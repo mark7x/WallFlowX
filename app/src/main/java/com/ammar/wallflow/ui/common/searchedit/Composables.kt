@@ -78,7 +78,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.ammar.wallflow.COMMON_RESOLUTIONS
+import com.ammar.wallflow.WALLHAVEN_RESOLUTION_PRESETS
 import com.ammar.wallflow.R
 import com.ammar.wallflow.extensions.getScreenResolution
 import com.ammar.wallflow.extensions.trimAll
@@ -535,7 +535,9 @@ private fun AddResolutionButton(
     var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val localResolution = context.getScreenResolution(true)
-    val localInCommon = remember(localResolution) { localResolution in COMMON_RESOLUTIONS.values }
+    val localInPresets = remember(localResolution) {
+        localResolution in WALLHAVEN_RESOLUTION_PRESETS
+    }
     val scrollState = rememberScrollState()
 
     Box(
@@ -566,8 +568,8 @@ private fun AddResolutionButton(
             scrollState = scrollState,
             onDismissRequest = { expanded = false },
         ) {
-            if (!localInCommon && localResolution !in addedResolutions) {
-                // if local device resolution is not in COMMON_RESOLUTIONS, add an entry
+            if (!localInPresets && localResolution !in addedResolutions) {
+                // if local device resolution is not a preset, add an entry
                 DropdownMenuItem(
                     text = {
                         Text(
@@ -581,23 +583,22 @@ private fun AddResolutionButton(
                 )
                 HorizontalDivider()
             }
-            COMMON_RESOLUTIONS.entries
-                .filter { it.value !in addedResolutions }
-                .map {
-                    val text = "${it.key} ${
+            WALLHAVEN_RESOLUTION_PRESETS
+                .filter { it !in addedResolutions }
+                .map { resolution ->
+                    val text = buildString {
+                        append("${resolution.width} × ${resolution.height}")
                         // if this resolution is same as local, add Current label
-                        if (it.value == localResolution) {
-                            "(${stringResource(R.string.current)})"
-                        } else {
-                            ""
+                        if (resolution == localResolution) {
+                            append(" (${stringResource(R.string.current)})")
                         }
-                    } (${it.value})"
+                    }
 
                     DropdownMenuItem(
                         text = { Text(text = text) },
                         onClick = {
                             expanded = false
-                            onAdd(it.value)
+                            onAdd(resolution)
                         },
                     )
                     HorizontalDivider()

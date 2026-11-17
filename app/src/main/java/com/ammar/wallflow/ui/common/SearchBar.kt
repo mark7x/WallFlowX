@@ -43,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -125,7 +126,7 @@ object SearchBar {
                                 ) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = null,
+                                        contentDescription = stringResource(R.string.back),
                                     )
                                 }
                                 return@Crossfade
@@ -226,7 +227,7 @@ object SearchBar {
                         painter = painterResource(
                             R.drawable.baseline_north_west_24,
                         ),
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.insert_suggestion),
                     )
                 }
             },

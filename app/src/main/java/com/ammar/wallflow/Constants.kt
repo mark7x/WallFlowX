@@ -15,7 +15,7 @@ val COMMON_RESOLUTIONS = mapOf(
     "WSVGA" to IntSize(1024, 600),
     "XGA" to IntSize(1024, 768),
     "WXGA" to IntSize(1280, 768),
-    "WXGA" to IntSize(1280, 800),
+    "WXGA 16:10" to IntSize(1280, 800),
     "SXGA" to IntSize(1280, 960),
     "SXGA+" to IntSize(1400, 1050),
     "UXGA" to IntSize(1600, 1200),
@@ -30,6 +30,41 @@ val COMMON_RESOLUTIONS = mapOf(
     "WQUXGA" to IntSize(3840, 2400),
     "5k iMac Retina" to IntSize(5120, 2880),
     "6k Apple Pro XDR" to IntSize(6016, 3384),
+)
+
+/**
+ * Resolutions offered in the Wallhaven filter picker, matching wallhaven.cc's own
+ * "Resolution" menu. Wallhaven matches the "Exactly" filter on exact sizes only.
+ */
+val WALLHAVEN_RESOLUTION_PRESETS: List<IntSize> = listOf(
+    // Ultrawide
+    IntSize(2560, 1080),
+    IntSize(3440, 1440),
+    IntSize(3840, 1600),
+    // 16:9
+    IntSize(1280, 720),
+    IntSize(1600, 900),
+    IntSize(1920, 1080),
+    IntSize(2560, 1440),
+    IntSize(3840, 2160),
+    // 16:10
+    IntSize(1280, 800),
+    IntSize(1600, 1000),
+    IntSize(1920, 1200),
+    IntSize(2560, 1600),
+    IntSize(3840, 2400),
+    // 4:3
+    IntSize(1280, 960),
+    IntSize(1600, 1200),
+    IntSize(1920, 1440),
+    IntSize(2560, 1920),
+    IntSize(3840, 2880),
+    // 5:4
+    IntSize(1280, 1024),
+    IntSize(1600, 1280),
+    IntSize(1920, 1536),
+    IntSize(2560, 2048),
+    IntSize(3840, 3072),
 )
 
 const val DISABLED_ALPHA = 0.38f

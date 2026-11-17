@@ -7,8 +7,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -18,11 +22,13 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -30,9 +36,11 @@ import androidx.navigation.compose.rememberNavController
 import com.ammar.wallflow.MainDispatcher
 import com.ammar.wallflow.data.preferences.Theme
 import com.ammar.wallflow.destinations.WallpaperScreenDestination
+import com.ammar.wallflow.extensions.toDp
 import com.ammar.wallflow.model.Source
 import com.ammar.wallflow.navigation.MainNavigation
 import com.ammar.wallflow.ui.common.DefaultSystemController
+import com.ammar.wallflow.ui.common.LocalSnackbarHostState
 import com.ammar.wallflow.ui.common.LocalSystemController
 import com.ammar.wallflow.ui.common.SystemState
 import com.ammar.wallflow.ui.common.bottombar.BottomBarState
@@ -108,6 +116,8 @@ class MainActivity : ComponentActivity() {
         val systemController = LocalSystemController.current
         val systemState by systemController.state
         val bottomBarController = LocalBottomBarController.current
+        val bottomBarState by bottomBarController.state
+        val snackbarHostState = remember { SnackbarHostState() }
 
         LaunchedEffect(Unit) {
             withContext(mainDispatcher) {
@@ -162,9 +172,32 @@ class MainActivity : ComponentActivity() {
                     MaterialTheme.colorScheme.background
                 },
             ) {
-                MainNavigation(
-                    navController = navController,
-                )
+                CompositionLocalProvider(
+                    LocalSnackbarHostState provides snackbarHostState,
+                ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        MainNavigation(
+                            navController = navController,
+                        )
+                        SnackbarHost(
+                            hostState = snackbarHostState,
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(
+                                    start = if (bottomBarState.isRail && bottomBarState.visible) {
+                                        bottomBarState.size.width.toDp()
+                                    } else {
+                                        0.dp
+                                    },
+                                    bottom = if (!bottomBarState.isRail && bottomBarState.visible) {
+                                        bottomBarState.size.height.toDp()
+                                    } else {
+                                        0.dp
+                                    },
+                                ),
+                        )
+                    }
+                }
             }
         }
     }

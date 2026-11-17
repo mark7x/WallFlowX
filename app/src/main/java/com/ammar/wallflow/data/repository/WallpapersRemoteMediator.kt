@@ -108,11 +108,13 @@ class WallpapersRemoteMediator<T : Search, U : OnlineSourceWallpaperEntity>(
                 )
                 else -> throw RuntimeException()
             }
-            val nextPageStr = when (response) {
+            // null means there are no more pages. Keep it null (not the text "null")
+            // so APPEND ends instead of requesting a bogus cursor.
+            val nextPageStr: String? = when (response) {
                 is NetworkWallhavenWallpapersResponse -> {
                     // if at last page, next page is null else current + 1
                     response.meta?.run {
-                        if (current_page != last_page) current_page + 1 else null
+                        if (current_page != last_page) (current_page + 1).toString() else null
                     }
                 }
                 is NetworkRedditSearchResponse -> response.data.after
@@ -154,11 +156,11 @@ class WallpapersRemoteMediator<T : Search, U : OnlineSourceWallpaperEntity>(
 
                 // Update RemoteKey for this query.
                 val remoteKey = remoteKeysDao.getBySearchQueryId(searchQueryId)
-                val updatedRemoteKey = remoteKey?.copy(nextPage = nextPageStr.toString())
+                val updatedRemoteKey = remoteKey?.copy(nextPage = nextPageStr)
                     ?: SearchQueryRemoteKeyEntity(
                         id = 0,
                         searchQueryId = searchQueryId,
-                        nextPage = nextPageStr.toString(),
+                        nextPage = nextPageStr,
                     )
                 remoteKeysDao.insertOrReplace(updatedRemoteKey)
 

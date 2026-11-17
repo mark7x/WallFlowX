@@ -15,9 +15,14 @@ class GlobalErrorsRepository @Inject constructor() {
     fun addError(error: GlobalError, replace: Boolean = false) = _errors.update {
         var errorList = it
         if (replace) {
-            errorList = errorList.filter { e -> e.type != error.type }
+            errorList = errorList.filter { e -> e.key != error.key }
         }
         errorList + error
+    }
+
+    /** Removes the rate-limit error for one source only, so other sources keep theirs. */
+    fun removeRateLimitError(source: Source) = _errors.update {
+        it.filterNot { e -> e is RateLimitError && e.source == source }
     }
 
     fun removeError(error: GlobalError) = _errors.update {
@@ -35,6 +40,9 @@ class GlobalErrorsRepository @Inject constructor() {
 
     sealed class GlobalError {
         abstract val type: GlobalErrorType
+
+        /** Errors with the same key replace each other. Defaults to the type. */
+        open val key: Any get() = type
     }
 
     class WallHavenUnauthorisedError : GlobalError() {
@@ -43,5 +51,6 @@ class GlobalErrorsRepository @Inject constructor() {
 
     class RateLimitError(val source: Source) : GlobalError() {
         override val type: GlobalErrorType = GlobalErrorType.RATE_LIMIT
+        override val key: Any get() = Pair(type, source)
     }
 }

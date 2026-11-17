@@ -76,7 +76,7 @@ fun <T> Dropdown(
                         {
                             Icon(
                                 imageVector = Icons.Default.Check,
-                                contentDescription = "Selected",
+                                contentDescription = stringResource(R.string.selected),
                             )
                         }
                     } else {
@@ -195,7 +195,7 @@ fun <T> DropdownMultiple(
                         {
                             Icon(
                                 imageVector = Icons.Default.Check,
-                                contentDescription = "Selected",
+                                contentDescription = stringResource(R.string.selected),
                             )
                         }
                     } else {

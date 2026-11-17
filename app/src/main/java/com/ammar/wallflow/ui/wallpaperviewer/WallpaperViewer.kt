@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -68,15 +70,18 @@ import com.ammar.wallflow.model.reddit.withRedditDomainPrefix
 import com.ammar.wallflow.model.wallhaven.WallhavenTag
 import com.ammar.wallflow.model.wallhaven.WallhavenUploader
 import com.ammar.wallflow.model.wallhaven.WallhavenWallpaper
+import com.ammar.wallflow.ui.common.LocalSnackbarHostState
 import com.ammar.wallflow.ui.common.TopBar
 import com.ammar.wallflow.ui.common.bottomWindowInsets
 import com.ammar.wallflow.ui.common.permissions.DownloadPermissionsRationalDialog
 import com.ammar.wallflow.ui.common.permissions.rememberDownloadPermissionsState
+import com.ammar.wallflow.ui.common.showMessage
 import com.ammar.wallflow.ui.screens.wallpaper.LightDarkInfoDialog
 import com.ammar.wallflow.ui.screens.wallpaper.ShareButton
 import com.ammar.wallflow.ui.screens.wallpaper.WallpaperActions
 import com.ammar.wallflow.ui.screens.wallpaper.WallpaperInfoBottomSheet
 import com.ammar.wallflow.utils.DownloadStatus
+import java.io.IOException
 import java.net.SocketTimeoutException
 import me.saket.telephoto.zoomable.ZoomSpec
 import me.saket.telephoto.zoomable.rememberZoomableState
@@ -153,19 +158,19 @@ fun WallpaperViewer(
     // }
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val listener = remember {
+    val snackbarHostState = LocalSnackbarHostState.current
+    val snackbarScope = rememberCoroutineScope()
+    val listener = remember(snackbarHostState, snackbarScope) {
         object : ImageRequest.Listener {
             override fun onError(request: ImageRequest, result: ErrorResult) {
                 val throwable = result.throwable
-                when (throwable) {
-                    is SocketTimeoutException -> context.toast(
-                        context.getString(R.string.request_timed_out),
-                    )
+                val messageRes = when (throwable) {
                     is NullRequestDataException -> return // Do nothing
-                    else -> context.toast(
-                        throwable.message ?: context.getString(R.string.error_occurred),
-                    )
+                    is SocketTimeoutException -> R.string.request_timed_out
+                    is IOException -> R.string.network_error
+                    else -> R.string.error_occurred
                 }
+                snackbarHostState.showMessage(snackbarScope, context.getString(messageRes))
                 Log.e(TAG, "onError: ", throwable)
             }
         }
@@ -283,11 +288,19 @@ fun WallpaperViewer(
             )
         }
 
+        // Show progress while the full-resolution image loads (thumbnail may already be visible).
+        if (
+            painter.state is AsyncImagePainter.State.Loading &&
+            painter.request.data !is NullRequestData
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center),
+            )
+        }
+
         AnimatedVisibility(
             modifier = Modifier.align(Alignment.BottomCenter),
-            visible = painter.state is AsyncImagePainter.State.Success &&
-                painter.request.data == wallpaper?.data &&
-                actionsVisible,
+            visible = wallpaper != null && actionsVisible,
             enter = fadeIn(),
             exit = fadeOut(),
         ) {
@@ -344,8 +357,7 @@ fun WallpaperViewer(
             onBackClick = onBackClick,
             actions = {
                 AnimatedVisibility(
-                    visible = painter.state is AsyncImagePainter.State.Success &&
-                        painter.request.data == wallpaper?.data,
+                    visible = wallpaper != null,
                     enter = fadeIn(),
                     exit = fadeOut(),
                 ) {

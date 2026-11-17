@@ -47,6 +47,7 @@ fun WallpaperStaggeredGrid(
     wallpapers: LazyPagingItems<Wallpaper>,
     header: (LazyStaggeredGridScope.() -> Unit)? = null,
     emptyContent: (LazyStaggeredGridScope.() -> Unit)? = null,
+    footer: (LazyStaggeredGridScope.() -> Unit)? = null,
     blurSketchy: Boolean = false,
     blurNsfw: Boolean = false,
     selectedWallpaper: Wallpaper? = null,
@@ -131,6 +132,7 @@ fun WallpaperStaggeredGrid(
                 )
             } ?: PlaceholderWallpaperCard()
         }
+        footer?.invoke(this)
     }
 }
 

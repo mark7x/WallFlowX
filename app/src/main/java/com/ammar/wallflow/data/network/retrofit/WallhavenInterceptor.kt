@@ -86,8 +86,8 @@ class WallhavenInterceptor @Inject constructor(
             // remove any network related errors
             globalErrorsRepository.removeErrorByType(
                 GlobalErrorType.WALLHAVEN_UNAUTHORISED,
-                GlobalErrorType.RATE_LIMIT,
             )
+            globalErrorsRepository.removeRateLimitError(Source.WALLHAVEN)
         }
     }
 }

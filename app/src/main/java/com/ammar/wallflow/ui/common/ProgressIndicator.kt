@@ -6,8 +6,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import com.ammar.wallflow.R
+import kotlin.math.roundToInt
 
 @Composable
 fun ProgressIndicator(
@@ -16,6 +19,10 @@ fun ProgressIndicator(
     strokeCap: StrokeCap = StrokeCap.Round,
     circular: Boolean = true,
 ) {
+    val progressDescription = stringResource(
+        R.string.progress_percent,
+        (progress * 100).roundToInt(),
+    )
     if (progress <= -1F) {
         if (circular) {
             CircularProgressIndicator(
@@ -34,7 +41,7 @@ fun ProgressIndicator(
                 progress = { progress },
                 modifier = modifier
                     .testTag("circular-progress")
-                    .semantics { contentDescription = "Progress $progress" },
+                    .semantics { contentDescription = progressDescription },
                 strokeCap = strokeCap,
             )
         } else {
@@ -42,7 +49,7 @@ fun ProgressIndicator(
                 progress = { progress },
                 modifier = modifier
                     .testTag("linear-progress")
-                    .semantics { contentDescription = "Progress $progress" },
+                    .semantics { contentDescription = progressDescription },
                 strokeCap = strokeCap,
             )
         }

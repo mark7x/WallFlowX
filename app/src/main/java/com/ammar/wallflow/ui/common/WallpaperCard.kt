@@ -96,6 +96,14 @@ fun WallpaperCard(
             )
         }.build()
     }
+    val cardDescription = listOfNotNull(
+        stringResource(
+            R.string.wallpaper_card_description,
+            "${wallpaper.resolution.width}x${wallpaper.resolution.height}",
+        ),
+        stringResource(R.string.viewed).takeIf { isViewed },
+        stringResource(R.string.favorite).takeIf { isFavorite },
+    ).joinToString(", ")
     val transition = updateTransition(isSelected, label = "selection state")
     val selectionColor by transition.animateColor(label = "selection color") {
         if (it) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else Color.Transparent
@@ -189,7 +197,7 @@ fun WallpaperCard(
                     Color.White
                 },
             ),
-            contentDescription = stringResource(R.string.wallpaper),
+            contentDescription = cardDescription,
             contentScale = ContentScale.Crop,
             onError = {
                 Log.e(

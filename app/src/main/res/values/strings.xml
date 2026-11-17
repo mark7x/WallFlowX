@@ -376,4 +376,16 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
         <item quantity="one">Lock screen: %d source</item>
         <item quantity="other">Lock screen: %d sources</item>
     </plurals>
+    <string name="load_error_title">Couldn't load wallpapers</string>
+    <string name="load_error_message">Check your connection and try again.</string>
+    <string name="retry">Retry</string>
+    <string name="no_results_title">No wallpapers found</string>
+    <string name="no_results_message">Try different filters or search terms.</string>
+    <string name="network_error">No internet connection. Check your network and try again.</string>
+    <string name="progress_percent">%d%% progress</string>
+    <string name="uploader_avatar">Avatar of %s</string>
+    <string name="copy_report">Copy report</string>
+    <string name="report_copied">Report copied</string>
+    <string name="wallpaper_card_description">Wallpaper %s</string>
+    <string name="insert_suggestion">Insert suggestion</string>
 </resources>

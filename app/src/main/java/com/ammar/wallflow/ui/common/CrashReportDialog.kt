@@ -45,10 +45,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.LinkAnnotation.Url
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.withLink
@@ -60,6 +62,7 @@ import com.ammar.wallflow.R
 import com.ammar.wallflow.extensions.getScreenResolution
 import com.ammar.wallflow.extensions.toAnnotatedString
 import com.ammar.wallflow.extensions.toDp
+import com.ammar.wallflow.extensions.toast
 import com.ammar.wallflow.ui.theme.WallFlowTheme
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentMapOf
@@ -79,6 +82,7 @@ fun CrashReportDialog(
     onDismissRequest: () -> Unit = {},
 ) {
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
     var reportOpen by rememberSaveable { mutableStateOf(false) }
 
     BasicAlertDialog(
@@ -132,13 +136,20 @@ fun CrashReportDialog(
                                     text = stringResource(R.string.report_data),
                                     style = MaterialTheme.typography.labelMedium,
                                 )
-                                IconButton(onClick = { }) {
+                                IconButton(
+                                    onClick = {
+                                        clipboardManager.setText(
+                                            reportData.toAnnotatedString(SpanStyle()),
+                                        )
+                                        context.toast(context.getString(R.string.report_copied))
+                                    },
+                                ) {
                                     Icon(
                                         modifier = Modifier.size(ButtonDefaults.IconSize),
                                         painter = painterResource(
                                             R.drawable.baseline_content_copy_24,
                                         ),
-                                        contentDescription = null,
+                                        contentDescription = stringResource(R.string.copy_report),
                                     )
                                 }
                                 Spacer(modifier = Modifier.weight(1f))

@@ -45,11 +45,11 @@ import com.ammar.wallflow.data.repository.utils.successOr
 import com.ammar.wallflow.extensions.aspectRatio
 import com.ammar.wallflow.extensions.getScreenResolution
 import com.ammar.wallflow.extensions.toDp
-import com.ammar.wallflow.extensions.toast
 import com.ammar.wallflow.model.Detection
 import com.ammar.wallflow.model.DetectionCategory
 import com.ammar.wallflow.model.DetectionWithBitmap
 import com.ammar.wallflow.model.WallpaperTarget
+import com.ammar.wallflow.ui.common.LocalSnackbarHostState
 import com.ammar.wallflow.ui.common.LocalSystemController
 import com.ammar.wallflow.ui.theme.WallFlowTheme
 import com.ammar.wallflow.utils.DownloadStatus
@@ -75,6 +75,7 @@ fun CropScreen(
     }
     val cropState = viewModel.imageCropper.cropState
     val context = LocalContext.current
+    val snackbarHostState = LocalSnackbarHostState.current
     val resolution by produceState(
         initialValue = IntSize.Zero,
         key1 = context,
@@ -113,11 +114,8 @@ fun CropScreen(
 
     LaunchedEffect(uiState.detectedObjects) {
         if (uiState.detectedObjects !is Resource.Error) return@LaunchedEffect
-        val e = (uiState.detectedObjects as Resource.Error).throwable
-        context.toast(
-            e.localizedMessage
-                ?: e.message
-                ?: context.getString(R.string.error_detecting_objects),
+        snackbarHostState.showSnackbar(
+            context.getString(R.string.error_detecting_objects),
         )
     }
 

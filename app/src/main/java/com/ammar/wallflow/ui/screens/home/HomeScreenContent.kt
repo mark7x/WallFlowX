@@ -57,6 +57,8 @@ import com.ammar.wallflow.model.wallhaven.wallhavenWallpaper1
 import com.ammar.wallflow.model.wallhaven.wallhavenWallpaper2
 import com.ammar.wallflow.ui.common.BottomBarAwareHorizontalTwoPane
 import com.ammar.wallflow.ui.common.WallpaperStaggeredGrid
+import com.ammar.wallflow.ui.common.feedAppendErrorItem
+import com.ammar.wallflow.ui.common.feedStatusItem
 import com.ammar.wallflow.ui.common.topWindowInsets
 import com.ammar.wallflow.ui.screens.home.composables.header
 import com.ammar.wallflow.ui.screens.home.composables.wallhavenHeader
@@ -313,6 +315,17 @@ private fun Feed(
                 blurSketchy = blurSketchy,
                 blurNsfw = blurNsfw,
                 header = header,
+                emptyContent = {
+                    feedStatusItem(
+                        refresh = wallpapers.loadState.refresh,
+                        onRetry = wallpapers::retry,
+                    )
+                },
+                footer = {
+                    if (wallpapers.loadState.append is LoadState.Error) {
+                        feedAppendErrorItem(onRetry = wallpapers::retry)
+                    }
+                },
                 selectedWallpaper = selectedWallpaper,
                 showSelection = showSelection,
                 gridType = layoutPreferences.gridType,

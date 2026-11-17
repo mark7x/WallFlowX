@@ -61,6 +61,7 @@ import com.ammar.wallflow.model.search.WallhavenUploaderSearchMeta
 import com.ammar.wallflow.model.wallhaven.WallhavenTag
 import com.ammar.wallflow.model.wallhaven.WallhavenUploader
 import com.ammar.wallflow.navigation.AppNavGraphs
+import com.ammar.wallflow.ui.common.LocalSnackbarHostState
 import com.ammar.wallflow.ui.common.LocalSystemController
 import com.ammar.wallflow.ui.common.SearchBar
 import com.ammar.wallflow.ui.common.bottomWindowInsets
@@ -70,6 +71,7 @@ import com.ammar.wallflow.ui.common.rememberAdaptiveBottomSheetState
 import com.ammar.wallflow.ui.common.searchedit.EditSearchModalBottomSheet
 import com.ammar.wallflow.ui.common.searchedit.SaveAsDialog
 import com.ammar.wallflow.ui.common.searchedit.SavedSearchesDialog
+import com.ammar.wallflow.ui.common.showMessage
 import com.ammar.wallflow.ui.screens.home.composables.FiltersBottomSheetHeader
 import com.ammar.wallflow.ui.screens.home.composables.ManageSourcesDialog
 import com.ammar.wallflow.ui.screens.home.composables.RedditInitDialog
@@ -121,6 +123,8 @@ fun HomeScreen(
     )
     val systemState by systemController.state
     val clipboardManager = LocalClipboardManager.current
+    val snackbarHostState = LocalSnackbarHostState.current
+    val snackbarScope = rememberCoroutineScope()
     val bottomBarState by bottomBarController.state
 
     val searchBarQuery by remember {
@@ -344,7 +348,10 @@ fun HomeScreen(
                                             clipboardManager.setText(
                                                 AnnotatedString("#${it.name}"),
                                             )
-                                            context.toast(context.getString(R.string.tag_copied))
+                                            snackbarHostState.showMessage(
+                                                snackbarScope,
+                                                context.getString(R.string.tag_copied),
+                                            )
                                         },
                                     )
                                 }
