@@ -338,8 +338,6 @@ dependencies {
     // ExifInterface
     implementation(libs.androidx.exifinterface)
 
-    // LeakCanary
-    debugImplementation(libs.leakcanary.android)
 
     // Baseline Profiles
     implementation(libs.androidx.profileinstaller)
