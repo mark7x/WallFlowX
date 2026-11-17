@@ -39,11 +39,11 @@ private fun DetailTopBarTitle(selectedType: SettingsType) {
                 SettingsType.ACCOUNT -> R.string.account
                 SettingsType.LOOK_AND_FEEL -> R.string.look_and_feel
                 SettingsType.DOWNLOADS -> R.string.downloads
+                SettingsType.REDDIT_SUBREDDITS -> R.string.reddit_subreddits
                 SettingsType.SAVED_SEARCHES -> R.string.saved_searches
                 SettingsType.VIEWED_WALLPAPERS -> R.string.viewed_wallpapers
                 SettingsType.OBJECT_DETECTION -> R.string.object_detection
                 SettingsType.AUTO_WALLPAPER -> R.string.auto_wallpaper
-                SettingsType.CRASH_REPORTS -> R.string.crash_reports
             },
         ),
         maxLines = 1,

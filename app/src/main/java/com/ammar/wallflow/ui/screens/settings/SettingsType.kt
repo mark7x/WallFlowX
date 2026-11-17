@@ -4,11 +4,11 @@ enum class SettingsType {
     ACCOUNT,
     LOOK_AND_FEEL,
     DOWNLOADS,
+    REDDIT_SUBREDDITS,
     SAVED_SEARCHES,
     VIEWED_WALLPAPERS,
     OBJECT_DETECTION,
     AUTO_WALLPAPER,
-    CRASH_REPORTS,
 }
 
 enum class SettingsExtraType {

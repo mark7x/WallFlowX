@@ -57,6 +57,14 @@ fun SettingsContentList(
             onItemClick = onItemClick,
         )
         mainSettingsListItem(
+            type = SettingsType.REDDIT_SUBREDDITS,
+            labelRes = R.string.reddit_subreddits,
+            iconRes = R.drawable.reddit,
+            isExpanded = isExpanded,
+            selectedType = selectedType,
+            onItemClick = onItemClick,
+        )
+        mainSettingsListItem(
             type = SettingsType.SAVED_SEARCHES,
             labelRes = R.string.saved_searches,
             iconRes = R.drawable.baseline_manage_search_24,
@@ -92,14 +100,6 @@ fun SettingsContentList(
                 onItemClick = onItemClick,
             )
         }
-        mainSettingsListItem(
-            type = SettingsType.CRASH_REPORTS,
-            labelRes = R.string.crash_reports,
-            iconRes = R.drawable.baseline_bug_report_24,
-            isExpanded = isExpanded,
-            selectedType = selectedType,
-            onItemClick = onItemClick,
-        )
     }
 }
 

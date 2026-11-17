@@ -45,7 +45,8 @@
             android:name=".activities.main.MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
-            android:theme="@style/Theme.WallFlow">
+            android:theme="@style/Theme.WallFlow"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -86,14 +87,6 @@
             android:exported="true"
             android:icon="@mipmap/ic_change_wallpaper"
             android:launchMode="singleTask"
-            android:theme="@style/Theme.WallFlow.Dialog" />
-        <activity
-            android:name="com.ammar.wallflow.activities.crashreport.CrashReportActivity"
-            android:excludeFromRecents="true"
-            android:exported="false"
-            android:finishOnTaskLaunch="true"
-            android:launchMode="singleInstance"
-            android:process=":acra"
             android:theme="@style/Theme.WallFlow.Dialog" />
 
         <service

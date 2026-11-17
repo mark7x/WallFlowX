@@ -36,6 +36,7 @@ import com.ammar.wallflow.extensions.workManager
 import com.ammar.wallflow.model.ObjectDetectionModel
 import com.ammar.wallflow.model.WallpaperTarget
 import com.ammar.wallflow.model.local.LocalDirectory
+import com.ammar.wallflow.model.search.RedditSearch
 import com.ammar.wallflow.model.search.SavedSearch
 import com.ammar.wallflow.utils.DownloadManager
 import com.ammar.wallflow.utils.DownloadStatus
@@ -151,6 +152,10 @@ class SettingsViewModel @Inject constructor(
         initialValue = SettingsUiState(),
     )
 
+    fun deleteRedditCookie() = viewModelScope.launch {
+        appPreferencesRepository.updateRedditCookie("")
+    }
+
     fun setBlurSketchy(blur: Boolean) = viewModelScope.launch {
         appPreferencesRepository.updateBlurSketchy(blur)
     }
@@ -166,6 +171,11 @@ class SettingsViewModel @Inject constructor(
     fun updateTagsWriteType(writeType: ExifWriteType) = viewModelScope.launch {
         appPreferencesRepository.updateTagsWriteType(writeType)
     }
+
+    fun updateHomeRedditSearch(redditSearch: RedditSearch) =
+        viewModelScope.launch {
+            appPreferencesRepository.updateHomeRedditSearch(redditSearch)
+        }
 
     fun updateSubjectDetectionPrefs(objectDetectionPreferences: ObjectDetectionPreferences) =
         viewModelScope.launch {
@@ -455,6 +465,16 @@ class SettingsViewModel @Inject constructor(
 
     fun showThemeOptionsDialog(show: Boolean) = localUiStateFlow.update {
         it.copy(showThemeOptionsDialog = partial(show))
+    }
+
+    fun showAccentColorDialog(show: Boolean) = localUiStateFlow.update {
+        it.copy(showAccentColorDialog = partial(show))
+    }
+
+    fun updateAccentColor(color: Int?) = viewModelScope.launch {
+        appPreferencesRepository.updateLookAndFeelPreferences(
+            uiState.value.appPreferences.lookAndFeelPreferences.copy(accentColor = color),
+        )
     }
 
     fun updateLookAndFeelPrefs(lookAndFeelPreferences: LookAndFeelPreferences) =
@@ -775,13 +795,6 @@ class SettingsViewModel @Inject constructor(
         )
     }
 
-    fun updateAcraEnabled(enabled: Boolean) = viewModelScope.launch {
-        appPreferencesRepository.updateAcraEnabled(enabled)
-        // need to restart to init acra
-        localUiStateFlow.update {
-            it.copy(showRestartDialog = partial(enabled))
-        }
-    }
 }
 
 @Stable
@@ -810,6 +823,7 @@ data class SettingsUiState(
     val showAutoWallpaperNextRunInfoDialog: Boolean = false,
     val autoWallpaperStatus: AutoWallpaperWorker.Companion.Status? = null,
     val showThemeOptionsDialog: Boolean = false,
+    val showAccentColorDialog: Boolean = false,
     val showAutoWallpaperSetToDialog: Boolean = false,
     val localDirectories: ImmutableList<LocalDirectory> = persistentListOf(),
     val showTagsWriteTypeDialog: Boolean = false,
@@ -819,7 +833,6 @@ data class SettingsUiState(
     val hasFavorites: Boolean = false,
     val homeScreenAutoWallpaperSources: AutoWallpaperSources = AutoWallpaperSources(),
     val lockScreenAutoWallpaperSources: AutoWallpaperSources = AutoWallpaperSources(),
-    val showRestartDialog: Boolean = false,
 )
 
 sealed class NextRun {
