@@ -20,6 +20,7 @@ import coil.annotation.ExperimentalCoilApi
 import coil.imageLoader
 import com.ammar.wallflow.IoDispatcher
 import com.ammar.wallflow.R
+import com.ammar.wallflow.data.repository.AppPreferencesRepository
 import com.ammar.wallflow.extensions.TAG
 import com.ammar.wallflow.extensions.getFileNameFromUrl
 import com.ammar.wallflow.extensions.getShareChooserIntent
@@ -42,6 +43,7 @@ import kotlin.math.absoluteValue
 import kotlin.random.Random
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.first
 import okhttp3.OkHttpClient
 
 @HiltWorker
@@ -50,6 +52,7 @@ class DownloadWorker @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     private val okHttpClient: OkHttpClient,
+    private val appPreferencesRepository: AppPreferencesRepository,
 ) : CoroutineWorker(
     context,
     params,
@@ -133,6 +136,7 @@ class DownloadWorker @AssistedInject constructor(
                     progressCallback = this@DownloadWorker::notifyProgress,
                 )
             }
+
             if (wallpaperId != null) {
                 val tags = inputData.getStringArray(INPUT_KEY_TAGS) ?: emptyArray()
                 if (tags.isNotEmpty()) {

@@ -58,4 +58,5 @@ class GlobalErrorsRepository @Inject constructor() {
         override val type: GlobalErrorType = GlobalErrorType.RATE_LIMIT
         override val key: Any get() = Pair(type, source)
     }
+
 }

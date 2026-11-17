@@ -56,6 +56,7 @@ import com.ammar.wallflow.model.wallhaven.WallhavenUploader
 import com.ammar.wallflow.model.wallhaven.wallhavenWallpaper1
 import com.ammar.wallflow.model.wallhaven.wallhavenWallpaper2
 import com.ammar.wallflow.ui.common.BottomBarAwareHorizontalTwoPane
+import com.ammar.wallflow.ui.common.WallpaperQuickActionsSheet
 import com.ammar.wallflow.ui.common.WallpaperStaggeredGrid
 import com.ammar.wallflow.ui.common.feedAppendErrorItem
 import com.ammar.wallflow.ui.common.feedStatusItem
@@ -103,6 +104,13 @@ internal fun HomeScreenContent(
     refreshIndicator: @Composable (BoxScope.() -> Unit) = {},
     onWallpaperClick: (wallpaper: Wallpaper) -> Unit = {},
     onWallpaperFavoriteClick: (wallpaper: Wallpaper) -> Unit = {},
+    onWallpaperLongClick: ((wallpaper: Wallpaper) -> Unit)? = null,
+    quickActionsWallpaper: Wallpaper? = null,
+    onQuickActionsDismiss: () -> Unit = {},
+    onQuickActionsFavoriteClick: (Wallpaper) -> Unit = {},
+    onQuickActionsApplyWallpaperClick: (Wallpaper) -> Unit = {},
+    onQuickActionsDownloadClick: (Wallpaper) -> Unit = {},
+    onQuickActionsShareClick: (Wallpaper) -> Unit = {},
     onTagClick: (wallhavenTag: WallhavenTag) -> Unit = {},
     onFABClick: () -> Unit = {},
     onRefresh: () -> Unit = {},
@@ -116,7 +124,11 @@ internal fun HomeScreenContent(
     onFullWallpaperFullScreenClick: () -> Unit = {},
     onFullWallpaperUploaderClick: (WallhavenUploader) -> Unit = {},
     onFullWallpaperDownloadPermissionsGranted: () -> Unit = {},
+    onFullWallpaperDownloadAllPermissionsGranted: () -> Unit = {},
     onFullWallpaperLightDarkTypeFlagsChange: (Int) -> Unit = {},
+    fullWallpaperGalleryWallpapers: List<Wallpaper>? = null,
+    fullWallpaperGalleryPageIndex: Int = 0,
+    onFullWallpaperGalleryPageChange: (Int) -> Unit = {},
 ) {
     HomeScreenContent(
         modifier = modifier,
@@ -146,6 +158,13 @@ internal fun HomeScreenContent(
                 refreshIndicator = refreshIndicator,
                 onWallpaperClick = onWallpaperClick,
                 onWallpaperFavoriteClick = onWallpaperFavoriteClick,
+                onWallpaperLongClick = onWallpaperLongClick,
+                quickActionsWallpaper = quickActionsWallpaper,
+                onQuickActionsDismiss = onQuickActionsDismiss,
+                onQuickActionsFavoriteClick = onQuickActionsFavoriteClick,
+                onQuickActionsApplyWallpaperClick = onQuickActionsApplyWallpaperClick,
+                onQuickActionsDownloadClick = onQuickActionsDownloadClick,
+                onQuickActionsShareClick = onQuickActionsShareClick,
                 onFABClick = onFABClick,
                 onRefresh = onRefresh,
             )
@@ -170,6 +189,7 @@ internal fun HomeScreenContent(
                 onApplyWallpaperClick = onFullWallpaperApplyWallpaperClick,
                 onFullScreenClick = onFullWallpaperFullScreenClick,
                 onDownloadPermissionsGranted = onFullWallpaperDownloadPermissionsGranted,
+                onDownloadAllPermissionsGranted = onFullWallpaperDownloadAllPermissionsGranted,
                 onUploaderClick = onFullWallpaperUploaderClick,
                 onTagClick = onTagClick,
                 onFavoriteToggle = {
@@ -178,6 +198,9 @@ internal fun HomeScreenContent(
                     }
                 },
                 onLightDarkTypeFlagsChange = onFullWallpaperLightDarkTypeFlagsChange,
+                galleryWallpapers = fullWallpaperGalleryWallpapers,
+                galleryPageIndex = fullWallpaperGalleryPageIndex,
+                onGalleryPageChange = onFullWallpaperGalleryPageChange,
             )
         },
     )
@@ -239,6 +262,13 @@ private fun Feed(
     refreshIndicator: @Composable (BoxScope.() -> Unit) = {},
     onWallpaperClick: (Wallpaper) -> Unit = {},
     onWallpaperFavoriteClick: (Wallpaper) -> Unit = {},
+    onWallpaperLongClick: ((Wallpaper) -> Unit)? = null,
+    quickActionsWallpaper: Wallpaper? = null,
+    onQuickActionsDismiss: () -> Unit = {},
+    onQuickActionsFavoriteClick: (Wallpaper) -> Unit = {},
+    onQuickActionsApplyWallpaperClick: (Wallpaper) -> Unit = {},
+    onQuickActionsDownloadClick: (Wallpaper) -> Unit = {},
+    onQuickActionsShareClick: (Wallpaper) -> Unit = {},
     onFABClick: () -> Unit = {},
     onRefresh: () -> Unit = {},
 ) {
@@ -333,11 +363,27 @@ private fun Feed(
                 gridColCount = layoutPreferences.gridColCount,
                 gridColMinWidthPct = layoutPreferences.gridColMinWidthPct,
                 roundedCorners = layoutPreferences.roundedCorners,
+                itemSpacingDp = layoutPreferences.gridItemSpacingDp,
+                showCarousel = layoutPreferences.showCarousel,
                 onWallpaperClick = onWallpaperClick,
                 onWallpaperFavoriteClick = onWallpaperFavoriteClick,
+                onWallpaperLongClick = onWallpaperLongClick,
             )
             searchBar()
         }
+    }
+
+    quickActionsWallpaper?.let { wallpaper ->
+        val isFav = favorites.any { it.sourceId == wallpaper.id && it.source == wallpaper.source }
+        WallpaperQuickActionsSheet(
+            wallpaper = wallpaper,
+            isFavorite = isFav,
+            onDismiss = onQuickActionsDismiss,
+            onFavoriteClick = { onQuickActionsFavoriteClick(wallpaper) },
+            onApplyWallpaperClick = { onQuickActionsApplyWallpaperClick(wallpaper) },
+            onDownloadClick = { onQuickActionsDownloadClick(wallpaper) },
+            onShareLinkClick = { onQuickActionsShareClick(wallpaper) },
+        )
     }
 }
 
