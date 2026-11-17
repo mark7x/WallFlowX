@@ -17,6 +17,34 @@ and this repository don't fucking care for [Semantic Versioning](https://semver.
 
 ## [Unreleased]
 
+### Added
+- Reddit login from Settings > Account. The saved session cookie is sent with Reddit requests
+- Network log in Settings > Account with Success and Failures tabs for API calls, image loads, and downloads
+- Auto wallpaper order setting: random, newest first, or oldest first
+- Merged the 2.6.7 features from ddCeka/wallflow, including gallery posts, collections, subreddit filter, accent colors, and quick actions
+- "All wallpapers loaded" message at the end of the feed
+
+### Changed
+- Merged ddCeka/wallflow 2.6.7 toolchain: Kotlin 2.2, Compose 1.10, AGP 8.7, Gradle 8.10
+- Build Test runs on every push and only checks that the release build compiles
+- Debug APK workflow can be run manually from the Actions tab
+- Updated GitHub Actions to current versions (upload-artifact v4 and later)
+
+### Fixed
+- Wallhaven resolution and ratio lists match the site, so fewer images go missing
+- Reddit requests send a unique User-Agent and handle rate limits
+- Reddit invalid session shows a clear message to log in again
+- Reddit pagination no longer stores the text "null" as a cursor
+- Feed shows error and empty states with a retry button
+- Viewer shows load errors as snackbars and shows a loading indicator
+- Copy button in the crash report copies the report
+- Icons and wallpaper cards have accessibility labels
+
+### Removed
+- Alpha build flavour and its workflow, following the 2.6.7 merge
+- ACRA crash reporting dialog, following the 2.6.7 merge
+- LeakCanary from debug builds
+
 ### Other
 - Fuck u/spez part2
 

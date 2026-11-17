@@ -26,13 +26,15 @@
 ## Features
 
 - Supports wallhaven.cc and Reddit
+- Sign in to Reddit from Settings > Account so Reddit searches use your session
 - Multi-pane layout for tablets and other wide screen devices
-- Auto wallpaper changer
+- Auto wallpaper changer, with random, newest first, or oldest first order
 - Save searches
 - Favorite wallpapers
 - Local Wallpapers
 - Use saved searches, favorites, and local wallpapers for auto wallpaper changer
 - Search history
+- Network log in Settings > Account, showing successful and failed image loads, API calls, and downloads
 - [Plus] Smart wallpaper cropping using on-device object detection powered by [Tensorflow Lite](https://www.tensorflow.org/lite/).
   - Supports adding your own TFLite models. You can find more models [here](https://tfhub.dev/s?deployment-format=lite&module-type=image-object-detection/).
 - Search results caching to reduce api calls
