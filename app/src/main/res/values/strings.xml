@@ -420,4 +420,10 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="gallery_fav_message">Apply to all images in this gallery, or just this one?</string>
     <string name="this_image_only">This image only</string>
     <string name="all_images">All %d images</string>
+    <string name="network_log">Network log</string>
+    <string name="network_log_desc">Successful and failed image loads, API calls, and downloads</string>
+    <string name="network_log_success">Success (%d)</string>
+    <string name="network_log_failures">Failures (%d)</string>
+    <string name="network_log_empty">Nothing logged yet</string>
+    <string name="network_log_clear">Clear</string>
 </resources>

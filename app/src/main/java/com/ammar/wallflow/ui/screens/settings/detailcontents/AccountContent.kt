@@ -21,6 +21,7 @@ internal fun AccountContent(
     onWallhavenApiKeyItemClick: () -> Unit = {},
     onRedditLoginItemClick: () -> Unit = {},
     redditCookie: String = "",
+    onNetworkLogItemClick: () -> Unit = {},
 ) {
     Column(modifier = modifier) {
         WallhavenApiKeyItem(
@@ -31,6 +32,10 @@ internal fun AccountContent(
             modifier = Modifier.clickable(onClick = onRedditLoginItemClick),
             isExpanded = isExpanded,
             isLoggedIn = redditCookie.isNotBlank(),
+        )
+        NetworkLogItem(
+            modifier = Modifier.clickable(onClick = onNetworkLogItemClick),
+            isExpanded = isExpanded,
         )
     }
 }
@@ -61,6 +66,25 @@ private fun WallhavenApiKeyItem(
 }
 
 @Composable
+private fun NetworkLogItem(
+    modifier: Modifier = Modifier,
+    isExpanded: Boolean = false,
+) {
+    SettingsDetailListItem(
+        modifier = modifier,
+        isExpanded = isExpanded,
+        isFirst = false,
+        isLast = true,
+        headlineContent = {
+            Text(text = stringResource(R.string.network_log))
+        },
+        supportingContent = {
+            Text(text = stringResource(R.string.network_log_desc))
+        },
+    )
+}
+
+@Composable
 private fun RedditLoginItem(
     modifier: Modifier = Modifier,
     isExpanded: Boolean = false,
@@ -70,7 +94,7 @@ private fun RedditLoginItem(
         modifier = modifier,
         isExpanded = isExpanded,
         isFirst = false,
-        isLast = true,
+        isLast = false,
         headlineContent = {
             Text(text = stringResource(R.string.reddit_login))
         },

@@ -52,6 +52,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.ammar.wallflow.R
 import com.ammar.wallflow.data.preferences.AutoWallpaperPreferences
+import com.ammar.wallflow.destinations.NetworkLogScreenDestination
 import com.ammar.wallflow.destinations.RedditAuthScreenDestination
 import com.ammar.wallflow.destinations.WallhavenApiKeyDialogDestination
 import com.ammar.wallflow.extensions.toast
@@ -231,6 +232,9 @@ fun SettingsScreen(
                         }
                     },
                     redditCookie = uiState.appPreferences.redditCookie,
+                    onNetworkLogItemClick = {
+                        navController.navigate(NetworkLogScreenDestination.route)
+                    },
                     onLayoutClick = {
                         selectedExtraType = SettingsExtraType.LAYOUT
                         coroutineScope.launch {
@@ -599,6 +603,7 @@ private fun DetailContentScaffold(
     onWallhavenApiKeyItemClick: () -> Unit,
     onRedditLoginItemClick: () -> Unit,
     redditCookie: String,
+    onNetworkLogItemClick: () -> Unit,
     onLayoutClick: () -> Unit,
     onViewedWallpapersLookClick: () -> Unit,
     onSourcesClick: () -> Unit,
@@ -649,6 +654,7 @@ private fun DetailContentScaffold(
                         onWallhavenApiKeyItemClick = onWallhavenApiKeyItemClick,
                         onRedditLoginItemClick = onRedditLoginItemClick,
                         redditCookie = redditCookie,
+                        onNetworkLogItemClick = onNetworkLogItemClick,
                     )
                     SettingsType.LOOK_AND_FEEL -> LookAndFeelSettingsScreen(
                         selectedExtraType = selectedExtraType,
