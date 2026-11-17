@@ -43,6 +43,7 @@ import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameter
 import androidx.compose.ui.unit.dp
 import com.ammar.wallflow.DISABLED_ALPHA
 import com.ammar.wallflow.R
+import com.ammar.wallflow.model.AutoWallpaperOrder
 import com.ammar.wallflow.data.preferences.defaultAutoWallpaperFreq
 import com.ammar.wallflow.model.WallpaperTarget
 import com.ammar.wallflow.ui.common.ProgressIndicator
@@ -66,6 +67,7 @@ internal fun AutoWallpaperContent(
     enabled: Boolean = false,
     sourcesSummary: String? = null,
     crop: Boolean = true,
+    order: AutoWallpaperOrder = AutoWallpaperOrder.OLDEST_FIRST,
     useObjectDetection: Boolean = true,
     useSameFrequency: Boolean = true,
     frequency: DateTimePeriod = defaultAutoWallpaperFreq,
@@ -91,6 +93,7 @@ internal fun AutoWallpaperContent(
     onShowNotificationChange: (Boolean) -> Unit = {},
     onSetToClick: () -> Unit = {},
     onCropChange: (Boolean) -> Unit = {},
+    onOrderChange: (AutoWallpaperOrder) -> Unit = {},
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -228,6 +231,42 @@ internal fun AutoWallpaperContent(
                             lsFrequency = lsFrequency,
                         ),
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha),
+                    )
+                },
+            )
+        }
+        item {
+            SettingsDetailListItem(
+                modifier = Modifier.clickable(
+                    enabled = enabled,
+                    onClick = {
+                        val values = AutoWallpaperOrder.entries
+                        onOrderChange(values[(order.ordinal + 1) % values.size])
+                    },
+                ),
+                isExpanded = isExpanded,
+                headlineContent = {
+                    Text(
+                        text = stringResource(R.string.auto_wallpaper_order),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha),
+                    )
+                },
+                supportingContent = {
+                    Text(
+                        text = stringResource(R.string.auto_wallpaper_order_desc),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha),
+                    )
+                },
+                trailingContent = {
+                    Text(
+                        text = stringResource(
+                            when (order) {
+                                AutoWallpaperOrder.RANDOM -> R.string.order_random
+                                AutoWallpaperOrder.NEWEST_FIRST -> R.string.order_newest
+                                AutoWallpaperOrder.OLDEST_FIRST -> R.string.order_oldest
+                            },
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha),
                     )
                 },
             )

@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.emptyPreferences
 import com.ammar.wallflow.IoDispatcher
 import com.ammar.wallflow.data.preferences.AppPreferences
 import com.ammar.wallflow.data.preferences.AutoWallpaperPreferences
+import com.ammar.wallflow.model.AutoWallpaperOrder
 import com.ammar.wallflow.data.preferences.GridColType
 import com.ammar.wallflow.data.preferences.GridType
 import com.ammar.wallflow.data.preferences.LayoutPreferences
@@ -237,6 +238,7 @@ class AppPreferencesRepository @Inject constructor(
         set(PreferencesKeys.AUTO_WALLPAPER_DOWNLOAD, download)
         set(PreferencesKeys.AUTO_WALLPAPER_SET_DIFFERENT_WALLPAPERS, setDifferentWallpapers)
         set(PreferencesKeys.AUTO_WALLPAPER_CROP, crop)
+        set(PreferencesKeys.AUTO_WALLPAPER_ORDER, order.name)
         set(PreferencesKeys.AUTO_WALLPAPER_LIGHT_DARK_ENABLED, lightDarkEnabled)
         set(PreferencesKeys.AUTO_WALLPAPER_LS_LIGHT_DARK_ENABLED, lsLightDarkEnabled)
         set(PreferencesKeys.AUTO_WALLPAPER_USE_DARK_WITH_EXTRA_DIM, useDarkWithExtraDim)
@@ -617,6 +619,9 @@ class AppPreferencesRepository @Inject constructor(
             setDifferentWallpapers = get(PreferencesKeys.AUTO_WALLPAPER_SET_DIFFERENT_WALLPAPERS)
                 ?: false,
             crop = get(PreferencesKeys.AUTO_WALLPAPER_CROP) ?: true,
+            order = get(PreferencesKeys.AUTO_WALLPAPER_ORDER)?.let {
+                runCatching { AutoWallpaperOrder.valueOf(it) }.getOrNull()
+            } ?: AutoWallpaperOrder.OLDEST_FIRST,
             lightDarkEnabled = lightDarkEnabled,
             lsLightDarkEnabled = lsLightDarkEnabled,
             useDarkWithExtraDim = useDarkWithExtraDim,

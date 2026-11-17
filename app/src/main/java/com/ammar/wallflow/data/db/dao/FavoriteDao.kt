@@ -70,6 +70,40 @@ interface FavoriteDao {
 
     @Query(
         """
+        SELECT * FROM favorites
+        WHERE id NOT IN (
+            SELECT DISTINCT f.id
+            FROM auto_wallpaper_history awh JOIN favorites f
+                    ON awh.source = f.source AND  awh.source_id = f.source_id
+        )
+        AND id NOT IN (:excludingIds)
+        ORDER BY favorited_on DESC
+        LIMIT 1
+        """,
+    )
+    suspend fun getNewestFreshExcludingIds(
+        excludingIds: Collection<Long>,
+    ): FavoriteEntity?
+
+    @Query(
+        """
+        SELECT * FROM favorites
+        WHERE id NOT IN (
+            SELECT DISTINCT f.id
+            FROM auto_wallpaper_history awh JOIN favorites f
+                    ON awh.source = f.source AND  awh.source_id = f.source_id
+        )
+        AND id NOT IN (:excludingIds)
+        ORDER BY RANDOM()
+        LIMIT 1
+        """,
+    )
+    suspend fun getRandomFreshExcludingIds(
+        excludingIds: Collection<Long>,
+    ): FavoriteEntity?
+
+    @Query(
+        """
         SELECT f.*
         FROM favorites f INNER JOIN (
             SELECT awh.* FROM auto_wallpaper_history awh

@@ -88,6 +88,7 @@ object PreferencesKeys {
         "auto_wallpaper_set_different_wallpapers",
     )
     val AUTO_WALLPAPER_CROP = booleanPreferencesKey("auto_wallpaper_crop")
+    val AUTO_WALLPAPER_ORDER = stringPreferencesKey("auto_wallpaper_order")
     val AUTO_WALLPAPER_LIGHT_DARK_ENABLED = booleanPreferencesKey(
         "auto_wallpaper_light_dark_enabled",
     )

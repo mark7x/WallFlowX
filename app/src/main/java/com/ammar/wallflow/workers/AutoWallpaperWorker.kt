@@ -65,6 +65,7 @@ import com.ammar.wallflow.model.LightDarkType
 import com.ammar.wallflow.model.ObjectDetectionModel
 import com.ammar.wallflow.model.Source
 import com.ammar.wallflow.model.Wallpaper
+import com.ammar.wallflow.model.AutoWallpaperOrder
 import com.ammar.wallflow.model.WallpaperTarget
 import com.ammar.wallflow.model.local.LocalWallpaper
 import com.ammar.wallflow.model.search.RedditSearch
@@ -723,7 +724,12 @@ class AutoWallpaperWorker @AssistedInject constructor(
             }
 
             // Loop until we find a wallpaper
-            val wallpaper = wallpapers.firstOrNull {
+            val candidates = if (autoWallpaperPreferences.order == AutoWallpaperOrder.RANDOM) {
+                wallpapers.shuffled()
+            } else {
+                wallpapers
+            }
+            val wallpaper = candidates.firstOrNull {
                 // exclude bad wallpapers always
                 val isBad = badWallpapers.any { b ->
                     it.id == b.id && it.source == b.source
@@ -785,6 +791,7 @@ class AutoWallpaperWorker @AssistedInject constructor(
     private suspend fun getNextFavoriteWallpaper() = favoritesRepository.getFirstFresh(
         context = context,
         excluding = badWallpapers,
+        order = autoWallpaperPreferences.order,
     ) ?: favoritesRepository.getByOldestSetOn(
         context = context,
         excluding = badWallpapers,

@@ -972,6 +972,7 @@ private fun AutoWallpaperSettingsScreen(
             lsLocalEnabled = autoWallpaperPreferences.lsLocalEnabled,
         ),
         crop = autoWallpaperPreferences.crop,
+        order = autoWallpaperPreferences.order,
         useObjectDetection = autoWallpaperPreferences.useObjectDetection,
         nextRun = uiState.autoWallpaperNextRun,
         lsNextRun = uiState.lsAutoWallpaperNextRun,
@@ -1042,6 +1043,13 @@ private fun AutoWallpaperSettingsScreen(
             viewModel.updateAutoWallpaperPrefs(
                 autoWallpaperPreferences.copy(
                     crop = crop,
+                ),
+            )
+        },
+        onOrderChange = { order ->
+            viewModel.updateAutoWallpaperPrefs(
+                autoWallpaperPreferences.copy(
+                    order = order,
                 ),
             )
         },

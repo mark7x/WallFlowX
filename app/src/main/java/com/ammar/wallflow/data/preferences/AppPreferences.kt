@@ -11,6 +11,7 @@ import android.net.Uri
 import androidx.annotation.IntRange
 import androidx.work.Constraints
 import androidx.work.NetworkType
+import com.ammar.wallflow.model.AutoWallpaperOrder
 import com.ammar.wallflow.model.OnlineSource
 import com.ammar.wallflow.model.WallpaperTarget
 import com.ammar.wallflow.model.search.RedditSearch
@@ -108,6 +109,7 @@ data class AutoWallpaperPreferences(
     val download: Boolean = false,
     val setDifferentWallpapers: Boolean = false,
     val crop: Boolean = true,
+    val order: AutoWallpaperOrder = AutoWallpaperOrder.OLDEST_FIRST,
     val lightDarkEnabled: Boolean = false,
     val lsLightDarkEnabled: Boolean = false,
     val useDarkWithExtraDim: Boolean = false,

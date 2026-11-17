@@ -426,4 +426,9 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="network_log_failures">Failures (%d)</string>
     <string name="network_log_empty">Nothing logged yet</string>
     <string name="network_log_clear">Clear</string>
+    <string name="auto_wallpaper_order">Wallpaper order</string>
+    <string name="auto_wallpaper_order_desc">Random shuffles picks. Newest or oldest uses when you favorited each wallpaper, or the search's own order for saved searches.</string>
+    <string name="order_random">Random</string>
+    <string name="order_newest">Newest first</string>
+    <string name="order_oldest">Oldest first</string>
 </resources>

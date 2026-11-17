@@ -16,6 +16,7 @@ import com.ammar.wallflow.data.db.entity.FavoriteEntity
 import com.ammar.wallflow.data.db.entity.wallpaper.toWallpaper
 import com.ammar.wallflow.data.repository.local.LocalWallpapersRepository
 import com.ammar.wallflow.data.repository.utils.successOr
+import com.ammar.wallflow.model.AutoWallpaperOrder
 import com.ammar.wallflow.model.Source
 import com.ammar.wallflow.model.Wallpaper
 import com.ammar.wallflow.model.wallhaven.wallhavenWallpaper1
@@ -179,10 +180,14 @@ class FavoritesRepository @Inject constructor(
     suspend fun getFirstFresh(
         context: Context,
         excluding: Collection<Wallpaper>,
+        order: AutoWallpaperOrder = AutoWallpaperOrder.OLDEST_FIRST,
     ) = withContext(ioDispatcher) {
-        val entity = favoriteDao.getFirstFreshExcludingIds(
-            excludingIds = getIds(excluding),
-        ) ?: return@withContext null
+        val excludingIds = getIds(excluding)
+        val entity = when (order) {
+            AutoWallpaperOrder.RANDOM -> favoriteDao.getRandomFreshExcludingIds(excludingIds)
+            AutoWallpaperOrder.NEWEST_FIRST -> favoriteDao.getNewestFreshExcludingIds(excludingIds)
+            AutoWallpaperOrder.OLDEST_FIRST -> favoriteDao.getFirstFreshExcludingIds(excludingIds)
+        } ?: return@withContext null
         getWallpaperFromEntity(context, entity)
     }
 
