@@ -36,6 +36,7 @@ class GlobalErrorsRepository @Inject constructor() {
     enum class GlobalErrorType {
         WALLHAVEN_UNAUTHORISED,
         RATE_LIMIT,
+        REDDIT_UNAUTHORISED,
     }
 
     sealed class GlobalError {
@@ -47,6 +48,10 @@ class GlobalErrorsRepository @Inject constructor() {
 
     class WallHavenUnauthorisedError : GlobalError() {
         override val type: GlobalErrorType = GlobalErrorType.WALLHAVEN_UNAUTHORISED
+    }
+
+    class RedditUnauthorisedError : GlobalError() {
+        override val type: GlobalErrorType = GlobalErrorType.REDDIT_UNAUTHORISED
     }
 
     class RateLimitError(val source: Source) : GlobalError() {

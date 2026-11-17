@@ -78,6 +78,10 @@ class AppPreferencesRepository @Inject constructor(
         .map(::mapAppPreferences)
         .flowOn(ioDispatcher)
 
+    suspend fun updateRedditCookie(redditCookie: String) = withContext(ioDispatcher) {
+        dataStore.edit { it.updateRedditCookie(redditCookie) }
+    }
+
     suspend fun updateWallhavenApiKey(wallhavenApiKey: String) = withContext(ioDispatcher) {
         dataStore.edit { it.updateWallhavenApikey(wallhavenApiKey) }
     }
@@ -128,6 +132,10 @@ class AppPreferencesRepository @Inject constructor(
         dataStore.edit {
             it.updateLookAndFeelPreferences(lookAndFeelPreferences)
         }
+    }
+
+    private fun MutablePreferences.updateRedditCookie(redditCookie: String) {
+        set(PreferencesKeys.REDDIT_COOKIE, redditCookie)
     }
 
     private fun MutablePreferences.updateWallhavenApikey(wallhavenApiKey: String) {
@@ -349,6 +357,7 @@ class AppPreferencesRepository @Inject constructor(
         return AppPreferences(
             version = preferences[PreferencesKeys.VERSION] ?: AppPreferences.CURRENT_VERSION,
             wallhavenApiKey = getWallhavenApiKey(preferences),
+            redditCookie = getRedditCookie(preferences),
             homeWallhavenSearch = getHomeWallhavenSearch(preferences),
             homeRedditSearch = homeRedditSearch,
             homeSources = getHomeSources(preferences, homeRedditSearch),
@@ -658,6 +667,9 @@ class AppPreferencesRepository @Inject constructor(
     private fun getWallhavenApiKey(preferences: Preferences) =
         preferences[PreferencesKeys.WALLHAVEN_API_KEY] ?: ""
 
+    private fun getRedditCookie(preferences: Preferences) =
+        preferences[PreferencesKeys.REDDIT_COOKIE] ?: ""
+
     private fun parseFrequency(freqStr: String?) = try {
         if (freqStr != null) {
             DateTimePeriod.parse(freqStr)
@@ -690,6 +702,8 @@ class AppPreferencesRepository @Inject constructor(
     }
 
     suspend fun getWallHavenApiKey() = getWallhavenApiKey(dataStore.data.first())
+
+    suspend fun getRedditCookie() = getRedditCookie(dataStore.data.first())
 
     suspend fun getAutoWallpaperWorkRequestId() = getAutoWallpaperPreferences(
         dataStore.data.first(),

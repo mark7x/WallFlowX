@@ -19,13 +19,20 @@ internal fun AccountContent(
     modifier: Modifier = Modifier,
     isExpanded: Boolean = false,
     onWallhavenApiKeyItemClick: () -> Unit = {},
+    onRedditLoginItemClick: () -> Unit = {},
+    redditCookie: String = "",
 ) {
-    WallhavenApiKeyItem(
-        modifier = modifier.clickable(
-            onClick = onWallhavenApiKeyItemClick,
-        ),
-        isExpanded = isExpanded,
-    )
+    Column(modifier = modifier) {
+        WallhavenApiKeyItem(
+            modifier = Modifier.clickable(onClick = onWallhavenApiKeyItemClick),
+            isExpanded = isExpanded,
+        )
+        RedditLoginItem(
+            modifier = Modifier.clickable(onClick = onRedditLoginItemClick),
+            isExpanded = isExpanded,
+            isLoggedIn = redditCookie.isNotBlank(),
+        )
+    }
 }
 
 @Composable
@@ -37,7 +44,7 @@ private fun WallhavenApiKeyItem(
         modifier = modifier,
         isExpanded = isExpanded,
         isFirst = true,
-        isLast = true,
+        isLast = false,
         headlineContent = {
             Text(text = stringResource(R.string.wallhaven_api_key))
         },
@@ -46,6 +53,36 @@ private fun WallhavenApiKeyItem(
                 Text(text = stringResource(R.string.wallhaven_api_key_desc))
                 Text(
                     text = stringResource(R.string.wallhaven_api_key_desc_2),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        },
+    )
+}
+
+@Composable
+private fun RedditLoginItem(
+    modifier: Modifier = Modifier,
+    isExpanded: Boolean = false,
+    isLoggedIn: Boolean = false,
+) {
+    SettingsDetailListItem(
+        modifier = modifier,
+        isExpanded = isExpanded,
+        isFirst = false,
+        isLast = true,
+        headlineContent = {
+            Text(text = stringResource(R.string.reddit_login))
+        },
+        supportingContent = {
+            Column {
+                Text(text = stringResource(R.string.reddit_login_desc))
+                Text(
+                    text = if (isLoggedIn) {
+                        stringResource(R.string.reddit_logged_in_status)
+                    } else {
+                        stringResource(R.string.reddit_not_logged_in)
+                    },
                     style = MaterialTheme.typography.bodySmall,
                 )
             }

@@ -388,4 +388,9 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="report_copied">Report copied</string>
     <string name="wallpaper_card_description">Wallpaper %s</string>
     <string name="insert_suggestion">Insert suggestion</string>
+    <string name="reddit_login">Reddit Login</string>
+    <string name="reddit_login_desc">Login to Reddit to enable search functionality.</string>
+    <string name="reddit_not_logged_in">Not logged in</string>
+    <string name="reddit_logged_in_status">Logged in</string>
+    <string name="reddit_unauthorised">Reddit session is not working. Open Settings, tap Reddit Login, and log in again.</string>
 </resources>
