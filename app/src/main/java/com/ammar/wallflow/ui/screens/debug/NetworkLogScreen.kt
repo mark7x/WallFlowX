@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,6 +50,8 @@ fun NetworkLogScreen(
     val successes = entries.filter { it.isSuccess }
     val failures = entries.filterNot { it.isSuccess }
     val shown = if (selectedTab == 0) successes else failures
+    val redditTest by viewModel.redditTest.collectAsStateWithLifecycle()
+    val redditTestRunning by viewModel.redditTestRunning.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -71,6 +74,20 @@ fun NetworkLogScreen(
         },
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
+            Button(
+                onClick = viewModel::runRedditTest,
+                enabled = !redditTestRunning,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+            ) {
+                Text(
+                    text = stringResource(
+                        if (redditTestRunning) R.string.reddit_test_running else R.string.network_log_reddit_test,
+                    ),
+                )
+            }
+            redditTest?.let { RedditTestSummary(result = it) }
             TabRow(selectedTabIndex = selectedTab) {
                 Tab(
                     selected = selectedTab == 0,
@@ -127,6 +144,52 @@ private fun NetworkLogRow(entry: NetworkLogEntry) {
             Text(
                 text = it,
                 color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+    }
+}
+
+@Composable
+private fun RedditTestSummary(result: RedditTestResult) {
+    val noneText = stringResource(R.string.reddit_test_none)
+    val names = if (result.cookieNames.isEmpty()) noneText else result.cookieNames.joinToString()
+    val sessionText = stringResource(
+        if (result.hasSessionCookie) R.string.reddit_test_yes else R.string.reddit_test_no,
+    )
+    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+        Text(
+            text = stringResource(R.string.reddit_test_cookies, names),
+            style = MaterialTheme.typography.bodySmall,
+        )
+        Text(
+            text = stringResource(R.string.reddit_test_session, sessionText),
+            style = MaterialTheme.typography.bodySmall,
+        )
+        Text(
+            text = stringResource(
+                R.string.reddit_test_http,
+                result.code?.toString() ?: stringResource(R.string.reddit_test_no_response),
+            ),
+            style = MaterialTheme.typography.bodySmall,
+        )
+        result.error?.let {
+            Text(
+                text = stringResource(R.string.reddit_test_error, it),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        if (result.isHtml) {
+            Text(
+                text = stringResource(R.string.reddit_test_html),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        result.bodyPreview?.let {
+            Text(
+                text = stringResource(R.string.reddit_test_body, it),
                 style = MaterialTheme.typography.bodySmall,
             )
         }

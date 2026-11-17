@@ -3,6 +3,7 @@ package com.ammar.wallflow.ui.screens.redditauth
 import android.annotation.SuppressLint
 import android.view.View
 import android.webkit.CookieManager
+import android.widget.Toast
 import android.webkit.WebSettings
 import android.webkit.WebView
 import androidx.compose.foundation.layout.Box
@@ -104,6 +105,13 @@ private fun RedditAuthDialogContent(
                             .orEmpty()
                             .trim()
 
+                        if (!cookieHeader.contains("reddit_session=")) {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.reddit_session_missing),
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        }
                         onDone(cookieHeader)
                     }) {
                         Text(text = stringResource(R.string.confirm))

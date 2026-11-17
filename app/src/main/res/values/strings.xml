@@ -431,4 +431,17 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="order_random">Random</string>
     <string name="order_newest">Newest first</string>
     <string name="order_oldest">Oldest first</string>
+    <string name="network_log_reddit_test">Test Reddit</string>
+    <string name="reddit_test_running">Testing Reddit…</string>
+    <string name="reddit_test_cookies">Saved cookies: %1$s</string>
+    <string name="reddit_test_session">Login cookie (reddit_session): %1$s</string>
+    <string name="reddit_test_yes">saved</string>
+    <string name="reddit_test_no">missing</string>
+    <string name="reddit_test_none">none</string>
+    <string name="reddit_test_http">Reddit response: HTTP %1$s</string>
+    <string name="reddit_test_no_response">no response</string>
+    <string name="reddit_test_error">Request failed: %1$s</string>
+    <string name="reddit_test_html">Reddit returned an HTML page, not JSON. This is a block page.</string>
+    <string name="reddit_test_body">Body: %1$s</string>
+    <string name="reddit_session_missing">Reddit login cookie not found. Finish logging in, then tap Confirm again.</string>
 </resources>
