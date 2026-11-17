@@ -376,7 +376,7 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
         <item quantity="one">Lock screen: %d source</item>
         <item quantity="other">Lock screen: %d sources</item>
     </plurals>
-    <string name="load_error_title">Couldn't load wallpapers</string>
+    <string name="load_error_title">Couldn\'t load wallpapers</string>
     <string name="load_error_message">Check your connection and try again.</string>
     <string name="retry">Retry</string>
     <string name="no_results_title">No wallpapers found</string>
