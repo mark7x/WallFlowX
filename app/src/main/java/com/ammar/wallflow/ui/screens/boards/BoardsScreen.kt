@@ -43,6 +43,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.ammar.wallflow.R
 import com.ammar.wallflow.navigation.AppNavGraphs.RootNavGraph
+import com.ammar.wallflow.extensions.search
+import com.ammar.wallflow.model.search.BooruFilters
+import com.ammar.wallflow.model.search.BooruSearch
 import com.ammar.wallflow.sources.booru.SavedBoard
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -91,6 +94,11 @@ fun BoardsScreen(
                     modifier = Modifier.weight(1f),
                     onOpen = viewModel::select,
                     onRemove = viewModel::remove,
+                    onOpenFeed = { board ->
+                        navigator.search(
+                            BooruSearch(filters = BooruFilters(boardUrl = board.baseUrl, style = board.style)),
+                        )
+                    },
                 )
             }
         } else {
@@ -145,6 +153,7 @@ private fun BoardList(
     modifier: Modifier = Modifier,
     onOpen: (SavedBoard) -> Unit,
     onRemove: (SavedBoard) -> Unit,
+    onOpenFeed: (SavedBoard) -> Unit,
 ) {
     if (boards.isEmpty()) {
         Column(modifier = modifier.padding(16.dp)) {
@@ -165,8 +174,13 @@ private fun BoardList(
                     text = stringResource(R.string.boards_style, board.style.name.lowercase()),
                     style = MaterialTheme.typography.bodySmall,
                 )
-                TextButton(onClick = { onRemove(board) }) {
-                    Text(text = stringResource(R.string.boards_remove))
+                Row {
+                    TextButton(onClick = { onOpenFeed(board) }) {
+                        Text(text = stringResource(R.string.boards_open_feed))
+                    }
+                    TextButton(onClick = { onRemove(board) }) {
+                        Text(text = stringResource(R.string.boards_remove))
+                    }
                 }
             }
         }

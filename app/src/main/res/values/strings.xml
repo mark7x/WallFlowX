@@ -476,6 +476,7 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="boards_empty">No boards saved yet. Test a board in Network log, then tap Save board.</string>
     <string name="boards_style">Style: %1$s</string>
     <string name="boards_remove">Remove</string>
+    <string name="boards_open_feed">Open in feed</string>
     <string name="boards_add_hint">Board address, for example danbooru.donmai.us</string>
     <string name="boards_add_button">Add board</string>
     <string name="boards_error">Could not load posts: %1$s</string>
