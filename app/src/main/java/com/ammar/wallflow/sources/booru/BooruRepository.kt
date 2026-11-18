@@ -32,6 +32,10 @@ private class BooruPagingSource(
     private val booruPostsClient: BooruPostsClient,
     private val search: BooruSearch,
 ) : PagingSource<Int, Wallpaper>() {
+    // Ids already shown in this list. A post can come back on a later page when new posts
+    // shift the results, and the grid needs each id only once.
+    private val seenIds = mutableSetOf<String>()
+
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Wallpaper> {
         val page = params.key ?: 1
         val boardUrl = search.filters.boardUrl
@@ -47,6 +51,7 @@ private class BooruPagingSource(
                 val wallpapers: List<Wallpaper> = posts
                     .map { it.toWallpaper(boardUrl) }
                     .filter { it.purity in allowed }
+                    .filter { seenIds.add(it.id) }
                 BooruPostRegistry.remember(wallpapers)
                 LoadResult.Page(
                     data = wallpapers,
