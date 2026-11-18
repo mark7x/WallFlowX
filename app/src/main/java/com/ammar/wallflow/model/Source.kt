@@ -4,6 +4,7 @@ enum class Source {
     WALLHAVEN,
     LOCAL,
     REDDIT,
+    BOORU,
 }
 
 enum class OnlineSource {
