@@ -200,6 +200,7 @@ fun File.toOfflineLocalWallpaper(): LocalWallpaper {
         id = uri.toString(),
         data = uri,
         fileSize = length(),
+        name = name,
         resolution = IntSize(bounds.outWidth.coerceAtLeast(0), bounds.outHeight.coerceAtLeast(0)),
         mimeType = when (extension.lowercase()) {
             "jpg", "jpeg" -> "image/jpeg"
