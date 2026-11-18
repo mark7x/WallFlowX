@@ -2,6 +2,8 @@ package com.ammar.wallflow.ui.screens.boards
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
@@ -15,7 +17,9 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -26,6 +30,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -50,6 +57,7 @@ fun BoardsScreen(
     val boards by viewModel.boards.collectAsStateWithLifecycle()
     val selected by viewModel.selected.collectAsStateWithLifecycle()
     val postsState by viewModel.posts.collectAsStateWithLifecycle()
+    val addState by viewModel.addState.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -72,17 +80,60 @@ fun BoardsScreen(
     ) { padding ->
         val current = selected
         if (current == null) {
-            BoardList(
-                boards = boards,
-                modifier = Modifier.padding(padding),
-                onOpen = viewModel::select,
-                onRemove = viewModel::remove,
-            )
+            Column(modifier = Modifier.padding(padding)) {
+                AddBoardRow(
+                    running = addState.running,
+                    error = addState.error,
+                    onAdd = viewModel::addBoard,
+                )
+                BoardList(
+                    boards = boards,
+                    modifier = Modifier.weight(1f),
+                    onOpen = viewModel::select,
+                    onRemove = viewModel::remove,
+                )
+            }
         } else {
             BoardPosts(
                 board = current,
                 state = postsState,
                 modifier = Modifier.padding(padding),
+            )
+        }
+    }
+}
+
+@Composable
+private fun AddBoardRow(
+    running: Boolean,
+    error: String?,
+    onAdd: (String) -> Unit,
+) {
+    var address by rememberSaveable { mutableStateOf("") }
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+        OutlinedTextField(
+            value = address,
+            onValueChange = { address = it },
+            label = { Text(text = stringResource(R.string.boards_add_hint)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Button(
+                onClick = { onAdd(address) },
+                enabled = !running && address.isNotBlank(),
+            ) {
+                Text(text = stringResource(R.string.boards_add_button))
+            }
+            if (running) {
+                CircularProgressIndicator(modifier = Modifier.padding(start = 12.dp).size(20.dp))
+            }
+        }
+        if (error != null) {
+            Text(
+                text = error,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
             )
         }
     }

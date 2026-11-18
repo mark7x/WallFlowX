@@ -3,8 +3,10 @@ package com.ammar.wallflow.ui.screens.boards
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ammar.wallflow.sources.booru.BoardsStore
+import com.ammar.wallflow.sources.booru.BooruDetection
 import com.ammar.wallflow.sources.booru.BooruPost
 import com.ammar.wallflow.sources.booru.BooruPostsClient
+import com.ammar.wallflow.sources.booru.BooruStyleDetector
 import com.ammar.wallflow.sources.booru.SavedBoard
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -19,10 +21,16 @@ data class BoardPostsState(
     val error: String? = null,
 )
 
+data class AddBoardState(
+    val running: Boolean = false,
+    val error: String? = null,
+)
+
 @HiltViewModel
 class BoardsViewModel @Inject constructor(
     private val boardsStore: BoardsStore,
     private val booruPostsClient: BooruPostsClient,
+    private val booruStyleDetector: BooruStyleDetector,
 ) : ViewModel() {
     val boards: StateFlow<List<SavedBoard>> = boardsStore.boards
 
@@ -31,6 +39,27 @@ class BoardsViewModel @Inject constructor(
 
     private val _posts = MutableStateFlow(BoardPostsState())
     val posts: StateFlow<BoardPostsState> = _posts.asStateFlow()
+
+    private val _addState = MutableStateFlow(AddBoardState())
+    val addState: StateFlow<AddBoardState> = _addState.asStateFlow()
+
+    /** Detects the booru style at [address] and saves it as a board if it is recognised. */
+    fun addBoard(address: String) {
+        val url = address.trim()
+        if (url.isEmpty() || _addState.value.running) return
+        viewModelScope.launch {
+            _addState.value = AddBoardState(running = true)
+            when (val detection = booruStyleDetector.detect(url)) {
+                is BooruDetection.Detected -> {
+                    boardsStore.add(SavedBoard(baseUrl = url, style = detection.style))
+                    _addState.value = AddBoardState()
+                }
+                is BooruDetection.Unknown -> _addState.value = AddBoardState(
+                    error = detection.reasons.joinToString("; ").ifBlank { "Not a supported booru site" },
+                )
+            }
+        }
+    }
 
     fun select(board: SavedBoard) {
         _selected.value = board
