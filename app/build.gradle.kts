@@ -39,8 +39,8 @@ android {
         applicationId = "com.ammar.wallflow"
         minSdk = 24
         targetSdk = 35
-        versionCode = 60
-        versionName = "2.6.40"
+        versionCode = 61
+        versionName = "2.6.41"
 
         val abi = getAbi()
         ndk {
@@ -58,6 +58,15 @@ android {
     }
 
     signingConfigs {
+        // CI debug builds sign with one fixed key from secrets, so each APK updates the last.
+        if (hasProperty("github") && System.getenv("CI_DEBUG_KEYSTORE") != null) {
+            create("ciDebug") {
+                storeFile = file(System.getenv("CI_DEBUG_KEYSTORE"))
+                storePassword = System.getenv("CI_DEBUG_KEYSTORE_PASSWORD") ?: ""
+                keyAlias = System.getenv("CI_DEBUG_KEY_ALIAS") ?: ""
+                keyPassword = System.getenv("CI_DEBUG_KEY_PASSWORD") ?: ""
+            }
+        }
         if (!hasProperty("github") && !hasProperty("fdroid")) {
             create("release") {
                 storeFile = file(localProperties.getProperty("release.jks.file", ""))
@@ -75,6 +84,7 @@ android {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-dev"
             isDebuggable = true
+            signingConfigs.findByName("ciDebug")?.let { signingConfig = it }
         }
 
         getByName("release") {
