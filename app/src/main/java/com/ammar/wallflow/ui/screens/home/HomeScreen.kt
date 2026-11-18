@@ -181,6 +181,10 @@ fun HomeScreen(
                 ) ?: MainSearchBar.Defaults.redditSearch(
                     subreddits = uiState.reddit.subreddits,
                 )
+                OnlineSource.BOORU -> uiState.prevMainWallhavenSearch?.copy(
+                    query = "",
+                    meta = null,
+                ) ?: MainSearchBar.Defaults.wallhavenSearch
             }
         searchBarViewModel.setSearch(search)
         searchBarViewModel.setSource(uiState.selectedSource)
@@ -363,6 +367,7 @@ fun HomeScreen(
                                 }
                             }
                             OnlineSource.REDDIT -> null
+                            OnlineSource.BOORU -> null
                         },
                         onSourceClick = { source ->
                             if (source == OnlineSource.BOORU) {
@@ -485,6 +490,7 @@ fun HomeScreen(
                 OnlineSource.REDDIT -> MainSearchBar.Defaults.redditSearch(
                     subreddits = uiState.reddit.subreddits,
                 )
+                OnlineSource.BOORU -> MainSearchBar.Defaults.wallhavenSearch
             }
         }
         var localSearch by rememberSaveable(initialSearch, stateSaver = SearchSaver) {
@@ -578,6 +584,7 @@ fun HomeScreen(
                 when (uiState.selectedSource) {
                     OnlineSource.WALLHAVEN -> it.search is WallhavenSearch
                     OnlineSource.REDDIT -> it.search is RedditSearch
+                    OnlineSource.BOORU -> it.search is BooruSearch
                 }
             },
             onSelect = {

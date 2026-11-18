@@ -123,6 +123,7 @@ private fun ManageSourcesDialogContent(
                                 when (it) {
                                     OnlineSource.WALLHAVEN -> R.drawable.wallhaven_logo_short
                                     OnlineSource.REDDIT -> R.drawable.reddit
+                                    OnlineSource.BOORU -> R.drawable.outline_image_24
                                 },
                             ),
                             contentDescription = null,
@@ -161,6 +162,7 @@ private fun ManageSourcesDialogContent(
                             when (it.key) {
                                 OnlineSource.WALLHAVEN -> R.drawable.wallhaven_logo_short
                                 OnlineSource.REDDIT -> R.drawable.reddit
+                                OnlineSource.BOORU -> R.drawable.outline_image_24
                             },
                         ),
                         contentDescription = null,
@@ -202,6 +204,7 @@ private fun getSourceLabel(
 ) = when (source) {
     OnlineSource.WALLHAVEN -> stringResource(R.string.wallhaven_cc)
     OnlineSource.REDDIT -> stringResource(R.string.reddit)
+    OnlineSource.BOORU -> stringResource(R.string.boards)
 }
 
 @Preview

@@ -204,6 +204,7 @@ object SearchBar {
                             when (suggestion.source) {
                                 OnlineSource.WALLHAVEN -> R.drawable.wallhaven_logo_short
                                 OnlineSource.REDDIT -> R.drawable.reddit
+                                OnlineSource.BOORU -> R.drawable.outline_image_24
                             },
                         ),
                         contentDescription = null,
