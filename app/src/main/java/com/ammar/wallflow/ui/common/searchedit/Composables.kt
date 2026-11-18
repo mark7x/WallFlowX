@@ -1,5 +1,7 @@
 package com.ammar.wallflow.ui.common.searchedit
 
+import com.ammar.wallflow.model.search.BooruSearch
+
 import android.content.Context
 import android.content.res.Configuration
 import androidx.annotation.StringRes
@@ -1143,6 +1145,7 @@ private fun SavedSearchItem(
                 when (savedSearch.search) {
                     is WallhavenSearch -> R.drawable.wallhaven_logo_short
                     is RedditSearch -> R.drawable.reddit
+                    is BooruSearch -> R.drawable.outline_image_24
                 },
             ),
             contentDescription = null,

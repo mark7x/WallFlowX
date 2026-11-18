@@ -1,5 +1,9 @@
 package com.ammar.wallflow.data.db.entity.search
 
+import com.ammar.wallflow.model.search.BooruFilters
+
+import com.ammar.wallflow.model.search.BooruSearch
+
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
@@ -32,6 +36,10 @@ fun SearchHistoryEntity.toSearch() = when (
     val filters = json.decodeFromString<Filters>(this.filters)
 ) {
     is WallhavenFilters -> WallhavenSearch(
+        query = query,
+        filters = filters,
+    )
+    is BooruFilters -> BooruSearch(
         query = query,
         filters = filters,
     )

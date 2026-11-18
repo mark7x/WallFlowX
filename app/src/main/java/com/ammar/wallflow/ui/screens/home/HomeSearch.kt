@@ -1,5 +1,9 @@
 package com.ammar.wallflow.ui.screens.home
 
+import com.ammar.wallflow.model.search.BooruFilters
+
+import com.ammar.wallflow.model.search.BooruSearch
+
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.ammar.wallflow.extensions.trimAll
@@ -53,6 +57,9 @@ fun HomeSearch(
                 when (search) {
                     is RedditSearch -> search.copy(
                         filters = filters as RedditFilters,
+                    )
+                    is BooruSearch -> search.copy(
+                        filters = filters as BooruFilters,
                     )
                     is WallhavenSearch -> search.copy(
                         filters = filters as WallhavenFilters,

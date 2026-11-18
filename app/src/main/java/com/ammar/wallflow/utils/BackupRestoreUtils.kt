@@ -1,5 +1,7 @@
 package com.ammar.wallflow.utils
 
+import com.ammar.wallflow.model.search.BooruFilters
+
 import com.ammar.wallflow.sources.booru.BoardsStore
 
 import android.content.Context
@@ -160,6 +162,7 @@ suspend fun getBackupV1Json(
             when (json.decodeFromString<Filters>(it.filters)) {
                 is WallhavenFilters -> OnlineSource.WALLHAVEN
                 is RedditFilters -> OnlineSource.REDDIT
+                is BooruFilters -> null
             }
         }
         wallhavenBackupV1 = wallhavenBackupV1.copy(

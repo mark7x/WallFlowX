@@ -1,7 +1,7 @@
 package com.ammar.wallflow.sources.booru
 
-import androidx.paging.LoadParams
-import androidx.paging.LoadResult
+import androidx.paging.PagingSource.LoadParams
+import androidx.paging.PagingSource.LoadResult
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData

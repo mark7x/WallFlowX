@@ -1,5 +1,7 @@
 package com.ammar.wallflow.ui.common.mainsearch
 
+import com.ammar.wallflow.model.search.BooruSearch
+
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -68,6 +70,7 @@ object MainSearchBar {
                         when (search) {
                             is WallhavenSearch -> stringResource(R.string.wallhaven_cc)
                             is RedditSearch -> stringResource(R.string.reddit)
+                            is BooruSearch -> stringResource(R.string.boards)
                         },
                     ),
                 )

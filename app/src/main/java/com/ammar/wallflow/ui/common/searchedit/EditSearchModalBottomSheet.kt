@@ -1,5 +1,7 @@
 package com.ammar.wallflow.ui.common.searchedit
 
+import com.ammar.wallflow.model.search.BooruSearch
+
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
@@ -140,6 +142,7 @@ fun EditSearchContent(
     onResolutionsAddCustomResClick: () -> Unit = {},
 ) {
     when (search) {
+        is BooruSearch -> Unit
         is WallhavenSearch -> EditWallhavenSearchContent(
             modifier = modifier,
             showQueryField = showQueryField,

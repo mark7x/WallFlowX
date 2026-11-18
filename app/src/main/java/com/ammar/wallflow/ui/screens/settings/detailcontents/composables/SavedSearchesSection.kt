@@ -1,5 +1,7 @@
 package com.ammar.wallflow.ui.screens.settings.detailcontents.composables
 
+import com.ammar.wallflow.model.search.BooruSearch
+
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
@@ -110,6 +112,7 @@ internal fun ColumnScope.SavedSearchesSection(
                                 when (it.search) {
                                     is WallhavenSearch -> R.drawable.wallhaven_logo_short
                                     is RedditSearch -> R.drawable.reddit
+                                    is BooruSearch -> R.drawable.outline_image_24
                                 },
                             ),
                             contentDescription = null,

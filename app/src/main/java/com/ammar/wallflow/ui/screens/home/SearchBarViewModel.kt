@@ -1,5 +1,7 @@
 package com.ammar.wallflow.ui.screens.home
 
+import com.ammar.wallflow.model.search.BooruSearch
+
 import android.app.Application
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.AndroidViewModel
@@ -58,6 +60,7 @@ class SearchBarViewModel @Inject constructor(
                     }
                     .map {
                         when (it) {
+                            is BooruSearch -> error("booru searches are not suggested")
                             is WallhavenSearch -> Suggestion(
                                 value = it,
                                 source = OnlineSource.WALLHAVEN,
@@ -95,6 +98,9 @@ class SearchBarViewModel @Inject constructor(
                 it.search.getOrElse { Defaults.wallhavenSearch }
         ) {
             is RedditSearch -> currentSearch.copy(
+                query = query,
+            )
+            is BooruSearch -> currentSearch.copy(
                 query = query,
             )
             is WallhavenSearch -> currentSearch.copy(

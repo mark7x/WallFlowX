@@ -1,5 +1,9 @@
 package com.ammar.wallflow.data.db.entity.search
 
+import com.ammar.wallflow.model.search.BooruFilters
+
+import com.ammar.wallflow.model.search.BooruSearch
+
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -38,6 +42,10 @@ fun SavedSearchEntity.toSavedSearch() = SavedSearch(
             filters = filters,
         )
         is WallhavenFilters -> WallhavenSearch(
+            query = query,
+            filters = filters,
+        )
+        is BooruFilters -> BooruSearch(
             query = query,
             filters = filters,
         )

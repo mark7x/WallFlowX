@@ -1,5 +1,9 @@
 package com.ammar.wallflow.model.search
 
+import com.ammar.wallflow.model.search.BooruFilters
+
+import com.ammar.wallflow.model.search.BooruSearch
+
 import androidx.compose.runtime.saveable.Saver
 import com.ammar.wallflow.data.db.entity.search.SavedSearchEntity
 import com.ammar.wallflow.json
@@ -35,6 +39,10 @@ val SavedSearchSaver = Saver<SavedSearch, List<Any>>(
                 val filters = json.decodeFromString<Filters>(it[3] as String)
             ) {
                 is WallhavenFilters -> WallhavenSearch(
+                    query = it[2] as String,
+                    filters = filters,
+                )
+                is BooruFilters -> BooruSearch(
                     query = it[2] as String,
                     filters = filters,
                 )

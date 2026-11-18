@@ -1,5 +1,7 @@
 package com.ammar.wallflow.ui.screens.home
 
+import com.ammar.wallflow.model.search.BooruSearch
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -316,6 +318,7 @@ fun HomeScreen(
                             is RedditSearch -> searchBarSearch.copy(
                                 query = query,
                             )
+                            is BooruSearch -> searchBarSearch.copy(query = query)
                             is WallhavenSearch -> searchBarSearch.copy(
                                 query = query,
                             )
@@ -493,6 +496,7 @@ fun HomeScreen(
             when (localSearch) {
                 is RedditSearch -> "reddit"
                 is WallhavenSearch -> "wallhaven"
+                is BooruSearch -> "booru"
             }
         }-filters"
 
@@ -518,6 +522,7 @@ fun HomeScreen(
                     ),
                     source = when (localSearch) {
                         is WallhavenSearch -> OnlineSource.WALLHAVEN
+                        is BooruSearch -> OnlineSource.WALLHAVEN // booru searches are not saved yet
                         is RedditSearch -> OnlineSource.REDDIT
                     },
                     saveEnabled = !hasError && localSearch != initialSearch,

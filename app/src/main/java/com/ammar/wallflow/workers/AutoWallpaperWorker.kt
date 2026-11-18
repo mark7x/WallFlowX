@@ -1,5 +1,7 @@
 package com.ammar.wallflow.workers
 
+import com.ammar.wallflow.model.search.BooruSearch
+
 import android.content.Context
 import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
@@ -706,6 +708,7 @@ class AutoWallpaperWorker @AssistedInject constructor(
                 when (search) {
                     is RedditSearch -> Source.REDDIT
                     is WallhavenSearch -> Source.WALLHAVEN
+                    is BooruSearch -> Source.BOORU
                 },
             ).map { it.sourceId }
         } else {
@@ -826,6 +829,7 @@ class AutoWallpaperWorker @AssistedInject constructor(
         page: String? = null,
     ): Pair<List<Wallpaper>, String?> {
         when (search) {
+            is BooruSearch -> return emptyList<Wallpaper>() to null
             is WallhavenSearch -> {
                 val response = wallHavenNetwork.search(search, page?.toIntOrNull())
                 val nextPageNumber = response.meta?.run {
