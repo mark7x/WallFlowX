@@ -24,6 +24,7 @@ import com.ammar.wallflow.data.repository.reddit.RedditRepository
 import com.ammar.wallflow.data.repository.utils.Resource
 import com.ammar.wallflow.data.repository.utils.successOr
 import com.ammar.wallflow.data.repository.wallhaven.WallhavenRepository
+import com.ammar.wallflow.sources.WallpaperSourceRegistry
 import com.ammar.wallflow.model.Favorite
 import com.ammar.wallflow.model.LightDark
 import com.ammar.wallflow.model.OnlineSource
@@ -76,6 +77,7 @@ import kotlinx.datetime.Clock
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val wallhavenRepository: WallhavenRepository,
+    private val wallpaperSourceRegistry: WallpaperSourceRegistry,
     private val redditRepository: RedditRepository,
     private val appPreferencesRepository: AppPreferencesRepository,
     private val savedSearchRepository: SavedSearchRepository,
@@ -123,7 +125,7 @@ class HomeViewModel @Inject constructor(
 
     val wallpapers = if (mainSearch != null) {
         when (mainSearch) {
-            is WallhavenSearch -> wallhavenRepository.wallpapersPager(mainSearch)
+            is WallhavenSearch -> wallpaperSourceRegistry.pagerFor(mainSearch)!!
             is RedditSearch -> redditRepository.wallpapersPager(mainSearch)
         }
     } else {
@@ -136,7 +138,7 @@ class HomeViewModel @Inject constructor(
             val showCarousel = prefs.lookAndFeelPreferences.layoutPreferences.showCarousel
             val subFilter = prefs.redditSubredditFilter
             when (search) {
-                is WallhavenSearch -> wallhavenRepository.wallpapersPager(search)
+                is WallhavenSearch -> wallpaperSourceRegistry.pagerFor(search)!!
                 is RedditSearch -> {
                     // apply subreddit filter at query level (does NOT touch saved settings)
                     val effectiveSearch = applySubredditFilter(search, subFilter)

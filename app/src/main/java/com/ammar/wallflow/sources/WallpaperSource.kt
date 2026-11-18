@@ -1,5 +1,10 @@
 package com.ammar.wallflow.sources
 
+import androidx.paging.PagingData
+import com.ammar.wallflow.model.Wallpaper
+import com.ammar.wallflow.model.search.Search
+import kotlinx.coroutines.flow.Flow
+
 /**
  * Describes one image source (a board or site) that the app can read wallpapers from.
  *
@@ -15,6 +20,12 @@ interface WallpaperSource {
 
     /** What the source supports, so the UI only shows controls that work for it. */
     val capabilities: Set<SourceCapability>
+
+    /**
+     * Paged wallpapers for [search], or null when this source doesn't handle that search type.
+     * Sources opt in by overriding this; the default keeps existing sources unchanged.
+     */
+    fun wallpapersPager(search: Search): Flow<PagingData<Wallpaper>>? = null
 }
 
 enum class SourceCapability {
