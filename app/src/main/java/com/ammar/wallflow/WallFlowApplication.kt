@@ -9,7 +9,9 @@ import androidx.work.Configuration
 import androidx.work.ExistingPeriodicWorkPolicy
 import coil.ImageLoader
 import coil.ImageLoaderFactory
+import com.ammar.wallflow.data.network.coil.BooruUserAgentInterceptor
 import com.ammar.wallflow.data.network.coil.WallhavenFallbackInterceptor
+import com.ammar.wallflow.utils.CrashLog
 import com.ammar.wallflow.data.repository.AppPreferencesRepository
 import com.ammar.wallflow.extensions.TAG
 import com.ammar.wallflow.utils.NotificationChannels
@@ -57,6 +59,7 @@ class WallFlowApplication : Application(), Configuration.Provider, ImageLoaderFa
 
     override fun onCreate() {
         super.onCreate()
+        CrashLog.install(this)
         NotificationChannels.createChannels(this)
         scheduleAutoWallpaperWorker()
         scheduleCleanupWorker()
@@ -110,6 +113,7 @@ class WallFlowApplication : Application(), Configuration.Provider, ImageLoaderFa
         .okHttpClient(okHttpClient)
         .components {
             add(WallhavenFallbackInterceptor())
+            add(BooruUserAgentInterceptor())
         }
         .build()
 

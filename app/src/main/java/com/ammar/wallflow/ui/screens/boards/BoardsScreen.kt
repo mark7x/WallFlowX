@@ -62,6 +62,7 @@ fun BoardsScreen(
     val selected by viewModel.selected.collectAsStateWithLifecycle()
     val postsState by viewModel.posts.collectAsStateWithLifecycle()
     val addState by viewModel.addState.collectAsStateWithLifecycle()
+    val lastCrash by viewModel.lastCrash.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -85,6 +86,18 @@ fun BoardsScreen(
         val current = selected
         if (current == null) {
             Column(modifier = Modifier.padding(padding)) {
+                lastCrash?.let { crash ->
+                    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+                        Text(
+                            text = stringResource(R.string.boards_last_crash),
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                        Text(text = crash.take(1500), style = MaterialTheme.typography.bodySmall)
+                        TextButton(onClick = viewModel::clearCrash) {
+                            Text(text = stringResource(R.string.boards_clear_crash))
+                        }
+                    }
+                }
                 AddBoardRow(
                     running = addState.running,
                     error = addState.error,

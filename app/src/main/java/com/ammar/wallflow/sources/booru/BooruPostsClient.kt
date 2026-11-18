@@ -38,7 +38,7 @@ class BooruPostsClient @Inject constructor(
             val base = baseUrl.trim().trimEnd('/')
             val board = boardsStore.find(base)
             val url = postsUrl(style, base, limit, page, board?.userId, board?.apiKey)
-            val request = Request.Builder().url(url).build()
+            val request = Request.Builder().url(url).header("User-Agent", BOORU_USER_AGENT).build()
             okHttpClient.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) error("HTTP ${response.code}")
                 parsePosts(style, response.body?.string().orEmpty())

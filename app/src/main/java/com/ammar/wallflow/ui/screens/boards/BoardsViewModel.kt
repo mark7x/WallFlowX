@@ -2,13 +2,16 @@ package com.ammar.wallflow.ui.screens.boards
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.content.Context
 import com.ammar.wallflow.sources.booru.BoardsStore
 import com.ammar.wallflow.sources.booru.BooruDetection
 import com.ammar.wallflow.sources.booru.BooruPost
 import com.ammar.wallflow.sources.booru.BooruPostsClient
 import com.ammar.wallflow.sources.booru.BooruStyleDetector
 import com.ammar.wallflow.sources.booru.SavedBoard
+import com.ammar.wallflow.utils.CrashLog
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,11 +31,20 @@ data class AddBoardState(
 
 @HiltViewModel
 class BoardsViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val boardsStore: BoardsStore,
     private val booruPostsClient: BooruPostsClient,
     private val booruStyleDetector: BooruStyleDetector,
 ) : ViewModel() {
     val boards: StateFlow<List<SavedBoard>> = boardsStore.boards
+
+    private val _lastCrash = MutableStateFlow(CrashLog.read(context))
+    val lastCrash: StateFlow<String?> = _lastCrash.asStateFlow()
+
+    fun clearCrash() {
+        CrashLog.clear(context)
+        _lastCrash.value = null
+    }
 
     private val _selected = MutableStateFlow<SavedBoard?>(null)
     val selected: StateFlow<SavedBoard?> = _selected.asStateFlow()
