@@ -1,6 +1,7 @@
 package com.ammar.wallflow.ui.screens.debug
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,13 +20,21 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import android.annotation.SuppressLint
+import android.webkit.CookieManager
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -52,6 +61,9 @@ fun NetworkLogScreen(
     val shown = if (selectedTab == 0) successes else failures
     val redditTest by viewModel.redditTest.collectAsStateWithLifecycle()
     val redditTestRunning by viewModel.redditTestRunning.collectAsStateWithLifecycle()
+    val redditCookie by viewModel.redditCookie.collectAsStateWithLifecycle()
+    var webTestActive by remember { mutableStateOf(false) }
+    var webTestText by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = {
@@ -88,6 +100,34 @@ fun NetworkLogScreen(
                 )
             }
             redditTest?.let { RedditTestSummary(result = it) }
+            Button(
+                onClick = {
+                    webTestText = null
+                    webTestActive = true
+                },
+                enabled = !webTestActive,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+            ) {
+                Text(text = stringResource(R.string.network_log_webview_test))
+            }
+            if (webTestActive) {
+                RedditWebTest(
+                    cookie = redditCookie,
+                    onResult = {
+                        webTestText = it
+                        webTestActive = false
+                    },
+                )
+            }
+            webTestText?.let {
+                Text(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    text = stringResource(R.string.reddit_webview_result, it),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
             TabRow(selectedTabIndex = selectedTab) {
                 Tab(
                     selected = selectedTab == 0,
@@ -195,5 +235,51 @@ private fun RedditTestSummary(result: RedditTestResult) {
         }
     }
 }
+
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+private fun RedditWebTest(cookie: String, onResult: (String) -> Unit) {
+    val timeoutText = stringResource(R.string.reddit_webview_timeout)
+    var reported = false
+    LaunchedEffect(Unit) {
+        delay(WEBVIEW_TEST_TIMEOUT_MS)
+        if (!reported) {
+            reported = true
+            onResult(timeoutText)
+        }
+    }
+    AndroidView(
+        modifier = Modifier.size(1.dp),
+        factory = { context ->
+            WebView(context).apply {
+                settings.javaScriptEnabled = true
+                settings.domStorageEnabled = true
+                val cookieManager = CookieManager.getInstance()
+                cookieManager.setAcceptCookie(true)
+                cookie.split(";")
+                    .map { it.trim() }
+                    .filter { it.contains("=") }
+                    .forEach { cookieManager.setCookie("https://www.reddit.com", it) }
+                cookieManager.flush()
+                webViewClient = object : WebViewClient() {
+                    override fun onPageFinished(view: WebView?, url: String?) {
+                        if (reported) return
+                        view?.evaluateJavascript(
+                            "(function(){return document.body ? document.body.innerText.slice(0,200) : ''})()",
+                        ) { value ->
+                            if (!reported) {
+                                reported = true
+                                onResult(value.orEmpty())
+                            }
+                        }
+                    }
+                }
+                loadUrl(NetworkLogViewModel.REDDIT_TEST_URL)
+            }
+        },
+    )
+}
+
+private const val WEBVIEW_TEST_TIMEOUT_MS = 20_000L
 
 private val TIME_FORMAT = SimpleDateFormat("HH:mm:ss", Locale.US)

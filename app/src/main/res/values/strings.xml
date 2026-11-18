@@ -444,4 +444,7 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="reddit_test_html">Reddit returned an HTML page, not JSON. This is a block page.</string>
     <string name="reddit_test_body">Body: %1$s</string>
     <string name="reddit_session_missing">Reddit login cookie not found. Finish logging in, then tap Confirm again.</string>
+    <string name="network_log_webview_test">Test Reddit in WebView</string>
+    <string name="reddit_webview_result">WebView result: %1$s</string>
+    <string name="reddit_webview_timeout">Timed out after 20 seconds</string>
 </resources>

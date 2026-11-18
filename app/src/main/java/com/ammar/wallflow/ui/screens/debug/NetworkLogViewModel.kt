@@ -9,6 +9,9 @@ import java.io.IOException
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -29,6 +32,10 @@ class NetworkLogViewModel @Inject constructor(
 
     private val _redditTestRunning = MutableStateFlow(false)
     val redditTestRunning: StateFlow<Boolean> = _redditTestRunning.asStateFlow()
+
+    val redditCookie: StateFlow<String> = appPreferencesRepository.appPreferencesFlow
+        .map { it.redditCookie }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "")
 
     fun clear() = networkLogRepository.clear()
 
@@ -78,7 +85,7 @@ class NetworkLogViewModel @Inject constructor(
     }
 
     companion object {
-        private const val REDDIT_TEST_URL = "https://www.reddit.com/search.json?q=wallpaper&limit=1&raw_json=1"
+        const val REDDIT_TEST_URL = "https://www.reddit.com/search.json?q=wallpaper&limit=1&raw_json=1"
         private const val SESSION_COOKIE = "reddit_session"
         private const val BODY_PREVIEW_LENGTH = 200
     }
