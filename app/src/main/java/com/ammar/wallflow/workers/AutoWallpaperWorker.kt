@@ -5,8 +5,6 @@ import com.ammar.wallflow.sources.booru.BooruRepository
 import com.ammar.wallflow.sources.booru.toWallpaper
 import com.ammar.wallflow.model.search.BooruSearch
 
-import com.ammar.wallflow.model.search.BooruSearch
-
 import android.content.Context
 import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
