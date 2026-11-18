@@ -41,6 +41,21 @@ class OfflineFavoritesStore @Inject constructor(
         return file.takeIf { it.exists() && it.length() > 0 }
     }
 
+    /** Number of saved copies and their total size in bytes. Ignores the .nomedia marker. */
+    fun stats(context: Context): Pair<Int, Long> {
+        val files = directory(context).listFiles()
+            ?.filter { it.isFile && it.name != ".nomedia" }
+            .orEmpty()
+        return files.size to files.sumOf { it.length() }
+    }
+
+    /** Deletes every saved copy and returns how many files were removed. */
+    fun deleteAll(context: Context): Int =
+        directory(context).listFiles()
+            ?.filter { it.isFile && it.name != ".nomedia" }
+            ?.count { it.delete() }
+            ?: 0
+
     /** Downloads every wallpaper not already saved. [onProgress] gets (done, total). */
     suspend fun downloadAll(
         context: Context,

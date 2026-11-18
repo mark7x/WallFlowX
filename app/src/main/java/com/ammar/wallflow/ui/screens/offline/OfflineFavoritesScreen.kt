@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import android.text.format.Formatter
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -19,6 +20,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -85,6 +87,21 @@ fun OfflineFavoritesScreen(
                 TextButton(onClick = viewModel::cancel) {
                     Text(text = stringResource(R.string.offline_cancel))
                 }
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = stringResource(
+                    R.string.offline_storage,
+                    state.files,
+                    Formatter.formatShortFileSize(LocalContext.current, state.bytes),
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            TextButton(
+                onClick = viewModel::deleteAll,
+                enabled = !state.running && state.files > 0,
+            ) {
+                Text(text = stringResource(R.string.offline_delete_all))
             }
             state.summary?.let { summary ->
                 Spacer(modifier = Modifier.height(16.dp))
