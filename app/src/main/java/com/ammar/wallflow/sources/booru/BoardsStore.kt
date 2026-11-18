@@ -38,12 +38,12 @@ class BoardsStore @Inject constructor(
     }
 
     private fun save(list: List<SavedBoard>) {
-        file.writeText(Json.encodeToString(list))
+        file.writeText(Json.encodeToString<List<SavedBoard>>(list))
         _boards.value = list
     }
 
     private fun load(): List<SavedBoard> = try {
-        if (file.exists()) Json.decodeFromString(file.readText()) else emptyList()
+        if (file.exists()) Json.decodeFromString<List<SavedBoard>>(file.readText()) else emptyList()
     } catch (e: Exception) {
         emptyList()
     }

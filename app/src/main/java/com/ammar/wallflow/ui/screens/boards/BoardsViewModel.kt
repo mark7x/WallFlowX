@@ -2,12 +2,10 @@ package com.ammar.wallflow.ui.screens.boards
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ammar.wallflow.model.Purity
 import com.ammar.wallflow.sources.booru.BoardsStore
 import com.ammar.wallflow.sources.booru.BooruPost
 import com.ammar.wallflow.sources.booru.BooruPostsClient
 import com.ammar.wallflow.sources.booru.SavedBoard
-import com.ammar.wallflow.sources.booru.purity
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,12 +37,7 @@ class BoardsViewModel @Inject constructor(
         _posts.value = BoardPostsState(loading = true)
         viewModelScope.launch {
             booruPostsClient.fetchPosts(board.style, board.baseUrl, limit = 30).fold(
-                onSuccess = { list ->
-                    // Only SFW posts are shown. Sketchy, explicit and unrated posts are hidden.
-                    _posts.value = BoardPostsState(
-                        posts = list.filter { it.purity() == Purity.SFW },
-                    )
-                },
+                onSuccess = { list -> _posts.value = BoardPostsState(posts = list) },
                 onFailure = { e ->
                     _posts.value = BoardPostsState(error = e.message ?: e.javaClass.simpleName)
                 },

@@ -95,7 +95,6 @@ private fun NetworkLogItem(
 }
 
 @Composable
-@Composable
 private fun BoardsItem(
     modifier: Modifier = Modifier,
     isExpanded: Boolean = false,
