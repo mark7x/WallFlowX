@@ -26,6 +26,7 @@ data class BooruPost(
 @Singleton
 class BooruPostsClient @Inject constructor(
     private val okHttpClient: OkHttpClient,
+    private val boardsStore: BoardsStore,
 ) {
     suspend fun fetchPosts(
         style: BooruStyle,
@@ -35,7 +36,9 @@ class BooruPostsClient @Inject constructor(
     ): Result<List<BooruPost>> = withContext(Dispatchers.IO) {
         runCatching {
             val base = baseUrl.trim().trimEnd('/')
-            val request = Request.Builder().url(postsUrl(style, base, limit, page)).build()
+            val board = boardsStore.find(base)
+            val url = postsUrl(style, base, limit, page, board?.userId, board?.apiKey)
+            val request = Request.Builder().url(url).build()
             okHttpClient.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) error("HTTP ${response.code}")
                 parsePosts(style, response.body?.string().orEmpty())
@@ -44,13 +47,21 @@ class BooruPostsClient @Inject constructor(
     }
 
     companion object {
-        internal fun postsUrl(style: BooruStyle, base: String, limit: Int, page: Int): String =
+        internal fun postsUrl(
+            style: BooruStyle,
+            base: String,
+            limit: Int,
+            page: Int,
+            userId: String? = null,
+            apiKey: String? = null,
+        ): String =
             when (style) {
                 BooruStyle.DANBOORU -> "$base/posts.json?limit=$limit&page=$page"
                 BooruStyle.MOEBOORU -> "$base/post.json?limit=$limit&page=$page"
                 // Gelbooru's pid is zero-based.
                 BooruStyle.GELBOORU ->
-                    "$base/index.php?page=dapi&s=post&q=index&json=1&limit=$limit&pid=${page - 1}"
+                    "$base/index.php?page=dapi&s=post&q=index&json=1&limit=$limit&pid=${page - 1}" +
+                        gelbooruAuthQuery(userId, apiKey)
             }
 
         internal fun parsePosts(style: BooruStyle, body: String): List<BooruPost> {

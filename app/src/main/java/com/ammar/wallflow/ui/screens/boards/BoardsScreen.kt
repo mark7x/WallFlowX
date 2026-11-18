@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -115,9 +116,11 @@ fun BoardsScreen(
 private fun AddBoardRow(
     running: Boolean,
     error: String?,
-    onAdd: (String) -> Unit,
+    onAdd: (address: String, userId: String, apiKey: String) -> Unit,
 ) {
     var address by rememberSaveable { mutableStateOf("") }
+    var userId by rememberSaveable { mutableStateOf("") }
+    var apiKey by rememberSaveable { mutableStateOf("") }
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
         OutlinedTextField(
             value = address,
@@ -126,9 +129,28 @@ private fun AddBoardRow(
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
+        OutlinedTextField(
+            value = userId,
+            onValueChange = { userId = it },
+            label = { Text(text = stringResource(R.string.boards_user_id)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        OutlinedTextField(
+            value = apiKey,
+            onValueChange = { apiKey = it },
+            label = { Text(text = stringResource(R.string.boards_api_key)) },
+            singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Text(
+            text = stringResource(R.string.boards_keys_warning),
+            style = MaterialTheme.typography.bodySmall,
+        )
         Row(verticalAlignment = Alignment.CenterVertically) {
             Button(
-                onClick = { onAdd(address) },
+                onClick = { onAdd(address, userId, apiKey) },
                 enabled = !running && address.isNotBlank(),
             ) {
                 Text(text = stringResource(R.string.boards_add_button))

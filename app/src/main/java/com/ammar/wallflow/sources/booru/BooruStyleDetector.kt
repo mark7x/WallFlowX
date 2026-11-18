@@ -28,14 +28,18 @@ sealed interface BooruDetection {
 class BooruStyleDetector @Inject constructor(
     private val okHttpClient: OkHttpClient,
 ) {
-    suspend fun detect(baseUrl: String): BooruDetection = withContext(Dispatchers.IO) {
+    suspend fun detect(
+        baseUrl: String,
+        userId: String? = null,
+        apiKey: String? = null,
+    ): BooruDetection = withContext(Dispatchers.IO) {
         val base = baseUrl.trim().trimEnd('/')
         if (!base.startsWith("https://") && !base.startsWith("http://")) {
             return@withContext BooruDetection.Unknown(
                 listOf("Enter a full address starting with https:// or http://"),
             )
         }
-        val results = BooruStyle.entries.map { style -> style to probe(style, base) }
+        val results = BooruStyle.entries.map { style -> style to probe(style, base, userId, apiKey) }
         val match = results.firstOrNull { it.second is ProbeResult.Match }
         if (match != null) {
             BooruDetection.Detected(match.first)
@@ -49,9 +53,9 @@ class BooruStyleDetector @Inject constructor(
         }
     }
 
-    private fun probe(style: BooruStyle, base: String): ProbeResult {
+    private fun probe(style: BooruStyle, base: String, userId: String?, apiKey: String?): ProbeResult {
         return try {
-            val request = Request.Builder().url(probeUrl(style, base)).build()
+            val request = Request.Builder().url(probeUrl(style, base, userId, apiKey)).build()
             okHttpClient.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
                     return ProbeResult.Miss("HTTP ${response.code}")
@@ -78,11 +82,16 @@ class BooruStyleDetector @Inject constructor(
 
     companion object {
         /** Public read-only endpoints, asking for a single post. */
-        internal fun probeUrl(style: BooruStyle, base: String): String = when (style) {
+        internal fun probeUrl(
+            style: BooruStyle,
+            base: String,
+            userId: String? = null,
+            apiKey: String? = null,
+        ): String = when (style) {
             BooruStyle.DANBOORU -> "$base/posts.json?limit=1"
             BooruStyle.MOEBOORU -> "$base/post.json?limit=1"
             BooruStyle.GELBOORU ->
-                "$base/index.php?page=dapi&s=post&q=index&json=1&limit=1"
+                "$base/index.php?page=dapi&s=post&q=index&json=1&limit=1" + gelbooruAuthQuery(userId, apiKey)
         }
 
         /** The first 80 characters of a reply, on one line, so a failed probe shows what the site said. */

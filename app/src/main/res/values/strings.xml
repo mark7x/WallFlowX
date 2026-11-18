@@ -481,6 +481,9 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="boards_remove">Remove</string>
     <string name="boards_open_feed">Open in feed</string>
     <string name="boards_add_hint">Board address, for example danbooru.donmai.us</string>
+    <string name="boards_user_id">User ID (only for sites that need it, such as rule34)</string>
+    <string name="boards_api_key">API key (only for sites that need it)</string>
+    <string name="boards_keys_warning">Keys are stored on this phone and included in backups.</string>
     <string name="boards_add_button">Add board</string>
     <string name="boards_error">Could not load posts: %1$s</string>
     <string name="boards_save_button">Save board</string>

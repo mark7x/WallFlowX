@@ -44,19 +44,32 @@ class BoardsViewModel @Inject constructor(
     val addState: StateFlow<AddBoardState> = _addState.asStateFlow()
 
     /** Detects the booru style at [address] and saves it as a board if it is recognised. */
-    fun addBoard(address: String) {
+    fun addBoard(address: String, userId: String = "", apiKey: String = "") {
         val url = address.trim()
         if (url.isEmpty() || _addState.value.running) return
+        val user = userId.trim().ifBlank { null }
+        val key = apiKey.trim().ifBlank { null }
         viewModelScope.launch {
             _addState.value = AddBoardState(running = true)
-            when (val detection = booruStyleDetector.detect(url)) {
+            when (val detection = booruStyleDetector.detect(url, user, key)) {
                 is BooruDetection.Detected -> {
-                    boardsStore.add(SavedBoard(baseUrl = url, style = detection.style))
+                    boardsStore.add(
+                        SavedBoard(baseUrl = url, style = detection.style, userId = user, apiKey = key),
+                    )
                     _addState.value = AddBoardState()
                 }
-                is BooruDetection.Unknown -> _addState.value = AddBoardState(
-                    error = detection.reasons.joinToString("; ").ifBlank { "Not a supported booru site" },
-                )
+                is BooruDetection.Unknown -> {
+                    val reasons = detection.reasons.joinToString("; ")
+                    val needsKeys = reasons.contains("Missing authentication", ignoreCase = true)
+                    _addState.value = AddBoardState(
+                        error = when {
+                            needsKeys && (user == null || key == null) ->
+                                "This site needs a user ID and API key. Fill in both fields and add again."
+                            needsKeys -> "The site rejected these keys. Check the user ID and API key."
+                            else -> reasons.ifBlank { "Not a supported booru site" }
+                        },
+                    )
+                }
             }
         }
     }
