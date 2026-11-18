@@ -33,6 +33,8 @@ import com.ammar.wallflow.model.Viewed
 import com.ammar.wallflow.model.Wallpaper
 import com.ammar.wallflow.model.search.RedditFilters
 import com.ammar.wallflow.model.search.RedditSearch
+import com.ammar.wallflow.sources.booru.BooruRepository
+import com.ammar.wallflow.model.search.BooruSearch
 import com.ammar.wallflow.model.search.RedditSort
 import com.ammar.wallflow.model.search.RedditSubredditFilter
 import com.ammar.wallflow.model.search.RedditTimeRange
@@ -79,6 +81,7 @@ class HomeViewModel @Inject constructor(
     private val wallhavenRepository: WallhavenRepository,
     private val wallpaperSourceRegistry: WallpaperSourceRegistry,
     private val redditRepository: RedditRepository,
+    private val booruRepository: BooruRepository,
     private val appPreferencesRepository: AppPreferencesRepository,
     private val savedSearchRepository: SavedSearchRepository,
     private val favoritesRepository: FavoritesRepository,
@@ -127,6 +130,7 @@ class HomeViewModel @Inject constructor(
         when (mainSearch) {
             is WallhavenSearch -> wallpaperSourceRegistry.pagerFor(mainSearch)!!
             is RedditSearch -> redditRepository.wallpapersPager(mainSearch)
+            is BooruSearch -> booruRepository.wallpapersPager(mainSearch)
         }
     } else {
         combine(
@@ -139,6 +143,7 @@ class HomeViewModel @Inject constructor(
             val subFilter = prefs.redditSubredditFilter
             when (search) {
                 is WallhavenSearch -> wallpaperSourceRegistry.pagerFor(search)!!
+                is BooruSearch -> booruRepository.wallpapersPager(search)
                 is RedditSearch -> {
                     // apply subreddit filter at query level (does NOT touch saved settings)
                     val effectiveSearch = applySubredditFilter(search, subFilter)
@@ -247,6 +252,7 @@ class HomeViewModel @Inject constructor(
             when (search) {
                 is WallhavenSearch -> appPreferencesRepository.updateHomeWallhavenSearch(search)
                 is RedditSearch -> appPreferencesRepository.updateHomeRedditSearch(search)
+                is BooruSearch -> Unit
             }
         }
     }
