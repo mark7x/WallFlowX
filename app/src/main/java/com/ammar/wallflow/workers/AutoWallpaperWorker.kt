@@ -801,7 +801,24 @@ class AutoWallpaperWorker @AssistedInject constructor(
             }
         }
 
-    private suspend fun getNextFavoriteWallpaper() = favoritesRepository.getFirstFresh(
+    /**
+     * Favorites that already have an offline copy go first, so setting them needs no download.
+     * A favorite that was never set comes first. Otherwise the one set longest ago is used.
+     */
+    private suspend fun getOfflineFavoriteWallpaper(): Wallpaper? {
+        val lastSet = autoWallpaperHistoryRepository.getAll()
+            .filter { it.sourceChoice == SourceChoice.FAVORITES }
+            .groupBy { it.source to it.sourceId }
+            .mapValues { entry -> entry.value.maxOf { it.setOn } }
+        return favoritesRepository.getDownloadableWallpapers(context)
+            .filter { candidate ->
+                badWallpapers.none { it.id == candidate.id && it.source == candidate.source }
+            }
+            .filter { offlineFavoritesStore.existingFile(context, it) != null }
+            .minWithOrNull(compareBy { lastSet[it.source to it.id] })
+    }
+
+    private suspend fun getNextFavoriteWallpaper() = getOfflineFavoriteWallpaper() ?: favoritesRepository.getFirstFresh(
         context = context,
         excluding = badWallpapers,
         order = autoWallpaperPreferences.order,
