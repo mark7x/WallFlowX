@@ -60,7 +60,9 @@ class BooruStyleDetector @Inject constructor(
                 val detected = classify(body)
                 when (detected) {
                     style -> ProbeResult.Match(style)
-                    null -> ProbeResult.Miss("no sample post in a recognised shape")
+                    null -> ProbeResult.Miss(
+                        "no sample post in a recognised shape (site said: ${snippet(body)})",
+                    )
                     else -> ProbeResult.Miss("answers like ${detected.name.lowercase()}")
                 }
             }
@@ -83,6 +85,10 @@ class BooruStyleDetector @Inject constructor(
                 "$base/index.php?page=dapi&s=post&q=index&json=1&limit=1"
         }
 
+        /** The first 80 characters of a reply, on one line, so a failed probe shows what the site said. */
+        internal fun snippet(body: String): String =
+            body.replace(Regex("\\s+"), " ").trim().take(80).ifEmpty { "empty reply" }
+
         /**
          * Works out which style a JSON body came from, using fields that only that style has.
          * Returns null when the body isn't JSON or has no recognisable post.
@@ -99,11 +105,13 @@ class BooruStyleDetector @Inject constructor(
                 else -> return null
             }
             val post = posts.firstOrNull() as? JsonObject ?: return null
-            if (!post.containsKey("file_url")) return null
+            val hasFileField = post.containsKey("file_url") || post.containsKey("image")
+            if (!hasFileField) return null
             return when {
                 post.containsKey("tag_string") -> BooruStyle.DANBOORU
                 post.containsKey("file_ext") -> BooruStyle.MOEBOORU
-                post.containsKey("directory") || post.containsKey("owner") -> BooruStyle.GELBOORU
+                post.containsKey("directory") || post.containsKey("owner") || post.containsKey("image") ->
+                    BooruStyle.GELBOORU
                 else -> null
             }
         }
