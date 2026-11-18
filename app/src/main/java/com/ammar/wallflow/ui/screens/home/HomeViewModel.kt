@@ -104,6 +104,7 @@ class HomeViewModel @Inject constructor(
         when (source) {
             OnlineSource.WALLHAVEN -> appPreferences.homeWallhavenSearch
             OnlineSource.REDDIT -> appPreferences.homeRedditSearch
+            OnlineSource.BOORU -> appPreferences.homeWallhavenSearch
         }
     }.filterNotNull().distinctUntilChanged()
 
@@ -334,6 +335,7 @@ class HomeViewModel @Inject constructor(
         localUiState.update {
             when (source) {
                 OnlineSource.WALLHAVEN -> it // will never be called
+                OnlineSource.BOORU -> it // boards are opened from the Boards screen
                 OnlineSource.REDDIT -> it.copy(
                     showRedditInitDialog = partial(true),
                 )

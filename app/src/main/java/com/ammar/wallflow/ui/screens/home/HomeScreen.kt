@@ -1,5 +1,7 @@
 package com.ammar.wallflow.ui.screens.home
 
+import com.ammar.wallflow.destinations.BoardsScreenDestination
+
 import com.ammar.wallflow.model.search.BooruSearch
 
 import androidx.compose.foundation.layout.Box
@@ -362,7 +364,13 @@ fun HomeScreen(
                             }
                             OnlineSource.REDDIT -> null
                         },
-                        onSourceClick = viewModel::changeSource,
+                        onSourceClick = { source ->
+                            if (source == OnlineSource.BOORU) {
+                                rootNavController.navigate(BoardsScreenDestination.route)
+                            } else {
+                                viewModel.changeSource(source)
+                            }
+                        },
                         onManageSourcesClick = {
                             viewModel.showManageSourcesDialog(true)
                         },

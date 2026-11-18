@@ -10,4 +10,5 @@ enum class Source {
 enum class OnlineSource {
     WALLHAVEN,
     REDDIT,
+    BOORU,
 }

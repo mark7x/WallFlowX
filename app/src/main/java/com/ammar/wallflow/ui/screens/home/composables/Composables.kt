@@ -234,6 +234,7 @@ private fun SourceChip(
                     when (source) {
                         OnlineSource.WALLHAVEN -> R.drawable.wallhaven_logo_short
                         OnlineSource.REDDIT -> R.drawable.reddit
+                        OnlineSource.BOORU -> R.drawable.outline_image_24
                     },
                 ),
                 contentDescription = null,
@@ -245,6 +246,7 @@ private fun SourceChip(
                     when (source) {
                         OnlineSource.WALLHAVEN -> R.string.wallhaven_cc
                         OnlineSource.REDDIT -> R.string.reddit
+                        OnlineSource.BOORU -> R.string.boards
                     },
                 ),
             )
@@ -389,6 +391,7 @@ fun FiltersBottomSheetHeader(
                     when (source) {
                         OnlineSource.WALLHAVEN -> R.string.wallhaven_cc
                         OnlineSource.REDDIT -> R.string.reddit
+                        OnlineSource.BOORU -> R.string.boards
                     },
                 ),
                 maxLines = 1,

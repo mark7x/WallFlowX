@@ -55,6 +55,7 @@ class SearchBarViewModel @Inject constructor(
                         when (local.source.getOrNull()) {
                             OnlineSource.WALLHAVEN -> it is WallhavenSearch
                             OnlineSource.REDDIT -> it is RedditSearch
+                            OnlineSource.BOORU -> false
                             null -> false
                         }
                     }
