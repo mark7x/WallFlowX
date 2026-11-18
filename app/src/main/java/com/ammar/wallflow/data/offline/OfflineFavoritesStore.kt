@@ -1,6 +1,8 @@
 package com.ammar.wallflow.data.offline
 
 import android.content.Context
+import android.net.Uri
+import android.provider.DocumentsContract
 import com.ammar.wallflow.model.DownloadableWallpaper
 import java.io.File
 import java.io.IOException
@@ -55,6 +57,65 @@ class OfflineFavoritesStore @Inject constructor(
             ?.filter { it.isFile && it.name != ".nomedia" }
             ?.count { it.delete() }
             ?: 0
+
+    /**
+     * Copies every saved file into the folder the user picked with the system folder picker.
+     * Files exported this way are visible to gallery apps, so the screen warns first.
+     * Names already in that folder are skipped. Returns how many files were copied.
+     */
+    suspend fun exportTo(context: Context, treeUri: Uri): Int = withContext(Dispatchers.IO) {
+        val resolver = context.contentResolver
+        val parentUri = DocumentsContract.buildDocumentUriUsingTree(
+            treeUri,
+            DocumentsContract.getTreeDocumentId(treeUri),
+        )
+        val existing = existingNames(context, treeUri)
+        val files = directory(context).listFiles()
+            ?.filter { it.isFile && it.name != ".nomedia" && it.extension != "part" }
+            .orEmpty()
+        var copied = 0
+        for (file in files) {
+            if (file.name in existing) continue
+            val target = DocumentsContract.createDocument(
+                resolver,
+                parentUri,
+                mimeFor(file),
+                file.name,
+            ) ?: continue
+            resolver.openOutputStream(target)?.use { out ->
+                file.inputStream().use { input -> input.copyTo(out) }
+            }
+            copied++
+        }
+        copied
+    }
+
+    private fun existingNames(context: Context, treeUri: Uri): Set<String> {
+        val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
+            treeUri,
+            DocumentsContract.getTreeDocumentId(treeUri),
+        )
+        val names = mutableSetOf<String>()
+        context.contentResolver.query(
+            childrenUri,
+            arrayOf(DocumentsContract.Document.COLUMN_DISPLAY_NAME),
+            null,
+            null,
+            null,
+        )?.use { cursor ->
+            while (cursor.moveToNext()) {
+                names += cursor.getString(0) ?: continue
+            }
+        }
+        return names
+    }
+
+    private fun mimeFor(file: File) = when (file.extension.lowercase()) {
+        "jpg", "jpeg" -> "image/jpeg"
+        "png" -> "image/png"
+        "webp" -> "image/webp"
+        else -> "application/octet-stream"
+    }
 
     /** Downloads every wallpaper not already saved. [onProgress] gets (done, total). */
     suspend fun downloadAll(

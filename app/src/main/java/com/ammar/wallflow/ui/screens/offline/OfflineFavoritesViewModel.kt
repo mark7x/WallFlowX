@@ -3,6 +3,7 @@ package com.ammar.wallflow.ui.screens.offline
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.net.Uri
 import com.ammar.wallflow.data.offline.DownloadSummary
 import com.ammar.wallflow.data.offline.OfflineFavoritesStore
 import com.ammar.wallflow.data.repository.FavoritesRepository
@@ -25,6 +26,8 @@ data class OfflineFavoritesState(
     val summary: DownloadSummary? = null,
     val files: Int = 0,
     val bytes: Long = 0L,
+    val exporting: Boolean = false,
+    val exported: Int? = null,
 )
 
 @HiltViewModel
@@ -46,6 +49,15 @@ class OfflineFavoritesViewModel @Inject constructor(
         viewModelScope.launch {
             val (count, size) = withContext(Dispatchers.IO) { offlineFavoritesStore.stats(context) }
             _state.value = _state.value.copy(files = count, bytes = size)
+        }
+    }
+
+    fun exportTo(treeUri: Uri) {
+        if (_state.value.running || _state.value.exporting) return
+        viewModelScope.launch {
+            _state.value = _state.value.copy(exporting = true, exported = null)
+            val copied = offlineFavoritesStore.exportTo(context, treeUri)
+            _state.value = _state.value.copy(exporting = false, exported = copied)
         }
     }
 

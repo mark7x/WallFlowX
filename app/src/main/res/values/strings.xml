@@ -463,6 +463,12 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="offline_cancel">Cancel</string>
     <string name="offline_storage">%1$d saved copies, %2$s used</string>
     <string name="offline_delete_all">Delete offline copies</string>
+    <string name="offline_export_button">Export to folder</string>
+    <string name="offline_export_warning_title">Files will be visible</string>
+    <string name="offline_export_warning">Files copied to a folder you choose can be seen by Gallery, Google Photos, Instagram, WhatsApp and other apps. Continue only if that is fine.</string>
+    <string name="offline_export_continue">Choose folder</string>
+    <string name="offline_exporting">Exporting…</string>
+    <string name="offline_export_done">Exported %1$d new files</string>
     <string name="offline_done">Saved %1$d, already saved %2$d, failed %3$d</string>
     <string name="boards">Boards</string>
     <string name="no_boards_found">No boards found in this backup</string>

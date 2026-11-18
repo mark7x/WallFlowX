@@ -26,6 +26,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.AlertDialog
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import com.ammar.wallflow.R
 import com.ammar.wallflow.navigation.AppNavGraphs.RootNavGraph
 import com.ramcosta.composedestinations.annotation.Destination
@@ -102,6 +108,52 @@ fun OfflineFavoritesScreen(
                 enabled = !state.running && state.files > 0,
             ) {
                 Text(text = stringResource(R.string.offline_delete_all))
+            }
+            var showExportWarning by rememberSaveable { mutableStateOf(false) }
+            val folderPicker = rememberLauncherForActivityResult(
+                ActivityResultContracts.OpenDocumentTree(),
+            ) { uri ->
+                if (uri != null) viewModel.exportTo(uri)
+            }
+            TextButton(
+                onClick = { showExportWarning = true },
+                enabled = !state.running && !state.exporting && state.files > 0,
+            ) {
+                Text(text = stringResource(R.string.offline_export_button))
+            }
+            if (state.exporting) {
+                Text(
+                    text = stringResource(R.string.offline_exporting),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            state.exported?.let { copied ->
+                Text(
+                    text = stringResource(R.string.offline_export_done, copied),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            if (showExportWarning) {
+                AlertDialog(
+                    onDismissRequest = { showExportWarning = false },
+                    title = { Text(text = stringResource(R.string.offline_export_warning_title)) },
+                    text = { Text(text = stringResource(R.string.offline_export_warning)) },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                showExportWarning = false
+                                folderPicker.launch(null)
+                            },
+                        ) {
+                            Text(text = stringResource(R.string.offline_export_continue))
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showExportWarning = false }) {
+                            Text(text = stringResource(R.string.offline_cancel))
+                        }
+                    },
+                )
             }
             state.summary?.let { summary ->
                 Spacer(modifier = Modifier.height(16.dp))
