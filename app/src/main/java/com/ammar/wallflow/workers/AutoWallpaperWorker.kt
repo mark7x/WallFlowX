@@ -1,5 +1,10 @@
 package com.ammar.wallflow.workers
 
+import com.ammar.wallflow.sources.booru.BooruPostsClient
+import com.ammar.wallflow.sources.booru.BooruRepository
+import com.ammar.wallflow.sources.booru.toWallpaper
+import com.ammar.wallflow.model.search.BooruSearch
+
 import com.ammar.wallflow.model.search.BooruSearch
 
 import android.content.Context
@@ -116,6 +121,7 @@ class AutoWallpaperWorker @AssistedInject constructor(
     private val objectDetectionModelRepository: ObjectDetectionModelRepository,
     private val wallHavenNetwork: WallhavenNetworkDataSource,
     private val redditNetwork: RedditNetworkDataSource,
+    private val booruPostsClient: BooruPostsClient,
     private val favoritesRepository: FavoritesRepository,
     private val offlineFavoritesStore: OfflineFavoritesStore,
     private val localWallpapersRepository: LocalWallpapersRepository,
@@ -829,7 +835,20 @@ class AutoWallpaperWorker @AssistedInject constructor(
         page: String? = null,
     ): Pair<List<Wallpaper>, String?> {
         when (search) {
-            is BooruSearch -> return emptyList<Wallpaper>() to null
+            is BooruSearch -> {
+                val pageNumber = page?.toIntOrNull() ?: 1
+                val posts = booruPostsClient.fetchPosts(
+                    style = search.filters.style,
+                    baseUrl = search.filters.boardUrl,
+                    limit = BooruRepository.PAGE_SIZE,
+                    page = pageNumber,
+                ).getOrDefault(emptyList())
+                val allowed = search.filters.allowedPurities()
+                val wallpapers: List<Wallpaper> = posts
+                    .map { it.toWallpaper(search.filters.boardUrl) }
+                    .filter { it.purity in allowed }
+                return wallpapers to if (posts.isEmpty()) null else (pageNumber + 1).toString()
+            }
             is WallhavenSearch -> {
                 val response = wallHavenNetwork.search(search, page?.toIntOrNull())
                 val nextPageNumber = response.meta?.run {
