@@ -29,6 +29,9 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
+import com.ammar.wallflow.sources.booru.BooruFavoritesStore
+import com.ammar.wallflow.sources.booru.BooruPostRegistry
+import com.ammar.wallflow.sources.booru.BooruWallpaper
 
 @Singleton
 class FavoritesRepository @Inject constructor(
@@ -36,6 +39,7 @@ class FavoritesRepository @Inject constructor(
     private val wallhavenWallpapersDao: WallhavenWallpapersDao,
     private val redditWallpapersDao: RedditWallpapersDao,
     private val localWallpapersRepository: LocalWallpapersRepository,
+    private val booruFavoritesStore: BooruFavoritesStore,
     @IoDispatcher val ioDispatcher: CoroutineDispatcher,
 ) {
     fun observeAll() = favoriteDao.observeAll()
@@ -65,7 +69,7 @@ class FavoritesRepository @Inject constructor(
                     val wallpaperEntity = redditWallpapersDao.getByRedditId(entity.sourceId)
                     wallpaperEntity?.toWallpaper() ?: wallhavenWallpaper1
                 }
-                Source.BOORU -> wallhavenWallpaper1
+                Source.BOORU -> booruFavoritesStore.get(entity.sourceId) ?: wallhavenWallpaper1
                 Source.LOCAL -> localWallpapersRepository.wallpaper(
                     context = context,
                     wallpaperUriStr = entity.sourceId,
@@ -103,7 +107,7 @@ class FavoritesRepository @Inject constructor(
                     val wallpaperEntity = redditWallpapersDao.getByRedditId(entity.sourceId)
                     wallpaperEntity?.toWallpaper() ?: wallhavenWallpaper1
                 }
-                Source.BOORU -> wallhavenWallpaper1
+                Source.BOORU -> booruFavoritesStore.get(entity.sourceId) ?: wallhavenWallpaper1
                 Source.LOCAL -> localWallpapersRepository.wallpaper(
                     context = context,
                     wallpaperUriStr = entity.sourceId,
@@ -117,6 +121,10 @@ class FavoritesRepository @Inject constructor(
         sourceId: String,
         source: Source,
     ) = withContext(ioDispatcher) {
+        // Save the booru post's URLs so the favorite can be shown and downloaded later.
+        if (source == Source.BOORU) {
+            (BooruPostRegistry.get(sourceId) as? BooruWallpaper)?.let(booruFavoritesStore::put)
+        }
         val exists = favoriteDao.exists(
             sourceId = sourceId,
             source = source,
@@ -224,7 +232,7 @@ class FavoritesRepository @Inject constructor(
             val wallpaperEntity = redditWallpapersDao.getByRedditId(entity.sourceId)
             wallpaperEntity?.toWallpaper()
         }
-        Source.BOORU -> null
+        Source.BOORU -> booruFavoritesStore.get(entity.sourceId)
         Source.LOCAL -> localWallpapersRepository.wallpaper(
             context = context,
             wallpaperUriStr = entity.sourceId,

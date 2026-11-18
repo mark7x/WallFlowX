@@ -18,6 +18,7 @@ import com.ammar.wallflow.model.local.LocalWallpaper
 import com.ammar.wallflow.ui.screens.local.LocalSort
 import com.ammar.wallflow.workers.AutoWallpaperWorker.Companion.SourceChoice
 import com.lazygeniouz.dfc.file.DocumentFileCompat
+import java.io.File
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -48,6 +49,24 @@ class DefaultLocalWallpapersRepository @Inject constructor(
     }.flowOn(ioDispatcher)
 
     private fun getAllLocalWallpapers(
+        context: Context,
+        uris: Collection<Uri>,
+        sort: LocalSort = LocalSort.NO_SORT,
+    ): List<Wallpaper> = getFolderLocalWallpapers(context, uris, sort) +
+        getOfflineFavoriteWallpapers(context)
+
+    /** Offline favorites are files in app storage, shown in Local as file:// items. */
+    private fun getOfflineFavoriteWallpapers(context: Context): List<Wallpaper> =
+        File(context.filesDir, OFFLINE_DIR_NAME)
+            .listFiles()
+            .orEmpty()
+            .filter { it.isFile && it.extension.lowercase() in OFFLINE_EXTENSIONS }
+            .mapNotNull { file ->
+                DocumentFileCompat.fromSingleUri(context, Uri.fromFile(file))
+                    ?.toLocalWallpaper(context)
+            }
+
+    private fun getFolderLocalWallpapers(
         context: Context,
         uris: Collection<Uri>,
         sort: LocalSort = LocalSort.NO_SORT,
@@ -150,4 +169,9 @@ class DefaultLocalWallpapersRepository @Inject constructor(
     private fun getUris(excluding: Collection<Wallpaper>) = excluding
         .filter { it.source == Source.LOCAL }
         .map { it.data }
+
+    private companion object {
+        const val OFFLINE_DIR_NAME = "offline_favorites"
+        val OFFLINE_EXTENSIONS = setOf("jpg", "jpeg", "png", "webp", "gif")
+    }
 }
