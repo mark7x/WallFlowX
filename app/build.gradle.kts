@@ -39,8 +39,8 @@ android {
         applicationId = "com.ammar.wallflow"
         minSdk = 24
         targetSdk = 35
-        versionCode = 58
-        versionName = "2.6.38"
+        versionCode = 59
+        versionName = "2.6.39"
 
         val abi = getAbi()
         ndk {

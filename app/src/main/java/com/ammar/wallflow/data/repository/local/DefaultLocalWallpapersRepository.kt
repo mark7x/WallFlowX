@@ -140,7 +140,7 @@ class DefaultLocalWallpapersRepository @Inject constructor(
             SourceChoice.LOCAL,
         )
         val excludedUris = getUris(excluding)
-        wallpapersInUri.firstOrNull {
+        wallpapersInUri.shuffled().firstOrNull {
             it.id !in historyIds && it.data !in excludedUris
         }
     }

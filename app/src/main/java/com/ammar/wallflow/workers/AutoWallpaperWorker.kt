@@ -737,11 +737,8 @@ class AutoWallpaperWorker @AssistedInject constructor(
             }
 
             // Loop until we find a wallpaper
-            val candidates = if (autoWallpaperPreferences.order == AutoWallpaperOrder.RANDOM) {
-                wallpapers.shuffled()
-            } else {
-                wallpapers
-            }
+            // Auto wallpaper always picks at random.
+            val candidates = wallpapers.shuffled()
             val wallpaper = candidates.firstOrNull {
                 // exclude bad wallpapers always
                 val isBad = badWallpapers.any { b ->
@@ -815,13 +812,14 @@ class AutoWallpaperWorker @AssistedInject constructor(
                 badWallpapers.none { it.id == candidate.id && it.source == candidate.source }
             }
             .filter { offlineFavoritesStore.existingFile(context, it) != null }
+            .shuffled()
             .minWithOrNull(compareBy { lastSet[it.source to it.id] })
     }
 
     private suspend fun getNextFavoriteWallpaper() = getOfflineFavoriteWallpaper() ?: favoritesRepository.getFirstFresh(
         context = context,
         excluding = badWallpapers,
-        order = autoWallpaperPreferences.order,
+        order = AutoWallpaperOrder.RANDOM,
     ) ?: favoritesRepository.getByOldestSetOn(
         context = context,
         excluding = badWallpapers,
