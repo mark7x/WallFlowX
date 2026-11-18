@@ -447,4 +447,11 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="network_log_webview_test">Test Reddit in WebView</string>
     <string name="reddit_webview_result">WebView result: %1$s</string>
     <string name="reddit_webview_timeout">Timed out after 20 seconds</string>
+    <string name="booru_test_url_label">Board address (https://…)</string>
+    <string name="booru_test_button">Detect and test board</string>
+    <string name="booru_test_running">Testing board…</string>
+    <string name="booru_test_style">Detected style: %1$s</string>
+    <string name="booru_test_posts">Posts fetched: %1$d</string>
+    <string name="booru_test_first">First file: %1$s</string>
+    <string name="booru_test_error">Result: %1$s</string>
 </resources>

@@ -4,6 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ammar.wallflow.data.debug.NetworkLogRepository
 import com.ammar.wallflow.data.repository.AppPreferencesRepository
+import com.ammar.wallflow.sources.booru.BooruDetection
+import com.ammar.wallflow.sources.booru.BooruPostsClient
+import com.ammar.wallflow.sources.booru.BooruStyle
+import com.ammar.wallflow.sources.booru.BooruStyleDetector
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.IOException
 import javax.inject.Inject
@@ -24,6 +28,8 @@ class NetworkLogViewModel @Inject constructor(
     private val networkLogRepository: NetworkLogRepository,
     private val appPreferencesRepository: AppPreferencesRepository,
     private val okHttpClient: OkHttpClient,
+    private val booruStyleDetector: BooruStyleDetector,
+    private val booruPostsClient: BooruPostsClient,
 ) : ViewModel() {
     val entries = networkLogRepository.entries
 
@@ -32,6 +38,50 @@ class NetworkLogViewModel @Inject constructor(
 
     private val _redditTestRunning = MutableStateFlow(false)
     val redditTestRunning: StateFlow<Boolean> = _redditTestRunning.asStateFlow()
+
+    private val _booruTest = MutableStateFlow<BooruTestResult?>(null)
+    val booruTest: StateFlow<BooruTestResult?> = _booruTest.asStateFlow()
+
+    private val _booruTestRunning = MutableStateFlow(false)
+    val booruTestRunning: StateFlow<Boolean> = _booruTestRunning.asStateFlow()
+
+    /** Detects the board's style, then fetches three posts to confirm reading works. */
+    fun runBooruTest(url: String) {
+        if (_booruTestRunning.value) return
+        viewModelScope.launch {
+            _booruTestRunning.value = true
+            val result = when (val detection = booruStyleDetector.detect(url)) {
+                is BooruDetection.Unknown -> BooruTestResult(
+                    style = null,
+                    postCount = null,
+                    firstFileUrl = null,
+                    error = detection.reasons.joinToString("; "),
+                )
+                is BooruDetection.Detected -> {
+                    booruPostsClient.fetchPosts(detection.style, url, limit = 3).fold(
+                        onSuccess = { posts ->
+                            BooruTestResult(
+                                style = detection.style,
+                                postCount = posts.size,
+                                firstFileUrl = posts.firstOrNull()?.fileUrl,
+                                error = null,
+                            )
+                        },
+                        onFailure = { e ->
+                            BooruTestResult(
+                                style = detection.style,
+                                postCount = null,
+                                firstFileUrl = null,
+                                error = e.message ?: e.javaClass.simpleName,
+                            )
+                        },
+                    )
+                }
+            }
+            _booruTest.value = result
+            _booruTestRunning.value = false
+        }
+    }
 
     val redditCookie: StateFlow<String> = appPreferencesRepository.appPreferencesFlow
         .map { it.redditCookie }
@@ -98,4 +148,11 @@ data class RedditTestResult(
     val error: String?,
     val bodyPreview: String?,
     val isHtml: Boolean,
+)
+
+data class BooruTestResult(
+    val style: BooruStyle?,
+    val postCount: Int?,
+    val firstFileUrl: String?,
+    val error: String?,
 )

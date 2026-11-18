@@ -11,6 +11,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -64,6 +65,9 @@ fun NetworkLogScreen(
     val redditCookie by viewModel.redditCookie.collectAsStateWithLifecycle()
     var webTestActive by remember { mutableStateOf(false) }
     var webTestText by remember { mutableStateOf<String?>(null) }
+    val booruTest by viewModel.booruTest.collectAsStateWithLifecycle()
+    val booruTestRunning by viewModel.booruTestRunning.collectAsStateWithLifecycle()
+    var booruUrl by rememberSaveable { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -128,6 +132,29 @@ fun NetworkLogScreen(
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
+            OutlinedTextField(
+                value = booruUrl,
+                onValueChange = { booruUrl = it },
+                label = { Text(text = stringResource(R.string.booru_test_url_label)) },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+            )
+            Button(
+                onClick = { viewModel.runBooruTest(booruUrl) },
+                enabled = !booruTestRunning && booruUrl.isNotBlank(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+            ) {
+                Text(
+                    text = stringResource(
+                        if (booruTestRunning) R.string.booru_test_running else R.string.booru_test_button,
+                    ),
+                )
+            }
+            booruTest?.let { BooruTestSummary(result = it) }
             TabRow(selectedTabIndex = selectedTab) {
                 Tab(
                     selected = selectedTab == 0,
@@ -281,5 +308,36 @@ private fun RedditWebTest(cookie: String, onResult: (String) -> Unit) {
 }
 
 private const val WEBVIEW_TEST_TIMEOUT_MS = 20_000L
+
+@Composable
+private fun BooruTestSummary(result: BooruTestResult) {
+    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+        result.style?.let {
+            Text(
+                text = stringResource(R.string.booru_test_style, it.name.lowercase()),
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        result.postCount?.let {
+            Text(
+                text = stringResource(R.string.booru_test_posts, it),
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        result.firstFileUrl?.let {
+            Text(
+                text = stringResource(R.string.booru_test_first, it),
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        result.error?.let {
+            Text(
+                text = stringResource(R.string.booru_test_error, it),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+    }
+}
 
 private val TIME_FORMAT = SimpleDateFormat("HH:mm:ss", Locale.US)
