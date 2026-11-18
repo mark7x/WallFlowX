@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -19,6 +20,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -98,6 +100,28 @@ fun OfflineTabScreen(
                 ),
                 style = MaterialTheme.typography.bodyMedium,
             )
+            Button(
+                onClick = viewModel::downloadFavorites,
+                enabled = !state.running,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(text = stringResource(R.string.offline_download_all))
+            }
+            if (state.running) {
+                LinearProgressIndicator(
+                    progress = {
+                        if (state.total == 0) 0f else state.done.toFloat() / state.total
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Text(
+                    text = stringResource(R.string.offline_progress, state.done, state.total),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            state.message?.let {
+                Text(text = it, style = MaterialTheme.typography.bodySmall)
+            }
             if (state.items.isNotEmpty()) {
                 TextButton(onClick = { confirmDeleteAll = true }) {
                     Text(text = stringResource(R.string.offline_delete_all))

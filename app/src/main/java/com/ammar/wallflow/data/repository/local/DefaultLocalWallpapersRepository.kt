@@ -7,6 +7,7 @@ import androidx.paging.LoadStates
 import androidx.paging.PagingData
 import com.ammar.wallflow.IoDispatcher
 import com.ammar.wallflow.SUPPORTED_MIME_TYPES
+import com.ammar.wallflow.data.offline.toOfflineLocalWallpaper
 import com.ammar.wallflow.data.repository.AutoWallpaperHistoryRepository
 import com.ammar.wallflow.data.repository.utils.Resource
 import com.ammar.wallflow.extensions.deepListFiles
@@ -61,10 +62,7 @@ class DefaultLocalWallpapersRepository @Inject constructor(
             .listFiles()
             .orEmpty()
             .filter { it.isFile && it.extension.lowercase() in OFFLINE_EXTENSIONS }
-            .mapNotNull { file ->
-                DocumentFileCompat.fromSingleUri(context, Uri.fromFile(file))
-                    ?.toLocalWallpaper(context)
-            }
+            .map { it.toOfflineLocalWallpaper() }
 
     private fun getFolderLocalWallpapers(
         context: Context,

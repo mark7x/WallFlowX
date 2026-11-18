@@ -3,7 +3,12 @@ package com.ammar.wallflow.data.offline
 import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
+import android.graphics.BitmapFactory
+import androidx.compose.ui.unit.IntSize
 import com.ammar.wallflow.model.DownloadableWallpaper
+import com.ammar.wallflow.model.Source
+import com.ammar.wallflow.model.local.LocalWallpaper
+import com.ammar.wallflow.sources.booru.BOORU_USER_AGENT
 import java.io.File
 import java.io.IOException
 import javax.inject.Inject
@@ -152,7 +157,10 @@ class OfflineFavoritesStore @Inject constructor(
     private fun download(url: String, target: File): Boolean {
         val temp = File(target.parentFile, target.name + ".part")
         return try {
-            val request = Request.Builder().url(url).build()
+            val request = Request.Builder()
+                .url(url)
+                .header("User-Agent", BOORU_USER_AGENT)
+                .build()
             okHttpClient.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) return false
                 val body = response.body ?: return false
@@ -177,4 +185,28 @@ class OfflineFavoritesStore @Inject constructor(
     companion object {
         private const val DIR_NAME = "offline_favorites"
     }
+}
+
+/**
+ * Shows an offline copy in the Local and Offline tabs. Reads the image size from the file
+ * directly, so no document lookup is needed.
+ */
+fun File.toOfflineLocalWallpaper(): LocalWallpaper {
+    val uri = android.net.Uri.fromFile(this)
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeFile(absolutePath, bounds)
+    return LocalWallpaper(
+        source = Source.LOCAL,
+        id = uri.toString(),
+        data = uri,
+        fileSize = length(),
+        resolution = IntSize(bounds.outWidth.coerceAtLeast(0), bounds.outHeight.coerceAtLeast(0)),
+        mimeType = when (extension.lowercase()) {
+            "jpg", "jpeg" -> "image/jpeg"
+            "png" -> "image/png"
+            "webp" -> "image/webp"
+            "gif" -> "image/gif"
+            else -> null
+        },
+    )
 }
