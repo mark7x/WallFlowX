@@ -9,7 +9,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+
+private val boardsSerializer = ListSerializer(SavedBoard.serializer())
 
 /** A booru board the user saved after a successful detection. */
 @Serializable
@@ -38,12 +41,12 @@ class BoardsStore @Inject constructor(
     }
 
     private fun save(list: List<SavedBoard>) {
-        file.writeText(Json.encodeToString<List<SavedBoard>>(list))
+        file.writeText(Json.encodeToString(boardsSerializer, list))
         _boards.value = list
     }
 
     private fun load(): List<SavedBoard> = try {
-        if (file.exists()) Json.decodeFromString<List<SavedBoard>>(file.readText()) else emptyList()
+        if (file.exists()) Json.decodeFromString(boardsSerializer, file.readText()) else emptyList()
     } catch (e: Exception) {
         emptyList()
     }
