@@ -57,6 +57,7 @@ import com.ammar.wallflow.data.preferences.ViewedWallpapersLook
 import com.ammar.wallflow.extensions.TAG
 import com.ammar.wallflow.extensions.aspectRatio
 import com.ammar.wallflow.model.LightDarkType
+import com.ammar.wallflow.model.DownloadableWallpaper
 import com.ammar.wallflow.model.Wallpaper
 import com.ammar.wallflow.model.isUnspecified
 import com.ammar.wallflow.model.reddit.RedditWallpaper
@@ -263,6 +264,17 @@ fun WallpaperCard(
             if (isGalleryCover) {
                 CardGalleryIcon()
             }
+        }
+        if (wallpaper is DownloadableWallpaper) {
+            CardOfflineSaveButton(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(
+                        bottom = 4.dp,
+                        start = 4.dp,
+                    ),
+                wallpaper = wallpaper,
+            )
         }
         CardFavoriteButton(
             modifier = Modifier

@@ -72,6 +72,8 @@ import com.ammar.wallflow.model.Purity
 import com.ammar.wallflow.model.wallhaven.WallhavenAvatar
 import com.ammar.wallflow.model.wallhaven.WallhavenTag
 import com.ammar.wallflow.model.wallhaven.WallhavenUploader
+import com.ammar.wallflow.ui.common.ViewerOfflineSaveButton
+import com.ammar.wallflow.model.DownloadableWallpaper
 import com.ammar.wallflow.ui.common.ProgressIndicator
 import com.ammar.wallflow.ui.common.TagChip
 import com.ammar.wallflow.ui.common.UploaderChip
@@ -99,6 +101,7 @@ fun WallpaperActions(
     onLightDarkTypeFlagsChange: (Int) -> Unit = {},
     onShowLightDarkInfoClick: () -> Unit = {},
     onInfoClick: () -> Unit = {},
+    offlineWallpaper: DownloadableWallpaper? = null,
 ) {
     HorizontalFloatingToolbar(
         expanded = showApplyWallpaperAction,
@@ -174,6 +177,9 @@ fun WallpaperActions(
                     onClick = onDownloadClick,
                 )
             }
+        }
+        if (offlineWallpaper != null) {
+            ViewerOfflineSaveButton(wallpaper = offlineWallpaper)
         }
         LightDarkButton(
             typeFlags = lightDarkTypeFlags,

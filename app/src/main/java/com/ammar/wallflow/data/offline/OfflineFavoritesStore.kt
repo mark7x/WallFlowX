@@ -63,6 +63,18 @@ class OfflineFavoritesStore @Inject constructor(
             ?.sortedByDescending { it.lastModified() }
             .orEmpty()
 
+    /** Saves one wallpaper for offline use. Returns true when the copy exists afterwards. */
+    suspend fun saveOne(context: Context, wallpaper: DownloadableWallpaper): Boolean =
+        withContext(Dispatchers.IO) {
+            val target = File(directory(context), fileName(wallpaper))
+            if (target.exists() && target.length() > 0) return@withContext true
+            download(wallpaper.data, target)
+        }
+
+    /** Removes one offline copy. Returns true when a file was deleted. */
+    fun removeOne(context: Context, wallpaper: DownloadableWallpaper): Boolean =
+        existingFile(context, wallpaper)?.delete() ?: false
+
     /** Deletes every saved copy and returns how many files were removed. */
     fun deleteAll(context: Context): Int =
         directory(context).listFiles()

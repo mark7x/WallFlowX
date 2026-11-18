@@ -98,6 +98,15 @@ class DefaultLocalWallpapersRepository @Inject constructor(
     ): Flow<Resource<LocalWallpaper?>> {
         val uri = Uri.parse(wallpaperUriStr)
         try {
+            if (uri.scheme == "file") {
+                val file = uri.path?.let(::File)
+                if (file == null || !file.isFile) {
+                    return flowOf(
+                        Resource.Error(IllegalArgumentException("Offline copy is missing")),
+                    )
+                }
+                return flowOf(Resource.Success(file.toOfflineLocalWallpaper()))
+            }
             val doc = DocumentFileCompat.fromSingleUri(context, uri)
                 ?: return flowOf(
                     Resource.Error(
