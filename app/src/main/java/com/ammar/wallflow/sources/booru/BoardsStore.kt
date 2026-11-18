@@ -27,16 +27,26 @@ data class SavedBoard(
     val apiKey: String? = null,
 )
 
+/** Query text for a tag search. Empty when there is no text. */
+internal fun booruTagsQuery(tags: String): String =
+    tags.trim().takeIf { it.isNotEmpty() }
+        ?.let { "&tags=${URLEncoder.encode(it, \"UTF-8\")}" }
+        .orEmpty()
+
 /**
- * Query text that adds the account keys to a Gelbooru-style request.
- * Empty unless both values are set.
+ * Query text that adds the account keys. Danbooru uses login and api_key;
+ * Gelbooru uses user_id and api_key. Empty unless both values are set.
  */
-internal fun gelbooruAuthQuery(userId: String?, apiKey: String?): String =
-    if (userId.isNullOrBlank() || apiKey.isNullOrBlank()) {
-        ""
-    } else {
-        "&user_id=${URLEncoder.encode(userId, "UTF-8")}&api_key=${URLEncoder.encode(apiKey, "UTF-8")}"
+internal fun booruAuthQuery(style: BooruStyle, userId: String?, apiKey: String?): String {
+    if (userId.isNullOrBlank() || apiKey.isNullOrBlank()) return ""
+    val user = URLEncoder.encode(userId, \"UTF-8\")
+    val key = URLEncoder.encode(apiKey, \"UTF-8\")
+    return when (style) {
+        BooruStyle.DANBOORU -> "&login=$user&api_key=$key"
+        BooruStyle.GELBOORU -> "&user_id=$user&api_key=$key"
+        BooruStyle.MOEBOORU -> ""
     }
+}
 
 /** Keeps saved boards in a JSON file inside the app's private storage. */
 @Singleton

@@ -33,11 +33,12 @@ class BooruPostsClient @Inject constructor(
         baseUrl: String,
         limit: Int = 20,
         page: Int = 1,
+        tags: String = "",
     ): Result<List<BooruPost>> = withContext(Dispatchers.IO) {
         runCatching {
             val base = baseUrl.trim().trimEnd('/')
             val board = boardsStore.find(base)
-            val url = postsUrl(style, base, limit, page, board?.userId, board?.apiKey)
+            val url = postsUrl(style, base, limit, page, tags, board?.userId, board?.apiKey)
             val request = Request.Builder().url(url).header("User-Agent", BOORU_USER_AGENT).build()
             okHttpClient.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) error("HTTP ${response.code}")
@@ -52,17 +53,20 @@ class BooruPostsClient @Inject constructor(
             base: String,
             limit: Int,
             page: Int,
+            tags: String = "",
             userId: String? = null,
             apiKey: String? = null,
-        ): String =
-            when (style) {
-                BooruStyle.DANBOORU -> "$base/posts.json?limit=$limit&page=$page"
-                BooruStyle.MOEBOORU -> "$base/post.json?limit=$limit&page=$page"
+        ): String {
+            val tagQuery = booruTagsQuery(tags)
+            val auth = booruAuthQuery(style, userId, apiKey)
+            return when (style) {
+                BooruStyle.DANBOORU -> "$base/posts.json?limit=$limit&page=$page$tagQuery$auth"
+                BooruStyle.MOEBOORU -> "$base/post.json?limit=$limit&page=$page$tagQuery"
                 // Gelbooru's pid is zero-based.
                 BooruStyle.GELBOORU ->
-                    "$base/index.php?page=dapi&s=post&q=index&json=1&limit=$limit&pid=${page - 1}" +
-                        gelbooruAuthQuery(userId, apiKey)
+                    "$base/index.php?page=dapi&s=post&q=index&json=1&limit=$limit&pid=${page - 1}$tagQuery$auth"
             }
+        }
 
         internal fun parsePosts(style: BooruStyle, body: String): List<BooruPost> {
             val root: JsonElement = Json.parseToJsonElement(body)

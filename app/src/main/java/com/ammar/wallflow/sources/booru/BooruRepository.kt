@@ -41,6 +41,7 @@ private class BooruPagingSource(
             baseUrl = boardUrl,
             limit = params.loadSize,
             page = page,
+            tags = search.query,
         ).fold(
             onSuccess = { posts ->
                 val wallpapers: List<Wallpaper> = posts

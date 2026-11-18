@@ -94,7 +94,7 @@ class BooruStyleDetector @Inject constructor(
             BooruStyle.DANBOORU -> "$base/posts.json?limit=1"
             BooruStyle.MOEBOORU -> "$base/post.json?limit=1"
             BooruStyle.GELBOORU ->
-                "$base/index.php?page=dapi&s=post&q=index&json=1&limit=1" + gelbooruAuthQuery(userId, apiKey)
+                "$base/index.php?page=dapi&s=post&q=index&json=1&limit=1" + booruAuthQuery(BooruStyle.GELBOORU, userId, apiKey)
         }
 
         /** The first 80 characters of a reply, on one line, so a failed probe shows what the site said. */
