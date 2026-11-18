@@ -39,6 +39,7 @@ import com.ammar.wallflow.data.preferences.AppPreferences
 import com.ammar.wallflow.data.preferences.AutoWallpaperPreferences
 import com.ammar.wallflow.data.repository.AppPreferencesRepository
 import com.ammar.wallflow.data.repository.AutoWallpaperHistoryRepository
+import com.ammar.wallflow.data.offline.OfflineFavoritesStore
 import com.ammar.wallflow.data.repository.FavoritesRepository
 import com.ammar.wallflow.data.repository.LightDarkRepository
 import com.ammar.wallflow.data.repository.ObjectDetectionModelRepository
@@ -114,6 +115,7 @@ class AutoWallpaperWorker @AssistedInject constructor(
     private val wallHavenNetwork: WallhavenNetworkDataSource,
     private val redditNetwork: RedditNetworkDataSource,
     private val favoritesRepository: FavoritesRepository,
+    private val offlineFavoritesStore: OfflineFavoritesStore,
     private val localWallpapersRepository: LocalWallpapersRepository,
     private val lightDarkRepository: LightDarkRepository,
 ) : CoroutineWorker(
@@ -612,6 +614,10 @@ class AutoWallpaperWorker @AssistedInject constructor(
     }
 
     private suspend fun downloadWallpaper(wallpaper: DownloadableWallpaper): DocumentFileCompat {
+        // Use the offline copy saved from favorites when there is one, so no download is needed.
+        offlineFavoritesStore.existingFile(context, wallpaper)?.let {
+            return DocumentFileCompat.fromFile(context, it)
+        }
         val fileName = wallpaper.data.getFileNameFromUrl()
         val tempFile = context.getTempFileIfExists(fileName)
         if (tempFile != null) {

@@ -35,6 +35,12 @@ class OfflineFavoritesStore @Inject constructor(
         return dir
     }
 
+    /** Returns the saved copy of [wallpaper] if it exists and isn't empty. */
+    fun existingFile(context: Context, wallpaper: DownloadableWallpaper): File? {
+        val file = File(directory(context), fileName(wallpaper))
+        return file.takeIf { it.exists() && it.length() > 0 }
+    }
+
     /** Downloads every wallpaper not already saved. [onProgress] gets (done, total). */
     suspend fun downloadAll(
         context: Context,
@@ -76,7 +82,7 @@ class OfflineFavoritesStore @Inject constructor(
         }
     }
 
-    private fun fileName(wallpaper: DownloadableWallpaper): String {
+    internal fun fileName(wallpaper: DownloadableWallpaper): String {
         val safeId = wallpaper.id.replace(Regex("[^A-Za-z0-9_-]"), "_")
         val ext = wallpaper.mimeType
             ?.substringAfter('/')
