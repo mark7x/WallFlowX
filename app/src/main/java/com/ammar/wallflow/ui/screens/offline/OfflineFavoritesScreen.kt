@@ -1,10 +1,13 @@
 package com.ammar.wallflow.ui.screens.offline
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.weight
+import androidx.compose.ui.Alignment
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import android.text.format.Formatter
@@ -154,6 +157,35 @@ fun OfflineFavoritesScreen(
                         }
                     },
                 )
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = stringResource(R.string.offline_saved_searches),
+                style = MaterialTheme.typography.titleMedium,
+            )
+            state.searches.forEach { saved ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = saved.name,
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    TextButton(
+                        onClick = { viewModel.downloadSearch(saved) },
+                        enabled = !state.running && !state.exporting && state.searchRunningId == null,
+                    ) {
+                        Text(text = stringResource(R.string.offline_search_download))
+                    }
+                }
+            }
+            if (state.searchRunningId != null) {
+                Text(
+                    text = stringResource(R.string.offline_search_running),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            state.searchMessage?.let { message ->
+                Text(text = message, style = MaterialTheme.typography.bodySmall)
             }
             state.summary?.let { summary ->
                 Spacer(modifier = Modifier.height(16.dp))

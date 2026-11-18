@@ -469,6 +469,9 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="offline_export_continue">Choose folder</string>
     <string name="offline_exporting">Exporting…</string>
     <string name="offline_export_done">Exported %1$d new files</string>
+    <string name="offline_saved_searches">Saved searches (first pages)</string>
+    <string name="offline_search_download">Download</string>
+    <string name="offline_search_running">Downloading search results…</string>
     <string name="offline_done">Saved %1$d, already saved %2$d, failed %3$d</string>
     <string name="boards">Boards</string>
     <string name="no_boards_found">No boards found in this backup</string>
