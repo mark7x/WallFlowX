@@ -7,7 +7,9 @@ import com.ammar.wallflow.data.repository.AppPreferencesRepository
 import com.ammar.wallflow.sources.booru.BooruDetection
 import com.ammar.wallflow.sources.booru.BooruPostsClient
 import com.ammar.wallflow.sources.booru.BooruStyle
+import com.ammar.wallflow.sources.booru.BoardsStore
 import com.ammar.wallflow.sources.booru.BooruStyleDetector
+import com.ammar.wallflow.sources.booru.SavedBoard
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.IOException
 import javax.inject.Inject
@@ -30,6 +32,7 @@ class NetworkLogViewModel @Inject constructor(
     private val okHttpClient: OkHttpClient,
     private val booruStyleDetector: BooruStyleDetector,
     private val booruPostsClient: BooruPostsClient,
+    private val boardsStore: BoardsStore,
 ) : ViewModel() {
     val entries = networkLogRepository.entries
 
@@ -43,6 +46,17 @@ class NetworkLogViewModel @Inject constructor(
     val booruTest: StateFlow<BooruTestResult?> = _booruTest.asStateFlow()
 
     private val _booruTestRunning = MutableStateFlow(false)
+
+    private val _lastBoard = MutableStateFlow<SavedBoard?>(null)
+    val lastBoard: StateFlow<SavedBoard?> = _lastBoard.asStateFlow()
+
+    private val _boardSaved = MutableStateFlow(false)
+    val boardSaved: StateFlow<Boolean> = _boardSaved.asStateFlow()
+
+    fun saveLastBoard() {
+        _lastBoard.value?.let { boardsStore.add(it) }
+        _boardSaved.value = true
+    }
     val booruTestRunning: StateFlow<Boolean> = _booruTestRunning.asStateFlow()
 
     /** Detects the board's style, then fetches three posts to confirm reading works. */
@@ -50,6 +64,8 @@ class NetworkLogViewModel @Inject constructor(
         if (_booruTestRunning.value) return
         viewModelScope.launch {
             _booruTestRunning.value = true
+            _lastBoard.value = null
+            _boardSaved.value = false
             val result = when (val detection = booruStyleDetector.detect(url)) {
                 is BooruDetection.Unknown -> BooruTestResult(
                     style = null,
@@ -58,6 +74,10 @@ class NetworkLogViewModel @Inject constructor(
                     error = detection.reasons.joinToString("; "),
                 )
                 is BooruDetection.Detected -> {
+                    _lastBoard.value = SavedBoard(
+                        baseUrl = url.trim().trimEnd('/'),
+                        style = detection.style,
+                    )
                     booruPostsClient.fetchPosts(detection.style, url, limit = 3).fold(
                         onSuccess = { posts ->
                             BooruTestResult(

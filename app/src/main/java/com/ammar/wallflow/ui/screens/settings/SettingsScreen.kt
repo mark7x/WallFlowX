@@ -53,6 +53,7 @@ import androidx.navigation.NavController
 import com.ammar.wallflow.R
 import com.ammar.wallflow.data.preferences.AutoWallpaperPreferences
 import com.ammar.wallflow.destinations.NetworkLogScreenDestination
+import com.ammar.wallflow.destinations.BoardsScreenDestination
 import com.ammar.wallflow.destinations.OfflineFavoritesScreenDestination
 import com.ammar.wallflow.destinations.RedditAuthScreenDestination
 import com.ammar.wallflow.destinations.WallhavenApiKeyDialogDestination
@@ -238,6 +239,9 @@ fun SettingsScreen(
                     },
                     onOfflineFavoritesItemClick = {
                         navController.navigate(OfflineFavoritesScreenDestination.route)
+                    },
+                    onBoardsItemClick = {
+                        navController.navigate(BoardsScreenDestination.route)
                     },
                     onLayoutClick = {
                         selectedExtraType = SettingsExtraType.LAYOUT
@@ -609,6 +613,7 @@ private fun DetailContentScaffold(
     redditCookie: String,
     onNetworkLogItemClick: () -> Unit,
     onOfflineFavoritesItemClick: () -> Unit,
+    onBoardsItemClick: () -> Unit,
     onLayoutClick: () -> Unit,
     onViewedWallpapersLookClick: () -> Unit,
     onSourcesClick: () -> Unit,
@@ -661,6 +666,7 @@ private fun DetailContentScaffold(
                         redditCookie = redditCookie,
                         onNetworkLogItemClick = onNetworkLogItemClick,
                         onOfflineFavoritesItemClick = onOfflineFavoritesItemClick,
+                        onBoardsItemClick = onBoardsItemClick,
                     )
                     SettingsType.LOOK_AND_FEEL -> LookAndFeelSettingsScreen(
                         selectedExtraType = selectedExtraType,

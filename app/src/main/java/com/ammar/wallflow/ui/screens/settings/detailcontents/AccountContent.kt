@@ -23,6 +23,7 @@ internal fun AccountContent(
     redditCookie: String = "",
     onNetworkLogItemClick: () -> Unit = {},
     onOfflineFavoritesItemClick: () -> Unit = {},
+    onBoardsItemClick: () -> Unit = {},
 ) {
     Column(modifier = modifier) {
         WallhavenApiKeyItem(
@@ -40,6 +41,10 @@ internal fun AccountContent(
         )
         OfflineFavoritesItem(
             modifier = Modifier.clickable(onClick = onOfflineFavoritesItemClick),
+            isExpanded = isExpanded,
+        )
+        BoardsItem(
+            modifier = Modifier.clickable(onClick = onBoardsItemClick),
             isExpanded = isExpanded,
         )
     }
@@ -90,6 +95,26 @@ private fun NetworkLogItem(
 }
 
 @Composable
+@Composable
+private fun BoardsItem(
+    modifier: Modifier = Modifier,
+    isExpanded: Boolean = false,
+) {
+    SettingsDetailListItem(
+        modifier = modifier,
+        isExpanded = isExpanded,
+        isFirst = false,
+        isLast = false,
+        headlineContent = {
+            Text(text = stringResource(R.string.boards))
+        },
+        supportingContent = {
+            Text(text = stringResource(R.string.boards_row_desc))
+        },
+    )
+}
+
+@Composable
 private fun OfflineFavoritesItem(
     modifier: Modifier = Modifier,
     isExpanded: Boolean = false,
@@ -98,7 +123,7 @@ private fun OfflineFavoritesItem(
         modifier = modifier,
         isExpanded = isExpanded,
         isFirst = false,
-        isLast = true,
+        isLast = false,
         headlineContent = {
             Text(text = stringResource(R.string.offline_favorites))
         },

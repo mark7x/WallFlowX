@@ -68,6 +68,8 @@ fun NetworkLogScreen(
     val booruTest by viewModel.booruTest.collectAsStateWithLifecycle()
     val booruTestRunning by viewModel.booruTestRunning.collectAsStateWithLifecycle()
     var booruUrl by rememberSaveable { mutableStateOf("") }
+    val lastBoard by viewModel.lastBoard.collectAsStateWithLifecycle()
+    val boardSaved by viewModel.boardSaved.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -155,6 +157,21 @@ fun NetworkLogScreen(
                 )
             }
             booruTest?.let { BooruTestSummary(result = it) }
+            if (lastBoard != null) {
+                Button(
+                    onClick = viewModel::saveLastBoard,
+                    enabled = !boardSaved,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                ) {
+                    Text(
+                        text = stringResource(
+                            if (boardSaved) R.string.boards_saved else R.string.boards_save_button,
+                        ),
+                    )
+                }
+            }
             TabRow(selectedTabIndex = selectedTab) {
                 Tab(
                     selected = selectedTab == 0,
