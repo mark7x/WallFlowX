@@ -45,6 +45,7 @@ import com.ammar.wallflow.model.Source
 import com.ammar.wallflow.model.Wallpaper
 import com.ammar.wallflow.navigation.AppNavGraphs.OfflineTabNavGraph
 import com.ammar.wallflow.ui.common.LocalSystemController
+import com.ammar.wallflow.ui.common.OfflineDelaySetting
 import com.ammar.wallflow.ui.common.bottomWindowInsets
 import com.ammar.wallflow.ui.common.bottombar.LocalBottomBarController
 import com.ammar.wallflow.ui.common.topWindowInsets
@@ -100,6 +101,7 @@ fun OfflineTabScreen(
                 ),
                 style = MaterialTheme.typography.bodyMedium,
             )
+            OfflineDelaySetting(modifier = Modifier.padding(vertical = 4.dp))
             Button(
                 onClick = viewModel::downloadFavorites,
                 enabled = !state.running,

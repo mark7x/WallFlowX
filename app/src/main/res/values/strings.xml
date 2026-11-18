@@ -499,4 +499,6 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="offline_tab_delete_all_text">Remove every offline copy from this phone. Your favorites stay in Collections.</string>
     <string name="offline_save">Save offline</string>
     <string name="offline_save_failed">Could not save this image offline</string>
+    <string name="offline_delay_label">Pause between downloads: %1$.1f s</string>
+    <string name="offline_delay_desc">Wallhaven can block fast bursts of downloads. Raise the pause if downloads start failing.</string>
 </resources>

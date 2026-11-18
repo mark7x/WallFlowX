@@ -14,6 +14,7 @@ import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -31,6 +32,8 @@ data class DownloadSummary(
  * isn't written to MediaStore. A `.nomedia` file is also added as a second guard.
  */
 @Singleton
+private const val RATE_LIMIT_PAUSE_MS = 30_000L
+
 class OfflineFavoritesStore @Inject constructor(
     private val okHttpClient: OkHttpClient,
 ) {
@@ -151,22 +154,35 @@ class OfflineFavoritesStore @Inject constructor(
         var saved = 0
         var skipped = 0
         var failed = 0
+        val pauseMs = OfflineDownloadDelay.get(context)
         wallpapers.forEachIndexed { index, wallpaper ->
             ensureActive()
             val target = File(dir, fileName(wallpaper))
             if (target.exists() && target.length() > 0) {
                 skipped++
-            } else if (download(wallpaper.data, target)) {
-                saved++
             } else {
-                failed++
+                if (download(wallpaper.data, target)) saved++ else failed++
+                // Pause after each real download, so sites don't block the burst.
+                if (index < wallpapers.lastIndex) delay(pauseMs)
             }
             onProgress(index + 1, wallpapers.size)
         }
         DownloadSummary(saved = saved, skipped = skipped, failed = failed)
     }
 
-    private fun download(url: String, target: File): Boolean {
+    private suspend fun download(url: String, target: File): Boolean {
+        // One retry after a rate-limit response, following a longer pause.
+        repeat(2) { attempt ->
+            val outcome = attemptDownload(url, target)
+            if (outcome != HttpOutcome.RATE_LIMITED) return outcome == HttpOutcome.OK
+            if (attempt == 0) delay(RATE_LIMIT_PAUSE_MS)
+        }
+        return false
+    }
+
+    private enum class HttpOutcome { OK, FAILED, RATE_LIMITED }
+
+    private fun attemptDownload(url: String, target: File): HttpOutcome {
         val temp = File(target.parentFile, target.name + ".part")
         return try {
             val request = Request.Builder()
@@ -174,14 +190,15 @@ class OfflineFavoritesStore @Inject constructor(
                 .header("User-Agent", BOORU_USER_AGENT)
                 .build()
             okHttpClient.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) return false
-                val body = response.body ?: return false
+                if (response.code == 429) return HttpOutcome.RATE_LIMITED
+                if (!response.isSuccessful) return HttpOutcome.FAILED
+                val body = response.body ?: return HttpOutcome.FAILED
                 temp.outputStream().use { out -> body.byteStream().copyTo(out) }
             }
-            temp.renameTo(target)
+            if (temp.renameTo(target)) HttpOutcome.OK else HttpOutcome.FAILED
         } catch (e: IOException) {
             temp.delete()
-            false
+            HttpOutcome.FAILED
         }
     }
 
