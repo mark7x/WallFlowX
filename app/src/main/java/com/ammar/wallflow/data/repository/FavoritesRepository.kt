@@ -201,6 +201,15 @@ class FavoritesRepository @Inject constructor(
         getWallpaperFromEntity(context, entity)
     }
 
+    /** Favorites that can be downloaded (LOCAL wallpapers are already on the device). */
+    suspend fun getDownloadableWallpapers(
+        context: Context,
+    ): List<com.ammar.wallflow.model.DownloadableWallpaper> = withContext(ioDispatcher) {
+        favoriteDao.getAll().mapNotNull { entity ->
+            getWallpaperFromEntity(context, entity) as? com.ammar.wallflow.model.DownloadableWallpaper
+        }
+    }
+
     private suspend fun getWallpaperFromEntity(
         context: Context,
         entity: FavoriteEntity,

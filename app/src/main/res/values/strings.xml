@@ -454,4 +454,10 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="booru_test_posts">Posts fetched: %1$d</string>
     <string name="booru_test_first">First file: %1$s</string>
     <string name="booru_test_error">Result: %1$s</string>
+    <string name="offline_favorites">Offline favorites</string>
+    <string name="offline_favorites_desc">Save copies of all your favorites to this device so auto wallpaper works without a connection. Files stay inside the app, so Gallery, Google Photos and other apps don\'t show them.</string>
+    <string name="offline_download_all">Download all favorites</string>
+    <string name="offline_progress">%1$d of %2$d</string>
+    <string name="offline_cancel">Cancel</string>
+    <string name="offline_done">Saved %1$d, already saved %2$d, failed %3$d</string>
 </resources>
