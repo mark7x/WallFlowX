@@ -9,12 +9,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -85,7 +85,7 @@ fun BoardsScreen(
     ) { padding ->
         val current = selected
         if (current == null) {
-            Column(modifier = Modifier.padding(padding)) {
+            Column(modifier = Modifier.padding(padding).verticalScroll(rememberScrollState())) {
                 lastCrash?.let { crash ->
                     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
                         Text(
@@ -105,7 +105,7 @@ fun BoardsScreen(
                 )
                 BoardList(
                     boards = boards,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier,
                     onOpen = viewModel::select,
                     onRemove = viewModel::remove,
                     onOpenFeed = { board ->
@@ -196,8 +196,9 @@ private fun BoardList(
         }
         return
     }
-    LazyColumn(modifier = modifier.fillMaxSize()) {
-        items(boards, key = { it.baseUrl }) { board ->
+    // Plain Column, not LazyColumn: the Boards page scrolls as one column.
+    Column(modifier = modifier.fillMaxWidth()) {
+        boards.forEach { board ->
             Column(
                 modifier = Modifier
                     .fillMaxWidth()

@@ -148,7 +148,8 @@ fun WallpaperCard(
                     it.height(200.dp)
                 } else {
                     it
-                        .aspectRatio(wallpaper.resolution.aspectRatio)
+                        // Booru posts have no known size, so use a square when the ratio is unknown.
+                        .aspectRatio(wallpaper.resolution.aspectRatio.takeIf { it > 0f } ?: 1f)
                         .heightIn(min = 60.dp)
                 }
             }
