@@ -463,6 +463,7 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="offline_cancel">Cancel</string>
     <string name="offline_done">Saved %1$d, already saved %2$d, failed %3$d</string>
     <string name="boards">Boards</string>
+    <string name="no_boards_found">No boards found in this backup</string>
     <string name="boards_row_desc">Saved booru boards. Browse their latest posts as thumbnails.</string>
     <string name="boards_empty">No boards saved yet. Test a board in Network log, then tap Save board.</string>
     <string name="boards_style">Style: %1$s</string>

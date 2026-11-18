@@ -194,6 +194,19 @@ private fun BackupDialogContent(
                 )
             },
         )
+        BackupOption(
+            label = stringResource(R.string.boards),
+            checked = options.boards,
+            enabled = enabled,
+            alpha = alpha,
+            onCheckedChange = {
+                onOptionsChange(
+                    options.copy(
+                        boards = it,
+                    ),
+                )
+            },
+        )
         OutlinedTextField(
             modifier = Modifier
                 .fillMaxWidth()
@@ -480,6 +493,8 @@ private fun RestoreDialogContent(
             val savedSearchesEnabled = restoreProgress == null && summaryHasSearches
             val summaryHasViewed = summary.viewed != null && summary.viewed > 0
             val viewedEnabled = restoreProgress == null && summaryHasViewed
+            val summaryHasBoards = summary.boards != null && summary.boards > 0
+            val boardsEnabled = restoreProgress == null && summaryHasBoards
 
             ListItem(
                 modifier = Modifier
@@ -586,6 +601,21 @@ private fun RestoreDialogContent(
                     onOptionsChange(
                         options.copy(
                             viewed = it,
+                        ),
+                    )
+                },
+            )
+            RestoreOption(
+                label = stringResource(R.string.boards),
+                notFoundSupportingText = stringResource(R.string.no_boards_found),
+                checked = options.boards,
+                enabled = boardsEnabled,
+                summaryHasOption = summaryHasBoards,
+                summaryCount = summary.boards,
+                onCheckedChange = {
+                    onOptionsChange(
+                        options.copy(
+                            boards = it,
                         ),
                     )
                 },

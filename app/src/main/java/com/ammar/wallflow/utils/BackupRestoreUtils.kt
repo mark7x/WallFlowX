@@ -1,5 +1,7 @@
 package com.ammar.wallflow.utils
 
+import com.ammar.wallflow.sources.booru.BoardsStore
+
 import android.content.Context
 import android.util.Log
 import androidx.core.net.toUri
@@ -62,6 +64,7 @@ suspend fun getBackupV1Json(
     savedSearchDao: SavedSearchDao,
     viewedDao: ViewedDao,
     lightDarkDao: LightDarkDao,
+    boardsStore: BoardsStore,
 ): String? {
     if (!options.atleastOneChosen) {
         return null
@@ -167,11 +170,14 @@ suspend fun getBackupV1Json(
         )
     }
 
+    val boards = if (options.boards) boardsStore.boards.value else null
+
     val backupV1 = BackupV1(
         preferences = appPreferences,
         favorites = favorites,
         lightDark = lightDarkEntities,
         viewed = viewed,
+        boards = boards,
         wallhaven = wallhavenBackupV1,
         reddit = redditBackupV1,
     )
@@ -218,6 +224,7 @@ suspend fun restoreBackup(
     redditWallpapersDao: RedditWallpapersDao,
     viewedRepository: ViewedRepository,
     lightDarkRepository: LightDarkRepository,
+    boardsStore: BoardsStore,
 ) {
     when (backup.version) {
         1 -> restoreBackupV1(
@@ -233,6 +240,7 @@ suspend fun restoreBackup(
             redditWallpapersDao = redditWallpapersDao,
             viewedRepository = viewedRepository,
             lightDarkRepository = lightDarkRepository,
+            boardsStore = boardsStore,
         )
         else -> throw InvalidJsonException("Invalid version!")
     }
@@ -251,6 +259,7 @@ suspend fun restoreBackupV1(
     redditWallpapersDao: RedditWallpapersDao,
     viewedRepository: ViewedRepository,
     lightDarkRepository: LightDarkRepository,
+    boardsStore: BoardsStore,
 ) {
     if (!options.atleastOneChosen) {
         return
@@ -326,6 +335,9 @@ suspend fun restoreBackupV1(
         }
     }
 
+    if (options.boards) {
+        backup.boards?.forEach { boardsStore.add(it) }
+    }
     if (options.viewed && backup.viewed?.isNotEmpty() == true) {
         viewedRepository.insertEntities(backup.viewed)
     }

@@ -1,5 +1,7 @@
 package com.ammar.wallflow.model.backup
 
+import com.ammar.wallflow.sources.booru.SavedBoard
+
 import android.net.Uri
 import com.ammar.wallflow.data.db.entity.FavoriteEntity
 import com.ammar.wallflow.data.db.entity.LightDarkEntity
@@ -23,6 +25,7 @@ data class BackupV1(
     val viewed: List<ViewedEntity>? = null,
     val wallhaven: WallhavenBackupV1?,
     val reddit: RedditBackupV1? = null,
+    val boards: List<SavedBoard>? = null,
 ) : Backup {
     override fun getRestoreSummary(file: Uri) = RestoreSummary(
         file = file,
@@ -30,6 +33,7 @@ data class BackupV1(
         favorites = favorites?.size,
         lightDark = lightDark?.size,
         viewed = viewed?.size,
+        boards = boards?.size,
         savedSearches = (wallhaven?.savedSearches?.size ?: 0) + (reddit?.savedSearches?.size ?: 0),
         backup = this,
     )
