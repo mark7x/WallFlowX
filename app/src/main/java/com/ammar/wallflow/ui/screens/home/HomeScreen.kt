@@ -1,6 +1,5 @@
 package com.ammar.wallflow.ui.screens.home
 
-import com.ammar.wallflow.destinations.BoardsScreenDestination
 
 import com.ammar.wallflow.model.search.BooruSearch
 
@@ -92,6 +91,7 @@ import com.ramcosta.composedestinations.annotation.Destination
 import kotlin.math.roundToInt
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
+import kotlinx.collections.immutable.toImmutableMap
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Destination<AppNavGraphs.HomeNavGraph>(
@@ -342,6 +342,7 @@ fun HomeScreen(
                         sources = uiState.sources
                             .filter { it.value }
                             .keys
+                            .filterNot { it == OnlineSource.BOORU }
                             .toImmutableList(),
                         selectedSource = uiState.selectedSource,
                         sourceHeader = when (uiState.selectedSource) {
@@ -366,14 +367,10 @@ fun HomeScreen(
                             OnlineSource.REDDIT -> null
                             OnlineSource.BOORU -> null
                         },
-                        onSourceClick = { source ->
-                            if (source == OnlineSource.BOORU && !viewModel.hasBoards()) {
-                                // No board to show yet: add one first.
-                                rootNavController.navigate(BoardsScreenDestination.route)
-                            } else {
-                                viewModel.changeSource(source)
-                            }
-                        },
+                        onSourceClick = viewModel::changeSource,
+                        websites = uiState.websites,
+                        selectedWebsite = uiState.selectedBoardUrl ?: uiState.websites.firstOrNull()?.baseUrl,
+                        onWebsiteClick = { viewModel.selectWebsite(it.baseUrl) },
                         onManageSourcesClick = {
                             viewModel.showManageSourcesDialog(true)
                         },
@@ -606,7 +603,16 @@ fun HomeScreen(
 
     if (uiState.manageSourcesState.showDialog) {
         ManageSourcesDialog(
-            currentSources = uiState.manageSourcesState.currentSources,
+            currentSources = uiState.manageSourcesState.currentSources
+                .filterKeys { it != OnlineSource.BOORU }
+                .toImmutableMap(),
+            websites = uiState.websites,
+            websiteAddRunning = uiState.websiteAddRunning,
+            websiteAddError = uiState.websiteAddError,
+            lastCrash = uiState.lastCrash,
+            onAddWebsite = viewModel::addWebsite,
+            onRemoveWebsite = viewModel::removeWebsite,
+            onClearCrash = viewModel::clearCrash,
             saveEnabled = uiState.manageSourcesState.saveEnabled,
             onAddSourceClick = viewModel::addSource,
             onVisibilityChange = { source, visible ->

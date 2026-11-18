@@ -53,7 +53,6 @@ import androidx.navigation.NavController
 import com.ammar.wallflow.R
 import com.ammar.wallflow.data.preferences.AutoWallpaperPreferences
 import com.ammar.wallflow.destinations.NetworkLogScreenDestination
-import com.ammar.wallflow.destinations.BoardsScreenDestination
 import com.ammar.wallflow.destinations.OfflineFavoritesScreenDestination
 import com.ammar.wallflow.destinations.RedditAuthScreenDestination
 import com.ammar.wallflow.destinations.WallhavenApiKeyDialogDestination
@@ -240,9 +239,7 @@ fun SettingsScreen(
                     onOfflineFavoritesItemClick = {
                         navController.navigate(OfflineFavoritesScreenDestination.route)
                     },
-                    onBoardsItemClick = {
-                        navController.navigate(BoardsScreenDestination.route)
-                    },
+                    onBoardsItemClick = {},
                     onLayoutClick = {
                         selectedExtraType = SettingsExtraType.LAYOUT
                         coroutineScope.launch {

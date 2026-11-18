@@ -58,6 +58,8 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.datetime.Clock
+import com.ammar.wallflow.sources.booru.SavedBoard
+import com.ammar.wallflow.sources.booru.displayName
 
 internal fun LazyStaggeredGridScope.header(
     sources: ImmutableList<OnlineSource> = persistentListOf(),
@@ -65,6 +67,9 @@ internal fun LazyStaggeredGridScope.header(
     sourceHeader: (LazyStaggeredGridScope.() -> Unit)? = null,
     onSourceClick: (OnlineSource) -> Unit = {},
     onManageSourcesClick: () -> Unit = {},
+    websites: ImmutableList<SavedBoard> = persistentListOf(),
+    selectedWebsite: String? = null,
+    onWebsiteClick: (SavedBoard) -> Unit = {},
 ) {
     item(span = StaggeredGridItemSpan.FullLine) {
         SourcesRow(
@@ -72,6 +77,9 @@ internal fun LazyStaggeredGridScope.header(
             selected = selectedSource,
             onSourceClick = onSourceClick,
             onManageClick = onManageSourcesClick,
+            websites = websites,
+            selectedWebsite = selectedWebsite,
+            onWebsiteClick = onWebsiteClick,
         )
     }
     sourceHeader?.invoke(this)
@@ -137,6 +145,9 @@ internal fun SourcesRow(
     selected: OnlineSource = OnlineSource.WALLHAVEN,
     onSourceClick: (OnlineSource) -> Unit = {},
     onManageClick: () -> Unit = {},
+    websites: ImmutableList<SavedBoard> = persistentListOf(),
+    selectedWebsite: String? = null,
+    onWebsiteClick: (SavedBoard) -> Unit = {},
 ) {
     Row(
         modifier = modifier.scrollable(
@@ -158,6 +169,13 @@ internal fun SourcesRow(
                     source = it,
                     selected = selected == it,
                     onClick = { onSourceClick(it) },
+                )
+            }
+            websites.forEach { website ->
+                WebsiteChip(
+                    label = website.displayName(),
+                    selected = selected == OnlineSource.BOORU && website.baseUrl == selectedWebsite,
+                    onClick = { onWebsiteClick(website) },
                 )
             }
         }
@@ -434,4 +452,41 @@ private fun PreviewEditSearchBottomSheetHeader() {
             }
         }
     }
+}
+
+@Composable
+private fun WebsiteChip(
+    label: String,
+    modifier: Modifier = Modifier,
+    selected: Boolean = false,
+    onClick: () -> Unit = {},
+) {
+    FilterChip(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.medium,
+        colors = FilterChipDefaults.filterChipColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        ),
+        border = FilterChipDefaults.filterChipBorder(
+            enabled = true,
+            selected = selected,
+            borderWidth = 0.dp,
+            borderColor = Color.Transparent,
+        ),
+        leadingIcon = {
+            Icon(
+                modifier = Modifier.size(FilterChipDefaults.IconSize),
+                painter = painterResource(R.drawable.outline_image_24),
+                contentDescription = null,
+            )
+        },
+        selected = selected,
+        onClick = onClick,
+        label = { Text(text = label) },
+    )
 }

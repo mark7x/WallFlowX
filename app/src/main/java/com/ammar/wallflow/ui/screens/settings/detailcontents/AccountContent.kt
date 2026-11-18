@@ -43,10 +43,6 @@ internal fun AccountContent(
             modifier = Modifier.clickable(onClick = onOfflineFavoritesItemClick),
             isExpanded = isExpanded,
         )
-        BoardsItem(
-            modifier = Modifier.clickable(onClick = onBoardsItemClick),
-            isExpanded = isExpanded,
-        )
     }
 }
 
@@ -90,25 +86,6 @@ private fun NetworkLogItem(
         },
         supportingContent = {
             Text(text = stringResource(R.string.network_log_desc))
-        },
-    )
-}
-
-@Composable
-private fun BoardsItem(
-    modifier: Modifier = Modifier,
-    isExpanded: Boolean = false,
-) {
-    SettingsDetailListItem(
-        modifier = modifier,
-        isExpanded = isExpanded,
-        isFirst = false,
-        isLast = false,
-        headlineContent = {
-            Text(text = stringResource(R.string.boards))
-        },
-        supportingContent = {
-            Text(text = stringResource(R.string.boards_row_desc))
         },
     )
 }

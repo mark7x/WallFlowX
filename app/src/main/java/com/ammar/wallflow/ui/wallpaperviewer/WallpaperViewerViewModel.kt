@@ -41,6 +41,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.ammar.wallflow.sources.booru.BooruPostRegistry
 
 @HiltViewModel
 class WallpaperViewerViewModel @Inject constructor(
@@ -71,7 +72,7 @@ class WallpaperViewerViewModel @Inject constructor(
                     when (it.source) {
                         Source.WALLHAVEN -> wallhavenRepository.wallpaper(it.wallpaperId)
                         Source.REDDIT -> redditRepository.wallpaper(it.wallpaperId)
-                        Source.BOORU -> flowOf(Resource.Success(null))
+                        Source.BOORU -> flowOf(Resource.Success(BooruPostRegistry.get(it.wallpaperId)))
                         Source.LOCAL -> localWallpapersRepository.wallpaper(
                             application,
                             it.wallpaperId,

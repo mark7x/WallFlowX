@@ -486,6 +486,7 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="boards_keys_warning">Keys are stored on this phone and included in backups.</string>
     <string name="boards_last_crash">The app closed unexpectedly last time:</string>
     <string name="boards_clear_crash">Clear</string>
+    <string name="websites">Websites</string>
     <string name="boards_add_button">Add board</string>
     <string name="boards_error">Could not load posts: %1$s</string>
     <string name="boards_save_button">Save board</string>

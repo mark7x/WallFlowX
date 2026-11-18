@@ -39,6 +39,18 @@ import com.ammar.wallflow.ui.theme.WallFlowTheme
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.delay
+import com.ammar.wallflow.sources.booru.SavedBoard
+import com.ammar.wallflow.sources.booru.displayName
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.foundation.layout.fillMaxWidth
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,6 +62,13 @@ internal fun ManageSourcesDialog(
     onDismissRequest: () -> Unit = {},
     onAddSourceClick: (OnlineSource) -> Unit = {},
     onSaveClick: () -> Unit = {},
+    websites: ImmutableList<SavedBoard> = persistentListOf(),
+    websiteAddRunning: Boolean = false,
+    websiteAddError: String? = null,
+    lastCrash: String? = null,
+    onAddWebsite: (String, String, String) -> Unit = { _, _, _ -> },
+    onRemoveWebsite: (SavedBoard) -> Unit = {},
+    onClearCrash: () -> Unit = {},
 ) {
     BasicAlertDialog(
         modifier = modifier,
@@ -62,6 +81,13 @@ internal fun ManageSourcesDialog(
                     currentSources = currentSources,
                     onAddSourceClick = onAddSourceClick,
                     onVisibilityChange = onVisibilityChange,
+                    websites = websites,
+                    websiteAddRunning = websiteAddRunning,
+                    websiteAddError = websiteAddError,
+                    lastCrash = lastCrash,
+                    onAddWebsite = onAddWebsite,
+                    onRemoveWebsite = onRemoveWebsite,
+                    onClearCrash = onClearCrash,
                 )
             },
             buttons = {
@@ -89,17 +115,33 @@ private fun ManageSourcesDialogContent(
     currentSources: ImmutableMap<OnlineSource, Boolean> = persistentMapOf(),
     onAddSourceClick: (OnlineSource) -> Unit = {},
     onVisibilityChange: (OnlineSource, Boolean) -> Unit = { _, _ -> },
+    websites: ImmutableList<SavedBoard> = persistentListOf(),
+    websiteAddRunning: Boolean = false,
+    websiteAddError: String? = null,
+    lastCrash: String? = null,
+    onAddWebsite: (String, String, String) -> Unit = { _, _, _ -> },
+    onRemoveWebsite: (SavedBoard) -> Unit = {},
+    onClearCrash: () -> Unit = {},
 ) {
     val newSources = remember(currentSources) {
-        OnlineSource.entries.toSet() - currentSources.keys
+        OnlineSource.entries.toSet() - currentSources.keys - OnlineSource.BOORU
     }
     val enabledSourcesCount = remember(currentSources) {
         currentSources.count { it.value }
     }
 
     Column(
-        modifier = modifier,
+        modifier = modifier.verticalScroll(rememberScrollState()),
     ) {
+        WebsitesSection(
+            websites = websites,
+            addRunning = websiteAddRunning,
+            addError = websiteAddError,
+            lastCrash = lastCrash,
+            onAddWebsite = onAddWebsite,
+            onRemoveWebsite = onRemoveWebsite,
+            onClearCrash = onClearCrash,
+        )
         if (newSources.isNotEmpty()) {
             Header(
                 modifier = Modifier.padding(horizontal = 8.dp),
@@ -308,6 +350,97 @@ fun PreviewRedditInitDialog() {
                     "wallpapers",
                     "test",
                 ),
+            )
+        }
+    }
+}
+
+@Composable
+internal fun WebsitesSection(
+    websites: ImmutableList<SavedBoard>,
+    addRunning: Boolean,
+    addError: String?,
+    lastCrash: String?,
+    onAddWebsite: (String, String, String) -> Unit,
+    onRemoveWebsite: (SavedBoard) -> Unit,
+    onClearCrash: () -> Unit,
+) {
+    var address by rememberSaveable { mutableStateOf("") }
+    var userId by rememberSaveable { mutableStateOf("") }
+    var apiKey by rememberSaveable { mutableStateOf("") }
+    Column(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+        if (lastCrash != null) {
+            Text(
+                text = stringResource(R.string.boards_last_crash),
+                style = MaterialTheme.typography.titleSmall,
+            )
+            Text(text = lastCrash.take(1500), style = MaterialTheme.typography.bodySmall)
+            TextButton(onClick = onClearCrash) {
+                Text(text = stringResource(R.string.boards_clear_crash))
+            }
+        }
+        Header(
+            modifier = Modifier.padding(horizontal = 8.dp),
+            text = stringResource(R.string.websites),
+        )
+        websites.forEach { website ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
+                    Text(text = website.displayName(), style = MaterialTheme.typography.bodyLarge)
+                    Text(text = website.baseUrl, style = MaterialTheme.typography.bodySmall)
+                }
+                TextButton(onClick = { onRemoveWebsite(website) }) {
+                    Text(text = stringResource(R.string.boards_remove))
+                }
+            }
+        }
+        OutlinedTextField(
+            value = address,
+            onValueChange = { address = it },
+            label = { Text(text = stringResource(R.string.boards_add_hint)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+        )
+        OutlinedTextField(
+            value = userId,
+            onValueChange = { userId = it },
+            label = { Text(text = stringResource(R.string.boards_user_id)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+        )
+        OutlinedTextField(
+            value = apiKey,
+            onValueChange = { apiKey = it },
+            label = { Text(text = stringResource(R.string.boards_api_key)) },
+            singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+        )
+        Text(
+            text = stringResource(R.string.boards_keys_warning),
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(horizontal = 8.dp),
+        )
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Button(
+                onClick = { onAddWebsite(address, userId, apiKey) },
+                enabled = !addRunning && address.isNotBlank(),
+            ) {
+                Text(text = stringResource(R.string.boards_add_button))
+            }
+            if (addRunning) {
+                CircularProgressIndicator(modifier = Modifier.padding(start = 12.dp).size(20.dp))
+            }
+        }
+        if (addError != null) {
+            Text(
+                text = addError,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(horizontal = 8.dp),
             )
         }
     }

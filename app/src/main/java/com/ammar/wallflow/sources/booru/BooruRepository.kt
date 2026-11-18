@@ -47,6 +47,7 @@ private class BooruPagingSource(
                 val wallpapers: List<Wallpaper> = posts
                     .map { it.toWallpaper(boardUrl) }
                     .filter { it.purity in allowed }
+                BooruPostRegistry.remember(wallpapers)
                 LoadResult.Page(
                     data = wallpapers,
                     prevKey = if (page > 1) page - 1 else null,

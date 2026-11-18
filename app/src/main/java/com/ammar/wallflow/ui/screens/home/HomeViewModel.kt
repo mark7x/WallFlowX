@@ -76,6 +76,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
+import com.ammar.wallflow.sources.booru.BooruDetection
+import com.ammar.wallflow.sources.booru.BooruStyleDetector
+import com.ammar.wallflow.sources.booru.SavedBoard
+import com.ammar.wallflow.utils.CrashLog
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -85,6 +91,8 @@ class HomeViewModel @Inject constructor(
     private val redditRepository: RedditRepository,
     private val booruRepository: BooruRepository,
     private val boardsStore: BoardsStore,
+    private val booruStyleDetector: BooruStyleDetector,
+    @ApplicationContext private val context: Context,
     private val appPreferencesRepository: AppPreferencesRepository,
     private val savedSearchRepository: SavedSearchRepository,
     private val favoritesRepository: FavoritesRepository,
@@ -104,27 +112,84 @@ class HomeViewModel @Inject constructor(
             local = local,
             homeSource = appPreferences.homeSources,
             homeRedditSearch = appPreferences.homeRedditSearch,
+            hasBoards = boards.isNotEmpty(),
         )
         when (source) {
             OnlineSource.WALLHAVEN -> appPreferences.homeWallhavenSearch
             OnlineSource.REDDIT -> appPreferences.homeRedditSearch
-            // The booru feed shows the first saved board. With no boards it falls back to Wallhaven.
-            OnlineSource.BOORU -> boards.firstOrNull()?.let {
-                BooruSearch(filters = BooruFilters(boardUrl = it.baseUrl, style = it.style))
-            } ?: appPreferences.homeWallhavenSearch
+            // The website chosen in the feed, else the first saved website.
+            OnlineSource.BOORU -> {
+                val website = boards.firstOrNull { it.baseUrl == local.selectedBoardUrl.getOrElse { null } }
+                    ?: boards.firstOrNull()
+                website?.let { BooruSearch(filters = BooruFilters(boardUrl = it.baseUrl, style = it.style)) }
+                    ?: appPreferences.homeWallhavenSearch
+            }
         }
     }.filterNotNull().distinctUntilChanged()
 
-    /** True when at least one board is saved. The Boards chip needs one to show a feed. */
+    /** True when at least one website is saved. */
     fun hasBoards(): Boolean = boardsStore.boards.value.isNotEmpty()
+
+    fun selectWebsite(url: String) {
+        localUiState.update {
+            it.copy(
+                selectedSource = partial(OnlineSource.BOORU),
+                selectedBoardUrl = partial<String?>(url),
+            )
+        }
+    }
+
+    fun addWebsite(address: String, userId: String = "", apiKey: String = "") {
+        val url = address.trim()
+        if (url.isEmpty() || uiState.value.websiteAddRunning) return
+        val user = userId.trim().ifBlank { null }
+        val key = apiKey.trim().ifBlank { null }
+        viewModelScope.launch {
+            localUiState.update {
+                it.copy(websiteAddRunning = partial(true), websiteAddError = partial<String?>(null))
+            }
+            when (val detection = booruStyleDetector.detect(url, user, key)) {
+                is BooruDetection.Detected -> {
+                    boardsStore.add(
+                        SavedBoard(baseUrl = url, style = detection.style, userId = user, apiKey = key),
+                    )
+                    localUiState.update { it.copy(websiteAddRunning = partial(false)) }
+                }
+                is BooruDetection.Unknown -> {
+                    val reasons = detection.reasons.joinToString("; ")
+                    val needsKeys = reasons.contains("Missing authentication", ignoreCase = true)
+                    val message = when {
+                        needsKeys && (user == null || key == null) ->
+                            "This site needs a user ID and API key. Fill in both fields and add again."
+                        needsKeys -> "The site rejected these keys. Check the user ID and API key."
+                        else -> reasons.ifBlank { "Not a supported booru site" }
+                    }
+                    localUiState.update {
+                        it.copy(websiteAddRunning = partial(false), websiteAddError = partial<String?>(message))
+                    }
+                }
+            }
+        }
+    }
+
+    fun removeWebsite(website: SavedBoard) {
+        boardsStore.remove(website.baseUrl)
+    }
+
+    fun clearCrash() {
+        CrashLog.clear(context)
+        localUiState.update { it.copy(lastCrash = partial<String?>(null)) }
+    }
 
     private fun getCorrectSelectedSource(
         local: HomeUiStatePartial,
         homeSource: Map<OnlineSource, Boolean>,
         homeRedditSearch: RedditSearch?,
+        hasBoards: Boolean,
     ): OnlineSource {
         var source = local.selectedSource.getOrElse { OnlineSource.WALLHAVEN }
-        val sourceEnabled = homeSource[source] ?: false
+        // Booru is enabled by having at least one website, not by the toggle.
+        val sourceEnabled = if (source == OnlineSource.BOORU) hasBoards else homeSource[source] ?: false
         if (!sourceEnabled) {
             source = OnlineSource.entries.first { it != source }
         }
@@ -169,6 +234,7 @@ class HomeViewModel @Inject constructor(
     }.cachedIn(viewModelScope)
 
     init {
+        localUiState.update { it.copy(lastCrash = partial(CrashLog.read(context))) }
         if (mainSearch != null) {
             // save search to app prefs
             viewModelScope.launch {
@@ -181,6 +247,7 @@ class HomeViewModel @Inject constructor(
                 local = localUiState.value,
                 homeSource = appPreferences.homeSources,
                 homeRedditSearch = appPreferences.homeRedditSearch,
+                hasBoards = boardsStore.boards.value.isNotEmpty(),
             )
 
             localUiState.update {
@@ -200,6 +267,7 @@ class HomeViewModel @Inject constructor(
         favoritesRepository.observeAll(),
         viewedRepository.observeAll(),
         lightDarkRepository.observeAll(),
+        boardsStore.boards,
     ) {
             tags,
             homeSearch,
@@ -209,6 +277,7 @@ class HomeViewModel @Inject constructor(
             favorites,
             viewedList,
             lightDarkList,
+            boards,
         ->
         local.merge(
             HomeUiState(
@@ -241,6 +310,7 @@ class HomeViewModel @Inject constructor(
                 viewedWallpapersLook = appPreferences.viewedWallpapersPreferences.look,
                 lightDarkList = lightDarkList.map(LightDarkEntity::toLightDark).toImmutableList(),
                 sources = appPreferences.homeSources.toImmutableMap(),
+                websites = boards.toImmutableList(),
                 prevMainWallhavenSearch = appPreferences.mainWallhavenSearch,
                 prevMainRedditSearch = appPreferences.mainRedditSearch,
                 redditSubredditFilter = appPreferences.redditSubredditFilter,
@@ -423,6 +493,7 @@ class HomeViewModel @Inject constructor(
             local = localUiState.value,
             homeSource = currentSources,
             homeRedditSearch = prefs.homeRedditSearch,
+            hasBoards = boardsStore.boards.value.isNotEmpty(),
         )
 
         localUiState.update {
@@ -500,6 +571,11 @@ data class HomeUiState(
     val prevMainRedditSearch: RedditSearch? = null,
     val quickActionsWallpaper: Wallpaper? = null,
     val redditSubredditFilter: RedditSubredditFilter = RedditSubredditFilter(),
+    val websites: ImmutableList<SavedBoard> = persistentListOf(),
+    val selectedBoardUrl: String? = null,
+    val websiteAddRunning: Boolean = false,
+    val websiteAddError: String? = null,
+    val lastCrash: String? = null,
 ) {
     val isHome = mainSearch == null
     val showSaveAsDialog = saveSearchAsSearch != null

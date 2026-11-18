@@ -88,3 +88,7 @@ class BoardsStore @Inject constructor(
         private const val FILE_NAME = "boards.json"
     }
 }
+
+/** The name shown for a website: its host, without "www.". */
+fun SavedBoard.displayName(): String =
+    runCatching { java.net.URI(baseUrl.trim()).host }.getOrNull()?.removePrefix("www.") ?: baseUrl
