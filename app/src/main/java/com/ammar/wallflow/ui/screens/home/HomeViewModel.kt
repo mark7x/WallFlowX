@@ -34,7 +34,9 @@ import com.ammar.wallflow.model.Wallpaper
 import com.ammar.wallflow.model.search.RedditFilters
 import com.ammar.wallflow.model.search.RedditSearch
 import com.ammar.wallflow.sources.booru.BooruRepository
+import com.ammar.wallflow.model.search.BooruFilters
 import com.ammar.wallflow.model.search.BooruSearch
+import com.ammar.wallflow.sources.booru.BoardsStore
 import com.ammar.wallflow.model.search.RedditSort
 import com.ammar.wallflow.model.search.RedditSubredditFilter
 import com.ammar.wallflow.model.search.RedditTimeRange
@@ -82,6 +84,7 @@ class HomeViewModel @Inject constructor(
     private val wallpaperSourceRegistry: WallpaperSourceRegistry,
     private val redditRepository: RedditRepository,
     private val booruRepository: BooruRepository,
+    private val boardsStore: BoardsStore,
     private val appPreferencesRepository: AppPreferencesRepository,
     private val savedSearchRepository: SavedSearchRepository,
     private val favoritesRepository: FavoritesRepository,
@@ -95,7 +98,8 @@ class HomeViewModel @Inject constructor(
     private val homeSearchFlow = combine(
         localUiState,
         appPreferencesRepository.appPreferencesFlow,
-    ) { local, appPreferences ->
+        boardsStore.boards,
+    ) { local, appPreferences, boards ->
         val source = getCorrectSelectedSource(
             local = local,
             homeSource = appPreferences.homeSources,
@@ -104,9 +108,15 @@ class HomeViewModel @Inject constructor(
         when (source) {
             OnlineSource.WALLHAVEN -> appPreferences.homeWallhavenSearch
             OnlineSource.REDDIT -> appPreferences.homeRedditSearch
-            OnlineSource.BOORU -> appPreferences.homeWallhavenSearch
+            // The booru feed shows the first saved board. With no boards it falls back to Wallhaven.
+            OnlineSource.BOORU -> boards.firstOrNull()?.let {
+                BooruSearch(filters = BooruFilters(boardUrl = it.baseUrl, style = it.style))
+            } ?: appPreferences.homeWallhavenSearch
         }
     }.filterNotNull().distinctUntilChanged()
+
+    /** True when at least one board is saved. The Boards chip needs one to show a feed. */
+    fun hasBoards(): Boolean = boardsStore.boards.value.isNotEmpty()
 
     private fun getCorrectSelectedSource(
         local: HomeUiStatePartial,
@@ -332,6 +342,15 @@ class HomeViewModel @Inject constructor(
     }
 
     fun addSource(source: OnlineSource) {
+        if (source == OnlineSource.BOORU) {
+            viewModelScope.launch {
+                appPreferencesRepository.updateHomeSources(
+                    uiState.value.sources + (OnlineSource.BOORU to true),
+                )
+            }
+            showManageSourcesDialog(false)
+            return
+        }
         localUiState.update {
             when (source) {
                 OnlineSource.WALLHAVEN -> it // will never be called

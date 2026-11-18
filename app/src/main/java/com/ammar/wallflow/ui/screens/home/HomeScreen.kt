@@ -181,10 +181,7 @@ fun HomeScreen(
                 ) ?: MainSearchBar.Defaults.redditSearch(
                     subreddits = uiState.reddit.subreddits,
                 )
-                OnlineSource.BOORU -> uiState.prevMainWallhavenSearch?.copy(
-                    query = "",
-                    meta = null,
-                ) ?: MainSearchBar.Defaults.wallhavenSearch
+                OnlineSource.BOORU -> uiState.homeSearch
             }
         searchBarViewModel.setSearch(search)
         searchBarViewModel.setSource(uiState.selectedSource)
@@ -370,7 +367,8 @@ fun HomeScreen(
                             OnlineSource.BOORU -> null
                         },
                         onSourceClick = { source ->
-                            if (source == OnlineSource.BOORU) {
+                            if (source == OnlineSource.BOORU && !viewModel.hasBoards()) {
+                                // No board to show yet: add one first.
                                 rootNavController.navigate(BoardsScreenDestination.route)
                             } else {
                                 viewModel.changeSource(source)
