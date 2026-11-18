@@ -422,7 +422,8 @@ private fun ConstraintOptionsDialogContent(
     onChange: (Map<ConstraintType, Boolean>) -> Unit = {},
 ) {
     val wifiChecked = constraintTypeMap[ConstraintType.WIFI] ?: false
-    val roamingEnabled = !wifiChecked
+    val noNetworkChecked = constraintTypeMap[ConstraintType.NO_NETWORK] ?: false
+    val roamingEnabled = !wifiChecked && !noNetworkChecked
 
     Column(
         modifier = modifier.scrollable(
@@ -434,7 +435,7 @@ private fun ConstraintOptionsDialogContent(
             label = stringResource(R.string.on_wifi),
             desc = stringResource(R.string.on_wifi_desc),
             checked = wifiChecked,
-            enabled = true,
+            enabled = !noNetworkChecked,
             onCheckedChange = {
                 onChange(constraintTypeMap + (ConstraintType.WIFI to it))
             },
@@ -455,6 +456,15 @@ private fun ConstraintOptionsDialogContent(
             enabled = true,
             onCheckedChange = {
                 onChange(constraintTypeMap + (ConstraintType.CHARGING to it))
+            },
+        )
+        ConstraintOption(
+            label = stringResource(R.string.no_network),
+            desc = stringResource(R.string.no_network_desc),
+            checked = noNetworkChecked,
+            enabled = true,
+            onCheckedChange = {
+                onChange(constraintTypeMap + (ConstraintType.NO_NETWORK to it))
             },
         )
         ConstraintOption(

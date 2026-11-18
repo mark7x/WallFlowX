@@ -118,6 +118,8 @@
     <string name="hours">hours</string>
     <string name="on_wifi">On Wi-Fi</string>
     <string name="data_roaming">Data roaming</string>
+    <string name="no_network">Run without network</string>
+    <string name="no_network_desc">Use saved offline copies only. Favorites must be downloaded first.</string>
     <string name="charging">Charging</string>
     <string name="on_wifi_desc">Device must be connected to Wi-Fi</string>
     <string name="data_roaming_desc">Allow while on data roaming</string>

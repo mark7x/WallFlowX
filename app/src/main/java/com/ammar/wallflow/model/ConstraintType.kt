@@ -5,4 +5,5 @@ enum class ConstraintType {
     ROAMING,
     CHARGING,
     IDLE,
+    NO_NETWORK,
 }

@@ -10,6 +10,7 @@ fun Constraints.toConstraintTypeMap() = buildMap {
     put(ConstraintType.ROAMING, constraint.requiredNetworkType == NetworkType.CONNECTED)
     put(ConstraintType.CHARGING, constraint.requiresCharging())
     put(ConstraintType.IDLE, constraint.requiresDeviceIdle())
+    put(ConstraintType.NO_NETWORK, constraint.requiredNetworkType == NetworkType.NOT_REQUIRED)
 }
 
 private val wifiRoamingCombinations = mapOf(
@@ -30,7 +31,9 @@ fun Map<ConstraintType, Boolean>.toConstraints() = Constraints.Builder().apply {
             constraintMap[ConstraintType.ROAMING] ?: false,
         ),
     ] ?: NetworkType.CONNECTED
-    setRequiredNetworkType(networkType)
+    // No network: the worker only uses saved offline copies, so no network is required.
+    val noNetwork = constraintMap[ConstraintType.NO_NETWORK] ?: false
+    setRequiredNetworkType(if (noNetwork) NetworkType.NOT_REQUIRED else networkType)
     setRequiresCharging(constraintMap[ConstraintType.CHARGING] ?: false)
     setRequiresDeviceIdle(constraintMap[ConstraintType.IDLE] ?: false)
 }.build()
