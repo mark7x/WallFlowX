@@ -71,6 +71,7 @@ class WallpaperViewerViewModel @Inject constructor(
                     when (it.source) {
                         Source.WALLHAVEN -> wallhavenRepository.wallpaper(it.wallpaperId)
                         Source.REDDIT -> redditRepository.wallpaper(it.wallpaperId)
+                        Source.BOORU -> flowOf(Resource.Success(null))
                         Source.LOCAL -> localWallpapersRepository.wallpaper(
                             application,
                             it.wallpaperId,

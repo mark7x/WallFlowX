@@ -64,6 +64,7 @@ class LightDarkRepository @Inject constructor(
                     val wallpaperEntity = redditWallpapersDao.getByRedditId(entity.sourceId)
                     wallpaperEntity?.toWallpaper() ?: wallhavenWallpaper1
                 }
+                Source.BOORU -> wallhavenWallpaper1
                 Source.LOCAL -> localWallpapersRepository.wallpaper(
                     context = context,
                     wallpaperUriStr = entity.sourceId,
@@ -161,6 +162,7 @@ class LightDarkRepository @Inject constructor(
             val wallpaperEntity = redditWallpapersDao.getByRedditId(entity.sourceId)
             wallpaperEntity?.toWallpaper()
         }
+        Source.BOORU -> null
         Source.LOCAL -> localWallpapersRepository.wallpaper(
             context = context,
             wallpaperUriStr = entity.sourceId,

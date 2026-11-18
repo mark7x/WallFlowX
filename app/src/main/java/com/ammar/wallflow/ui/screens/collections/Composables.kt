@@ -242,6 +242,7 @@ private fun SourceFilterChip(
                         Source.WALLHAVEN -> R.string.wallhaven
                         Source.REDDIT -> R.string.reddit
                         Source.LOCAL -> R.string.local
+                        Source.BOORU -> R.string.boards
                     },
                 ),
             )

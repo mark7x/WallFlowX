@@ -306,6 +306,7 @@ suspend fun restoreBackupV1(
             when (it.source) {
                 Source.WALLHAVEN -> it.sourceId in existingWallhavenWallpaperIds
                 Source.REDDIT -> it.sourceId in existingRedditWallpaperIds
+                Source.BOORU -> false
                 Source.LOCAL -> try {
                     DocumentFileCompat.fromSingleUri(context, it.sourceId.toUri()) != null
                 } catch (e: Exception) {
@@ -323,6 +324,7 @@ suspend fun restoreBackupV1(
             when (it.source) {
                 Source.WALLHAVEN -> it.sourceId in existingWallhavenWallpaperIds
                 Source.REDDIT -> it.sourceId in existingRedditWallpaperIds
+                Source.BOORU -> false
                 Source.LOCAL -> try {
                     DocumentFileCompat.fromSingleUri(context, it.sourceId.toUri()) != null
                 } catch (e: Exception) {

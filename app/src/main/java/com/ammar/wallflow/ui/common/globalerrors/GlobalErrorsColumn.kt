@@ -32,6 +32,7 @@ fun GlobalErrorsColumn(
                         Source.WALLHAVEN -> stringResource(R.string.wallhaven_cc)
                         Source.REDDIT -> stringResource(R.string.reddit)
                         Source.LOCAL -> "" // will never be local
+                        Source.BOORU -> stringResource(R.string.boards)
                     },
                 )
             }
