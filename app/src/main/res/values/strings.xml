@@ -491,4 +491,10 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="boards_error">Could not load posts: %1$s</string>
     <string name="boards_save_button">Save board</string>
     <string name="boards_saved">Board saved</string>
+    <string name="offline_tab">Offline</string>
+    <string name="offline_tab_summary">%1$d saved, %2$s</string>
+    <string name="offline_tab_empty">No offline copies yet. Download favorites from Settings, then Account, then Offline favorites.</string>
+    <string name="offline_tab_delete_title">Delete offline copy?</string>
+    <string name="offline_tab_delete_text">The file is removed from this phone. Your favorite stays in Collections.</string>
+    <string name="offline_tab_delete_all_text">Remove every offline copy from this phone. Your favorites stay in Collections.</string>
 </resources>

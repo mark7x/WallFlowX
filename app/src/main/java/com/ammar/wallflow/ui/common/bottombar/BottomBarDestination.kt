@@ -14,5 +14,6 @@ enum class BottomBarDestination(
     Home(NavGraphs.home, R.drawable.baseline_home_24, R.string.home),
     Collections(NavGraphs.collections, R.drawable.baseline_collections_24, R.string.collections),
     Local(NavGraphs.local, R.drawable.baseline_folder_24, R.string.local),
+    OfflineTab(NavGraphs.offlineTab, R.drawable.baseline_download_24, R.string.offline_tab),
     More(NavGraphs.more, R.drawable.baseline_more_horiz_24, R.string.more),
 }

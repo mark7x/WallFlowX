@@ -51,6 +51,13 @@ class OfflineFavoritesStore @Inject constructor(
         return files.size to files.sumOf { it.length() }
     }
 
+    /** Every saved copy, newest first. Ignores the .nomedia marker. */
+    fun files(context: Context): List<File> =
+        directory(context).listFiles()
+            ?.filter { it.isFile && it.name != ".nomedia" }
+            ?.sortedByDescending { it.lastModified() }
+            .orEmpty()
+
     /** Deletes every saved copy and returns how many files were removed. */
     fun deleteAll(context: Context): Int =
         directory(context).listFiles()

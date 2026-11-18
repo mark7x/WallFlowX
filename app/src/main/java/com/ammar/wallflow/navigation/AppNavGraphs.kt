@@ -26,6 +26,9 @@ object AppNavGraphs {
     annotation class LocalNavGraph
 
     @NavGraph<MainNavGraph>
+    annotation class OfflineTabNavGraph
+
+    @NavGraph<MainNavGraph>
     annotation class MoreNavGraph
 
     @NavGraph<RootNavGraph>
