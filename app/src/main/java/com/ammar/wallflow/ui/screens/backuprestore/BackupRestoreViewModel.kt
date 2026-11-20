@@ -1,6 +1,8 @@
 package com.ammar.wallflow.ui.screens.backuprestore
 
 import com.ammar.wallflow.sources.booru.BoardsStore
+import com.ammar.wallflow.sources.booru.BooruFavoritesStore
+import com.ammar.wallflow.data.rating.WallpaperRatingStore
 
 import android.app.Application
 import android.net.Uri
@@ -59,6 +61,8 @@ class BackupRestoreViewModel @Inject constructor(
     private val lightDarkDao: LightDarkDao,
     private val lightDarkRepository: LightDarkRepository,
     private val boardsStore: BoardsStore,
+    private val booruFavoritesStore: BooruFavoritesStore,
+    private val wallpaperRatingStore: WallpaperRatingStore,
 ) : AndroidViewModel(
     application = application,
 ) {
@@ -165,6 +169,8 @@ class BackupRestoreViewModel @Inject constructor(
                 viewedDao = viewedDao,
                 lightDarkDao = lightDarkDao,
                 boardsStore = boardsStore,
+                booruFavoritesStore = booruFavoritesStore,
+                wallpaperRatingStore = wallpaperRatingStore,
             ) ?: return@launch
             try {
                 application.writeToUri(
@@ -231,6 +237,8 @@ class BackupRestoreViewModel @Inject constructor(
                     viewedRepository = viewedRepository,
                     lightDarkRepository = lightDarkRepository,
                     boardsStore = boardsStore,
+                    booruFavoritesStore = booruFavoritesStore,
+                    wallpaperRatingStore = wallpaperRatingStore,
                 )
                 localUiState.update {
                     it.copy(

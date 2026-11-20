@@ -341,6 +341,10 @@ suspend fun restoreBackupV1(
         }
     }
 
+    if (options.favorites) {
+        backup.booruFavorites?.let { booruFavoritesStore.importAll(it) }
+    }
+
     if (hasLightDark) {
         val lightDarkToInsert = backup.lightDark?.filter {
             when (it.source) {
@@ -361,6 +365,9 @@ suspend fun restoreBackupV1(
 
     if (options.boards) {
         backup.boards?.forEach { boardsStore.add(it) }
+    }
+    if (options.ratings) {
+        backup.ratings?.let { wallpaperRatingStore.importData(it) }
     }
     if (options.viewed && backup.viewed?.isNotEmpty() == true) {
         viewedRepository.insertEntities(backup.viewed)

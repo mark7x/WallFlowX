@@ -505,4 +505,6 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="rating_help">5 stars are never removed. Other ratings are removed from favorites and offline after the sets chosen in the Offline tab.</string>
     <string name="remove_after_label">%1$d★ removed after sets</string>
     <string name="recent_title">Recent, last 10 set</string>
+    <string name="ratings">Ratings and recent</string>
+    <string name="no_ratings_found">No ratings in this backup</string>
 </resources>
