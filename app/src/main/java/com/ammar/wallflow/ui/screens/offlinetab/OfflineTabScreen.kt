@@ -24,6 +24,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -112,134 +113,143 @@ fun OfflineTabScreen(
             .fillMaxSize()
             .windowInsetsPadding(topWindowInsets),
     ) {
-        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-            Text(
-                text = stringResource(R.string.offline_favorites),
-                style = MaterialTheme.typography.titleLarge,
-            )
-            Text(
-                text = stringResource(
-                    R.string.offline_tab_summary,
-                    state.items.size,
-                    Formatter.formatShortFileSize(context, state.bytes),
-                ),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            listOf(1, 2, 3, 4).forEach { stars ->
-                Column(modifier = Modifier.padding(vertical = 2.dp)) {
+        // One scrolling grid: the header and Recent row span the full width, so a tall header
+        // can never squeeze the tiles out of view.
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(120.dp),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = 8.dp,
+                end = 8.dp,
+                top = 8.dp,
+                bottom = bottomPadding + 8.dp,
+            ),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
                     Text(
-                        text = stringResource(R.string.remove_after_label, stars),
-                        style = MaterialTheme.typography.bodySmall,
+                        text = stringResource(R.string.offline_favorites),
+                        style = MaterialTheme.typography.titleLarge,
                     )
-                    Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
-                        listOf(1, 2, 3, 5, 10).forEach { sets ->
-                            FilterChip(
-                                selected = state.limits[stars] == sets,
-                                onClick = { viewModel.setLimit(stars, sets) },
-                                label = { Text(text = sets.toString()) },
-                                modifier = Modifier.padding(end = 6.dp),
+                    Text(
+                        text = stringResource(
+                            R.string.offline_tab_summary,
+                            state.items.size,
+                            Formatter.formatShortFileSize(context, state.bytes),
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    listOf(1, 2, 3, 4).forEach { stars ->
+                        Column(modifier = Modifier.padding(vertical = 2.dp)) {
+                            Text(
+                                text = stringResource(R.string.remove_after_label, stars),
+                                style = MaterialTheme.typography.bodySmall,
                             )
+                            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                                listOf(1, 2, 3, 5, 10).forEach { sets ->
+                                    FilterChip(
+                                        selected = state.limits[stars] == sets,
+                                        onClick = { viewModel.setLimit(stars, sets) },
+                                        label = { Text(text = sets.toString()) },
+                                        modifier = Modifier.padding(end = 6.dp),
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    OfflineDelaySetting(modifier = Modifier.padding(vertical = 4.dp))
+                    Button(
+                        onClick = viewModel::downloadFavorites,
+                        enabled = !state.running,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(text = stringResource(R.string.offline_download_all))
+                    }
+                    if (state.running) {
+                        LinearProgressIndicator(
+                            progress = {
+                                if (state.total == 0) 0f else state.done.toFloat() / state.total
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Text(
+                            text = stringResource(R.string.offline_progress, state.done, state.total),
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                    state.message?.let {
+                        Text(text = it, style = MaterialTheme.typography.bodySmall)
+                    }
+                    if (state.items.isNotEmpty()) {
+                        TextButton(onClick = { confirmDeleteAll = true }) {
+                            Text(text = stringResource(R.string.offline_delete_all))
                         }
                     }
                 }
             }
-            OfflineDelaySetting(modifier = Modifier.padding(vertical = 4.dp))
-            Button(
-                onClick = viewModel::downloadFavorites,
-                enabled = !state.running,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(text = stringResource(R.string.offline_download_all))
-            }
-            if (state.running) {
-                LinearProgressIndicator(
-                    progress = {
-                        if (state.total == 0) 0f else state.done.toFloat() / state.total
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Text(
-                    text = stringResource(R.string.offline_progress, state.done, state.total),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-            state.message?.let {
-                Text(text = it, style = MaterialTheme.typography.bodySmall)
-            }
-            if (state.items.isNotEmpty()) {
-                TextButton(onClick = { confirmDeleteAll = true }) {
-                    Text(text = stringResource(R.string.offline_delete_all))
-                }
-            }
-        }
 
-        if (state.recent.isNotEmpty()) {
-            Text(
-                text = stringResource(R.string.recent_title),
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.padding(horizontal = 16.dp),
-            )
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                items(state.recent, key = { it.source + ":" + it.id }) { entry ->
-                    val source = Source.values().firstOrNull { it.name == entry.source }
-                    if (source != null) {
-                        val stars = state.ratings[ratingKey(source, entry.id)] ?: 0
-                        Box(
-                            modifier = Modifier
-                                .size(84.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable {
-                                    rating = RatingTarget(source, entry.id, stars, item = null)
-                                },
+            if (state.recent.isNotEmpty()) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Column {
+                        Text(
+                            text = stringResource(R.string.recent_title),
+                            style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.padding(horizontal = 8.dp),
+                        )
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            AsyncImage(
-                                model = entry.preview,
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize(),
-                            )
-                            StarBadge(
-                                stars = stars,
-                                modifier = Modifier
-                                    .align(Alignment.BottomStart)
-                                    .padding(4.dp),
-                            )
+                            items(state.recent, key = { it.source + ":" + it.id }) { entry ->
+                                val source = Source.values().firstOrNull { it.name == entry.source }
+                                if (source != null) {
+                                    val stars = state.ratings[ratingKey(source, entry.id)] ?: 0
+                                    Box(
+                                        modifier = Modifier
+                                            .size(84.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .clickable {
+                                                rating = RatingTarget(source, entry.id, stars, item = null)
+                                            },
+                                    ) {
+                                        AsyncImage(
+                                            model = entry.preview,
+                                            contentDescription = null,
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier.fillMaxSize(),
+                                        )
+                                        StarBadge(
+                                            stars = stars,
+                                            modifier = Modifier
+                                                .align(Alignment.BottomStart)
+                                                .padding(4.dp),
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
-        }
 
-        if (state.items.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = stringResource(R.string.offline_tab_empty),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-        } else {
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(120.dp),
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(
-                    start = 8.dp,
-                    end = 8.dp,
-                    top = 8.dp,
-                    bottom = bottomPadding + 8.dp,
-                ),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
+            if (state.items.isEmpty()) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.offline_tab_empty),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                }
+            } else {
                 items(state.items, key = { it.wallpaper.id }) { item ->
                     Box(
                         modifier = Modifier
