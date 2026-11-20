@@ -13,7 +13,7 @@ import kotlinx.serialization.json.Json
 import android.content.Context
 
 @Serializable
-private data class StoredBooruPost(
+data class StoredBooruPost(
     val fileUrl: String,
     val previewUrl: String?,
     val boardUrl: String,
@@ -52,6 +52,17 @@ class BooruFavoritesStore @Inject constructor(
             purity = Purity.fromName(it.purity),
             boardUrl = it.boardUrl,
         )
+    }
+
+    /** Every saved post, for backups. */
+    @Synchronized
+    fun exportAll(): Map<String, StoredBooruPost> = posts.toMap()
+
+    /** Puts posts from a backup back. Existing posts with the same id are replaced. */
+    @Synchronized
+    fun importAll(entries: Map<String, StoredBooruPost>) {
+        posts.putAll(entries)
+        save()
     }
 
     private fun save() {

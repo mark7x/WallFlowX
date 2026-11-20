@@ -10,6 +10,8 @@ import com.ammar.wallflow.data.db.entity.search.SavedSearchEntity
 import com.ammar.wallflow.data.db.entity.wallpaper.RedditWallpaperEntity
 import com.ammar.wallflow.data.db.entity.wallpaper.WallhavenWallpaperEntity
 import com.ammar.wallflow.data.preferences.AppPreferences
+import com.ammar.wallflow.data.rating.RatingFile
+import com.ammar.wallflow.sources.booru.StoredBooruPost
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
@@ -26,6 +28,10 @@ data class BackupV1(
     val wallhaven: WallhavenBackupV1?,
     val reddit: RedditBackupV1? = null,
     val boards: List<SavedBoard>? = null,
+    /** Booru favorites' post links. Missing in backups made before this field existed. */
+    val booruFavorites: Map<String, StoredBooruPost>? = null,
+    /** Star ratings, set counts, limits and the recent list. */
+    val ratings: RatingFile? = null,
 ) : Backup {
     override fun getRestoreSummary(file: Uri) = RestoreSummary(
         file = file,
@@ -34,6 +40,7 @@ data class BackupV1(
         lightDark = lightDark?.size,
         viewed = viewed?.size,
         boards = boards?.size,
+        ratings = ratings?.ratings?.size,
         savedSearches = (wallhaven?.savedSearches?.size ?: 0) + (reddit?.savedSearches?.size ?: 0),
         backup = this,
     )

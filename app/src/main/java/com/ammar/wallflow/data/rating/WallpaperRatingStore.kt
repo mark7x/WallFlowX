@@ -81,6 +81,23 @@ class WallpaperRatingStore @Inject constructor(
 
     suspend fun limits(): Map<Int, Int> = locked { it.limits }
 
+    /** Everything rated, for backups. */
+    suspend fun export(): RatingFile = locked { it }
+
+    /** Merges a backup into the current ratings. Backup values win for the same wallpaper. */
+    suspend fun importData(data: RatingFile) {
+        update { current ->
+            current.copy(
+                ratings = current.ratings + data.ratings,
+                limits = current.limits + data.limits,
+                recent = (data.recent + current.recent)
+                    .distinctBy { it.source to it.id }
+                    .sortedByDescending { it.setAt }
+                    .take(RECENT_LIMIT),
+            )
+        }
+    }
+
     suspend fun setLimit(stars: Int, sets: Int) {
         if (stars !in 1..4) return
         update { it.copy(limits = it.limits + (stars to sets.coerceAtLeast(1))) }

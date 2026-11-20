@@ -3,6 +3,8 @@ package com.ammar.wallflow.utils
 import com.ammar.wallflow.model.search.BooruFilters
 
 import com.ammar.wallflow.sources.booru.BoardsStore
+import com.ammar.wallflow.sources.booru.BooruFavoritesStore
+import com.ammar.wallflow.data.rating.WallpaperRatingStore
 
 import android.content.Context
 import android.util.Log
@@ -67,6 +69,8 @@ suspend fun getBackupV1Json(
     viewedDao: ViewedDao,
     lightDarkDao: LightDarkDao,
     boardsStore: BoardsStore,
+    booruFavoritesStore: BooruFavoritesStore,
+    wallpaperRatingStore: WallpaperRatingStore,
 ): String? {
     if (!options.atleastOneChosen) {
         return null
@@ -175,7 +179,16 @@ suspend fun getBackupV1Json(
 
     val boards = if (options.boards) boardsStore.boards.value else null
 
+    val booruFavorites = if (options.favorites) {
+        booruFavoritesStore.exportAll().takeIf { it.isNotEmpty() }
+    } else {
+        null
+    }
+    val ratings = if (options.ratings) wallpaperRatingStore.export() else null
+
     val backupV1 = BackupV1(
+        booruFavorites = booruFavorites,
+        ratings = ratings,
         preferences = appPreferences,
         favorites = favorites,
         lightDark = lightDarkEntities,
@@ -228,6 +241,8 @@ suspend fun restoreBackup(
     viewedRepository: ViewedRepository,
     lightDarkRepository: LightDarkRepository,
     boardsStore: BoardsStore,
+    booruFavoritesStore: BooruFavoritesStore,
+    wallpaperRatingStore: WallpaperRatingStore,
 ) {
     when (backup.version) {
         1 -> restoreBackupV1(
@@ -244,6 +259,8 @@ suspend fun restoreBackup(
             viewedRepository = viewedRepository,
             lightDarkRepository = lightDarkRepository,
             boardsStore = boardsStore,
+            booruFavoritesStore = booruFavoritesStore,
+            wallpaperRatingStore = wallpaperRatingStore,
         )
         else -> throw InvalidJsonException("Invalid version!")
     }
@@ -263,6 +280,8 @@ suspend fun restoreBackupV1(
     viewedRepository: ViewedRepository,
     lightDarkRepository: LightDarkRepository,
     boardsStore: BoardsStore,
+    booruFavoritesStore: BooruFavoritesStore,
+    wallpaperRatingStore: WallpaperRatingStore,
 ) {
     if (!options.atleastOneChosen) {
         return
