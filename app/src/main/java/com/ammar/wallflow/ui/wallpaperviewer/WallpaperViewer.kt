@@ -393,6 +393,7 @@ fun WallpaperViewer(
                     showApplyWallpaperAction = applyWallpaperEnabled,
                     showFullScreenAction = isExpanded,
                     showDownloadAction = wallpaper is DownloadableWallpaper,
+                    ratingWallpaper = if (inGalleryMode) galleryWallpapers?.getOrNull(pagerState.currentPage) else wallpaper,
                     offlineWallpaper = (
                         if (inGalleryMode) galleryWallpapers?.getOrNull(pagerState.currentPage) else wallpaper
                     ) as? DownloadableWallpaper,

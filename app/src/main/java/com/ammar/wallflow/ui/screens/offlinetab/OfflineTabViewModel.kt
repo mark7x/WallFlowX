@@ -2,11 +2,15 @@ package com.ammar.wallflow.ui.screens.offlinetab
 
 import android.content.Context
 import androidx.core.net.toUri
-import com.ammar.wallflow.data.offline.toOfflineLocalWallpaper
-import com.ammar.wallflow.data.repository.FavoritesRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ammar.wallflow.data.offline.OfflineFavoritesStore
+import com.ammar.wallflow.data.offline.toOfflineLocalWallpaper
+import com.ammar.wallflow.data.rating.RecentSet
+import com.ammar.wallflow.data.rating.WallpaperRatingStore
+import com.ammar.wallflow.data.rating.ratingKey
+import com.ammar.wallflow.data.repository.FavoritesRepository
+import com.ammar.wallflow.model.Source
 import com.ammar.wallflow.model.Wallpaper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -20,8 +24,19 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/** One offline copy, with the favorite it belongs to and its rating. */
+data class OfflineItem(
+    val wallpaper: Wallpaper,
+    val source: Source,
+    val originalId: String,
+    val stars: Int,
+)
+
 data class OfflineTabState(
-    val items: List<Wallpaper> = emptyList(),
+    val items: List<OfflineItem> = emptyList(),
+    val recent: List<RecentSet> = emptyList(),
+    val ratings: Map<String, Int> = emptyMap(),
+    val removeAfterSets: Int = 2,
     val bytes: Long = 0L,
     val running: Boolean = false,
     val done: Int = 0,
@@ -34,6 +49,7 @@ class OfflineTabViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val offlineFavoritesStore: OfflineFavoritesStore,
     private val favoritesRepository: FavoritesRepository,
+    private val ratingStore: WallpaperRatingStore,
 ) : ViewModel() {
     private val _state = MutableStateFlow(OfflineTabState())
     val state: StateFlow<OfflineTabState> = _state.asStateFlow()
@@ -44,14 +60,60 @@ class OfflineTabViewModel @Inject constructor(
 
     fun refresh() {
         viewModelScope.launch {
-            val state = withContext(Dispatchers.IO) {
+            val built = withContext(Dispatchers.IO) {
                 val files = offlineFavoritesStore.files(context)
+                val ratings = ratingStore.allRatings()
                 OfflineTabState(
-                    items = files.map { it.toOfflineLocalWallpaper() },
+                    items = files.map { file ->
+                        val wallpaper = file.toOfflineLocalWallpaper()
+                        val original = offlineFavoritesStore.originalOf(file)
+                        val source = original?.first ?: Source.LOCAL
+                        val id = original?.second ?: wallpaper.id
+                        OfflineItem(
+                            wallpaper = wallpaper,
+                            source = source,
+                            originalId = id,
+                            stars = ratings[ratingKey(source, id)] ?: 0,
+                        )
+                    },
+                    recent = ratingStore.recent(),
+                    ratings = ratings,
+                    removeAfterSets = ratingStore.removeAfterSets(),
                     bytes = files.sumOf { it.length() },
                 )
             }
-            _state.value = _state.value.copy(items = state.items, bytes = state.bytes)
+            _state.update { current ->
+                built.copy(
+                    running = current.running,
+                    done = current.done,
+                    total = current.total,
+                    message = current.message,
+                )
+            }
+        }
+    }
+
+    fun rate(source: Source, id: String, stars: Int) {
+        viewModelScope.launch {
+            ratingStore.setStars(source, id, stars)
+            refresh()
+        }
+    }
+
+    fun setRemoveAfter(sets: Int) {
+        viewModelScope.launch {
+            ratingStore.setRemoveAfterSets(sets)
+            refresh()
+        }
+    }
+
+    /** Removes the offline copy only. The favorite stays in Collections. */
+    fun delete(item: OfflineItem) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                item.wallpaper.id.toUri().path?.let { offlineFavoritesStore.deleteCopy(File(it)) }
+            }
+            refresh()
         }
     }
 
@@ -73,16 +135,6 @@ class OfflineTabViewModel @Inject constructor(
                     message = "Saved ${summary.saved}, already saved ${summary.skipped}, " +
                         "failed ${summary.failed}",
                 )
-            }
-            refresh()
-        }
-    }
-
-    /** Removes the offline copy only. The favorite stays in Collections. */
-    fun delete(wallpaper: Wallpaper) {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                wallpaper.id.toUri().path?.let { File(it).delete() }
             }
             refresh()
         }

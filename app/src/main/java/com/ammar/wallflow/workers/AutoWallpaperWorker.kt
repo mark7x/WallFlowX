@@ -63,6 +63,7 @@ import com.ammar.wallflow.extensions.isInDefaultOrientation
 import com.ammar.wallflow.extensions.isSystemInDarkTheme
 import com.ammar.wallflow.extensions.notificationManager
 import com.ammar.wallflow.extensions.parseMimeType
+import com.ammar.wallflow.data.rating.WallpaperRatingStore
 import com.ammar.wallflow.extensions.setWallpaper
 import com.ammar.wallflow.extensions.workManager
 import com.ammar.wallflow.model.AutoWallpaperHistory
@@ -122,6 +123,7 @@ class AutoWallpaperWorker @AssistedInject constructor(
     private val booruPostsClient: BooruPostsClient,
     private val favoritesRepository: FavoritesRepository,
     private val offlineFavoritesStore: OfflineFavoritesStore,
+    private val wallpaperRatingStore: WallpaperRatingStore,
     private val localWallpapersRepository: LocalWallpapersRepository,
     private val lightDarkRepository: LightDarkRepository,
 ) : CoroutineWorker(
@@ -452,6 +454,7 @@ class AutoWallpaperWorker @AssistedInject constructor(
             nextWallpaper = nextWallpaper,
             targets = targets,
         )
+        if (applied) wallpaperRatingStore.recordSet(nextWallpaper)
         return if (applied) {
             autoWallpaperHistoryRepository.addHistory(
                 AutoWallpaperHistory(

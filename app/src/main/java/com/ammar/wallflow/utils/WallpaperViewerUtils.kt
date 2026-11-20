@@ -1,5 +1,8 @@
 package com.ammar.wallflow.utils
 
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
+import com.ammar.wallflow.data.rating.wallpaperRatingStore
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -72,6 +75,7 @@ fun applyWallpaper(
     viewModel: WallpaperViewerViewModel,
     wallpaper: Wallpaper,
 ) {
+    viewModel.viewModelScope.launch { wallpaperRatingStore(context).recordSet(wallpaper) }
     fun startActivity(uri: Uri) {
         context.startActivity(
             Intent().apply {

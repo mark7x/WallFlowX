@@ -32,6 +32,7 @@ data class DownloadSummary(
  * isn't written to MediaStore. A `.nomedia` file is also added as a second guard.
  */
 @Singleton
+private const val SIDECAR_EXT = ".src"
 private const val RATE_LIMIT_PAUSE_MS = 30_000L
 
 class OfflineFavoritesStore @Inject constructor(
@@ -62,7 +63,7 @@ class OfflineFavoritesStore @Inject constructor(
     /** Every saved copy, newest first. Ignores the .nomedia marker. */
     fun files(context: Context): List<File> =
         directory(context).listFiles()
-            ?.filter { it.isFile && it.name != ".nomedia" }
+            ?.filter { it.isFile && it.name != ".nomedia" && !it.name.endsWith(SIDECAR_EXT) }
             ?.sortedByDescending { it.lastModified() }
             .orEmpty()
 
@@ -71,12 +72,46 @@ class OfflineFavoritesStore @Inject constructor(
         withContext(Dispatchers.IO) {
             val target = File(directory(context), fileName(wallpaper))
             if (target.exists() && target.length() > 0) return@withContext true
-            download(wallpaper.data, target)
+            val ok = download(wallpaper.data, target)
+            if (ok) writeSource(target, wallpaper.source, wallpaper.id)
+            ok
         }
 
     /** Removes one offline copy. Returns true when a file was deleted. */
-    fun removeOne(context: Context, wallpaper: DownloadableWallpaper): Boolean =
-        existingFile(context, wallpaper)?.delete() ?: false
+    fun removeOne(context: Context, wallpaper: DownloadableWallpaper): Boolean {
+        val file = existingFile(context, wallpaper) ?: return false
+        sidecarOf(file).delete()
+        return file.delete()
+    }
+
+    /** Deletes one copy and its source record. */
+    fun deleteCopy(file: File) {
+        sidecarOf(file).delete()
+        file.delete()
+    }
+
+    /** Records which favorite an offline copy belongs to, so ratings can follow it. */
+    fun writeSource(target: File, source: Source, id: String) {
+        sidecarOf(target).writeText("${source.name}\n$id")
+    }
+
+    /** The favorite an offline copy belongs to, or null when it was saved before this was tracked. */
+    fun originalOf(file: File): Pair<Source, String>? {
+        val lines = sidecarOf(file).takeIf { it.exists() }?.readLines() ?: return null
+        if (lines.size < 2) return null
+        val source = runCatching { Source.valueOf(lines[0]) }.getOrNull() ?: return null
+        return source to lines[1]
+    }
+
+    /** Removes the offline copy of a favorite, when one exists. */
+    fun removeByOriginal(context: Context, source: Source, id: String): Boolean {
+        val copies = directory(context).listFiles().orEmpty()
+            .filter { it.isFile && !it.name.endsWith(SIDECAR_EXT) && originalOf(it) == (source to id) }
+        copies.forEach { deleteCopy(it) }
+        return copies.isNotEmpty()
+    }
+
+    private fun sidecarOf(file: File) = File(file.parentFile, file.name + SIDECAR_EXT)
 
     /** Deletes every saved copy and returns how many files were removed. */
     fun deleteAll(context: Context): Int =
@@ -161,7 +196,12 @@ class OfflineFavoritesStore @Inject constructor(
             if (target.exists() && target.length() > 0) {
                 skipped++
             } else {
-                if (download(wallpaper.data, target)) saved++ else failed++
+                if (download(wallpaper.data, target)) {
+                    saved++
+                    writeSource(target, wallpaper.source, wallpaper.id)
+                } else {
+                    failed++
+                }
                 // Pause after each real download, so sites don't block the burst.
                 if (index < wallpapers.lastIndex) delay(pauseMs)
             }
