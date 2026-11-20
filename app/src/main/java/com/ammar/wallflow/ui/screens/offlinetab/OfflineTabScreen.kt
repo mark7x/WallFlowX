@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -37,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -123,19 +125,22 @@ fun OfflineTabScreen(
                 ),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = stringResource(R.string.remove_after_label),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                listOf(1, 2).forEach { sets ->
-                    FilterChip(
-                        selected = state.removeAfterSets == sets,
-                        onClick = { viewModel.setRemoveAfter(sets) },
-                        label = { Text(text = sets.toString()) },
-                        modifier = Modifier.padding(end = 6.dp),
+            listOf(1, 2, 3, 4).forEach { stars ->
+                Column(modifier = Modifier.padding(vertical = 2.dp)) {
+                    Text(
+                        text = stringResource(R.string.remove_after_label, stars),
+                        style = MaterialTheme.typography.bodySmall,
                     )
+                    Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                        listOf(1, 2, 3, 5, 10).forEach { sets ->
+                            FilterChip(
+                                selected = state.limits[stars] == sets,
+                                onClick = { viewModel.setLimit(stars, sets) },
+                                label = { Text(text = sets.toString()) },
+                                modifier = Modifier.padding(end = 6.dp),
+                            )
+                        }
+                    }
                 }
             }
             OfflineDelaySetting(modifier = Modifier.padding(vertical = 4.dp))
@@ -275,7 +280,6 @@ fun OfflineTabScreen(
     rating?.let { target ->
         RatingDialog(
             current = target.stars,
-            removeAfterSets = state.removeAfterSets,
             onRate = { stars -> viewModel.rate(target.source, target.id, stars) },
             onDismiss = { rating = null },
             onDelete = target.item?.let { item -> { pendingDelete = item } },

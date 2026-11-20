@@ -502,7 +502,7 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="offline_delay_label">Pause between downloads: %1$.1f s</string>
     <string name="offline_delay_desc">Wallhaven can block fast bursts of downloads. Raise the pause if downloads start failing.</string>
     <string name="rate_wallpaper">Rate this wallpaper</string>
-    <string name="rating_help">5 stars are never removed. A 1-star favorite is removed after %1$d set(s), with its offline copy.</string>
-    <string name="remove_after_label">1-star removed after</string>
+    <string name="rating_help">5 stars are never removed. Other ratings are removed from favorites and offline after the sets chosen in the Offline tab.</string>
+    <string name="remove_after_label">%1$d★ removed after sets</string>
     <string name="recent_title">Recent, last 10 set</string>
 </resources>

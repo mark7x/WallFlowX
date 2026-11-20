@@ -22,7 +22,8 @@ import kotlinx.serialization.json.Json
 
 const val MAX_STARS = 5
 const val RECENT_LIMIT = 10
-const val DEFAULT_REMOVE_AFTER_SETS = 2
+/** Sets before a rated favorite is removed. 5 stars have no limit. */
+val DEFAULT_LIMITS: Map<Int, Int> = mapOf(1 to 2, 2 to 3, 3 to 5, 4 to 10)
 
 fun ratingKey(source: Source, id: String) = "${source.name}:$id"
 
@@ -41,13 +42,13 @@ data class RecentSet(
 data class RatingFile(
     val ratings: Map<String, RatingEntry> = emptyMap(),
     val recent: List<RecentSet> = emptyList(),
-    val removeAfterSets: Int = DEFAULT_REMOVE_AFTER_SETS,
+    val limits: Map<Int, Int> = DEFAULT_LIMITS,
 )
 
 /**
  * Star ratings from 1 to 5 and the last [RECENT_LIMIT] set wallpapers. A 1-star favorite is
- * removed from favorites and from its offline copy once it has been set [RatingFile.removeAfterSets]
- * times. Ratings of 2 to 5 stars are never removed.
+ * removed from favorites and from its offline copy once it has been set enough times for its stars
+ * (see [RatingFile.limits]). 5 stars are never removed.
  */
 @Singleton
 class WallpaperRatingStore @Inject constructor(
@@ -78,10 +79,11 @@ class WallpaperRatingStore @Inject constructor(
 
     suspend fun recent(): List<RecentSet> = locked { it.recent }
 
-    suspend fun removeAfterSets(): Int = locked { it.removeAfterSets }
+    suspend fun limits(): Map<Int, Int> = locked { it.limits }
 
-    suspend fun setRemoveAfterSets(sets: Int) {
-        update { it.copy(removeAfterSets = sets.coerceIn(1, 2)) }
+    suspend fun setLimit(stars: Int, sets: Int) {
+        if (stars !in 1..4) return
+        update { it.copy(limits = it.limits + (stars to sets.coerceAtLeast(1))) }
     }
 
     suspend fun setStars(source: Source, id: String, stars: Int) {
@@ -119,11 +121,11 @@ class WallpaperRatingStore @Inject constructor(
     }
 
     private suspend fun pruneIfNeeded(source: Source, id: String) {
-        val (stars, sets, limit) = locked { data ->
+        val (sets, limit) = locked { data ->
             val entry = data.ratings[ratingKey(source, id)] ?: RatingEntry()
-            Triple(entry.stars, entry.sets, data.removeAfterSets)
+            entry.sets to data.limits[entry.stars]
         }
-        if (stars != 1 || sets < limit) return
+        if (limit == null || sets < limit) return
         favoritesRepository.removeFavorite(sourceId = id, source = source)
         withContext(Dispatchers.IO) { offlineFavoritesStore.removeByOriginal(context, source, id) }
     }

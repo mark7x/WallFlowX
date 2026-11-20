@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ammar.wallflow.data.offline.OfflineFavoritesStore
 import com.ammar.wallflow.data.offline.toOfflineLocalWallpaper
+import com.ammar.wallflow.data.rating.DEFAULT_LIMITS
 import com.ammar.wallflow.data.rating.RecentSet
 import com.ammar.wallflow.data.rating.WallpaperRatingStore
 import com.ammar.wallflow.data.rating.ratingKey
@@ -36,7 +37,7 @@ data class OfflineTabState(
     val items: List<OfflineItem> = emptyList(),
     val recent: List<RecentSet> = emptyList(),
     val ratings: Map<String, Int> = emptyMap(),
-    val removeAfterSets: Int = 2,
+    val limits: Map<Int, Int> = DEFAULT_LIMITS,
     val bytes: Long = 0L,
     val running: Boolean = false,
     val done: Int = 0,
@@ -78,7 +79,7 @@ class OfflineTabViewModel @Inject constructor(
                     },
                     recent = ratingStore.recent(),
                     ratings = ratings,
-                    removeAfterSets = ratingStore.removeAfterSets(),
+                    limits = ratingStore.limits(),
                     bytes = files.sumOf { it.length() },
                 )
             }
@@ -100,9 +101,9 @@ class OfflineTabViewModel @Inject constructor(
         }
     }
 
-    fun setRemoveAfter(sets: Int) {
+    fun setLimit(stars: Int, sets: Int) {
         viewModelScope.launch {
-            ratingStore.setRemoveAfterSets(sets)
+            ratingStore.setLimit(stars, sets)
             refresh()
         }
     }

@@ -13,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -21,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.ammar.wallflow.R
-import com.ammar.wallflow.data.rating.DEFAULT_REMOVE_AFTER_SETS
 import com.ammar.wallflow.data.rating.MAX_STARS
 import com.ammar.wallflow.data.rating.ratingKey
 import com.ammar.wallflow.data.rating.wallpaperRatingStore
@@ -32,7 +30,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun RatingDialog(
     current: Int,
-    removeAfterSets: Int,
     onRate: (Int) -> Unit,
     onDismiss: () -> Unit,
     onDelete: (() -> Unit)? = null,
@@ -59,7 +56,7 @@ fun RatingDialog(
                     }
                 }
                 Text(
-                    text = stringResource(R.string.rating_help, removeAfterSets),
+                    text = stringResource(R.string.rating_help),
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
@@ -90,9 +87,6 @@ fun ViewerRatingButton(wallpaper: Wallpaper) {
     val store = remember(context) { wallpaperRatingStore(context) }
     var stars by remember { mutableStateOf(0) }
     var open by remember { mutableStateOf(false) }
-    val removeAfter by produceState(initialValue = DEFAULT_REMOVE_AFTER_SETS) {
-        value = store.removeAfterSets()
-    }
     val key = ratingKey(wallpaper.source, wallpaper.id)
     LaunchedEffect(key) {
         stars = store.allRatings()[key] ?: 0
@@ -106,7 +100,6 @@ fun ViewerRatingButton(wallpaper: Wallpaper) {
     if (open) {
         RatingDialog(
             current = stars,
-            removeAfterSets = removeAfter,
             onRate = { n ->
                 stars = n
                 scope.launch { store.setStars(wallpaper.source, wallpaper.id, n) }
