@@ -69,7 +69,7 @@ class WallpaperRatingStore @Inject constructor(
 
     private suspend fun update(block: (RatingFile) -> RatingFile) {
         withContext(Dispatchers.IO) {
-            mutex.withLock { file.writeText(json.encodeToString(block(read()))) }
+            mutex.withLock { file.writeText(json.encodeToString(RatingFile.serializer(), block(read()))) }
         }
     }
 
