@@ -211,6 +211,15 @@ class FavoritesRepository @Inject constructor(
         getWallpaperFromEntity(context, entity)
     }
 
+    /** Every favorite whose saved data can be loaded. Used when the ordered queries find nothing. */
+    suspend fun getAllWallpapers(
+        context: Context,
+    ): List<com.ammar.wallflow.model.Wallpaper> = withContext(ioDispatcher) {
+        favoriteDao.getAll().mapNotNull { entity ->
+            getWallpaperFromEntity(context, entity) as? com.ammar.wallflow.model.Wallpaper
+        }
+    }
+
     /** Favorites that can be downloaded (LOCAL wallpapers are already on the device). */
     suspend fun getDownloadableWallpapers(
         context: Context,

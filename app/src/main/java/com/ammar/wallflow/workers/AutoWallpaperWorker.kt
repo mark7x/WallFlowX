@@ -806,10 +806,7 @@ class AutoWallpaperWorker @AssistedInject constructor(
      * A favorite that was never set comes first. Otherwise the one set longest ago is used.
      */
     private suspend fun getOfflineFavoriteWallpaper(): Wallpaper? {
-        val lastSet = autoWallpaperHistoryRepository.getAll()
-            .filter { it.sourceChoice == SourceChoice.FAVORITES }
-            .groupBy { it.source to it.sourceId }
-            .mapValues { entry -> entry.value.maxOf { it.setOn } }
+        val lastSet = lastSetByFavorite()
         return favoritesRepository.getDownloadableWallpapers(context)
             .filter { candidate ->
                 badWallpapers.none { it.id == candidate.id && it.source == candidate.source }
@@ -826,7 +823,27 @@ class AutoWallpaperWorker @AssistedInject constructor(
     ) ?: favoritesRepository.getByOldestSetOn(
         context = context,
         excluding = badWallpapers,
-    )
+    ) ?: getAnyFavoriteWallpaper()
+
+    /**
+     * Fallback when the database queries return nothing usable, for example when the
+     * first picked favorite's saved data is missing. Tries every loadable favorite,
+     * preferring the one set longest ago.
+     */
+    private suspend fun getAnyFavoriteWallpaper(): Wallpaper? {
+        val lastSet = lastSetByFavorite()
+        return favoritesRepository.getAllWallpapers(context)
+            .filter { candidate ->
+                badWallpapers.none { it.id == candidate.id && it.source == candidate.source }
+            }
+            .shuffled()
+            .minWithOrNull(compareBy { lastSet[it.source to it.id] })
+    }
+
+    private suspend fun lastSetByFavorite() = autoWallpaperHistoryRepository.getAll()
+        .filter { it.sourceChoice == SourceChoice.FAVORITES }
+        .groupBy { it.source to it.sourceId }
+        .mapValues { entry -> entry.value.maxOf { it.setOn } }
 
     private suspend fun getNextLocalWallpaper(target: WallpaperTarget): Wallpaper? {
         val uris = when (target) {
