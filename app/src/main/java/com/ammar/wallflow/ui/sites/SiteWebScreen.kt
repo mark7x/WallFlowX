@@ -1,5 +1,8 @@
 package com.ammar.wallflow.ui.sites
 
+import android.webkit.RenderProcessGoneDetail
+import android.webkit.WebResourceRequest
+import androidx.compose.runtime.key
 import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.Looper
@@ -69,6 +72,7 @@ fun SiteWebScreen(
     var mode by remember { mutableStateOf<String?>(null) }
     val modeRef = remember { AtomicReference<String?>(null) }
     var webView by remember { mutableStateOf<WebView?>(null) }
+    var reloadKey by remember { mutableStateOf(0) }
 
     LaunchedEffect(profileId) { viewModel.load(profileId) }
     LaunchedEffect(mode, webView) {
@@ -159,6 +163,7 @@ fun SiteWebScreen(
             }
         },
     ) { padding ->
+        key(reloadKey) {
         AndroidView(
             modifier = Modifier
                 .padding(padding)
@@ -170,6 +175,26 @@ fun SiteWebScreen(
                     CookieManager.getInstance().setAcceptCookie(true)
                     addJavascriptInterface(SiteBridge { json -> viewModel.onPick(json) }, "WallFlowPick")
                     webViewClient = object : WebViewClient() {
+                        // Ads often open app links (intent://, market://). Only web pages load here.
+                        override fun shouldOverrideUrlLoading(
+                            view: WebView?,
+                            request: WebResourceRequest?,
+                        ): Boolean {
+                            val scheme = request?.url?.scheme.orEmpty()
+                            return scheme != "http" && scheme != "https"
+                        }
+
+                        // If the page's process dies (common with heavy ad pages), a WebView that does
+                        // not handle this takes the whole app down. Replace the view instead.
+                        override fun onRenderProcessGone(
+                            view: WebView?,
+                            detail: RenderProcessGoneDetail?,
+                        ): Boolean {
+                            view?.destroy()
+                            reloadKey++
+                            return true
+                        }
+
                         override fun onPageFinished(view: WebView, pageUrl: String?) {
                             view.evaluateJavascript(SiteScripts.PICKER, null)
                             view.evaluateJavascript(SiteScripts.modeScript(modeRef.get()), null)
@@ -180,5 +205,6 @@ fun SiteWebScreen(
                 }
             },
         )
+        }
     }
 }

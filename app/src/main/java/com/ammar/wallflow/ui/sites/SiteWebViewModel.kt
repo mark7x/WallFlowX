@@ -1,5 +1,7 @@
 package com.ammar.wallflow.ui.sites
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.ammar.wallflow.sites.SiteRenderedCache
 import android.content.Context
 import androidx.lifecycle.ViewModel
@@ -88,7 +90,9 @@ class SiteWebViewModel @Inject constructor(
     fun scanPage(html: String, pageUrl: String) {
         viewModelScope.launch {
             val current = _profile.value ?: return@launch
-            val found = grabber.renderedItemsIn(current, html, pageUrl)
+            val found = withContext(Dispatchers.Default) {
+                grabber.renderedItemsIn(current, html, pageUrl)
+            }
             if (found.isEmpty()) {
                 _message.value = context.getString(R.string.site_scan_none)
                 return@launch
@@ -101,7 +105,7 @@ class SiteWebViewModel @Inject constructor(
     fun harvestTags(html: String) {
         viewModelScope.launch {
             val current = _profile.value ?: return@launch
-            val tags = grabber.tagsIn(current, html)
+            val tags = withContext(Dispatchers.Default) { grabber.tagsIn(current, html) }
             if (tags.isEmpty()) {
                 _message.value = context.getString(R.string.site_no_tags)
                 return@launch
