@@ -1,5 +1,6 @@
 package com.ammar.wallflow.sites
 
+import kotlinx.serialization.Serializable
 import android.webkit.CookieManager
 import com.ammar.wallflow.sources.booru.BOORU_USER_AGENT
 import com.ammar.wallflow.sources.pacing.RequestPacer
@@ -12,6 +13,7 @@ import okhttp3.Request
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 
+@Serializable
 data class SiteItem(val postUrl: String?, val thumbUrl: String?)
 
 /**

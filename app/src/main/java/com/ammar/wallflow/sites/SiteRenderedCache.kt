@@ -1,18 +1,47 @@
 package com.ammar.wallflow.sites
 
-import java.util.concurrent.ConcurrentHashMap
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
+import java.io.File
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
 
 /**
  * Items taken from a page as the in-app browser rendered it. Used for sites whose
  * listings load with JavaScript, which a plain HTTP request cannot read.
- * Kept in memory, so it is refilled by scanning again after the app restarts.
+ * Each site keeps its own file, so scanned items survive an app restart.
  */
-object SiteRenderedCache {
-    private val items = ConcurrentHashMap<String, List<SiteItem>>()
+@Singleton
+class SiteRenderedCache @Inject constructor(
+    @ApplicationContext private val context: Context,
+) {
+    private val mutex = Mutex()
+    private val json = Json { ignoreUnknownKeys = true }
+    private val listSerializer = ListSerializer(SiteItem.serializer())
 
-    fun put(profileId: String, found: List<SiteItem>) {
-        items[profileId] = found
+    private fun fileFor(profileId: String): File {
+        val dir = File(context.filesDir, "site_scans").apply { mkdirs() }
+        return File(dir, "$profileId.json")
     }
 
-    fun get(profileId: String): List<SiteItem> = items[profileId].orEmpty()
+    suspend fun put(profileId: String, found: List<SiteItem>) = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            fileFor(profileId).writeText(json.encodeToString(listSerializer, found))
+        }
+    }
+
+    suspend fun get(profileId: String): List<SiteItem> = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            val file = fileFor(profileId)
+            runCatching {
+                if (file.exists()) json.decodeFromString(listSerializer, file.readText()) else emptyList()
+            }.getOrDefault(emptyList())
+        }
+    }
 }

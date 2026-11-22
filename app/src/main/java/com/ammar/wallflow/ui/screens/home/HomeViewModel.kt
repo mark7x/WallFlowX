@@ -1,5 +1,8 @@
 package com.ammar.wallflow.ui.screens.home
 
+import com.ammar.wallflow.sites.SiteProfile
+import com.ammar.wallflow.sites.SiteProfileStore
+import kotlinx.coroutines.flow.StateFlow
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -91,6 +94,7 @@ class HomeViewModel @Inject constructor(
     private val redditRepository: RedditRepository,
     private val booruRepository: BooruRepository,
     private val boardsStore: BoardsStore,
+    private val siteProfileStore: SiteProfileStore,
     private val booruStyleDetector: BooruStyleDetector,
     @ApplicationContext private val context: Context,
     private val appPreferencesRepository: AppPreferencesRepository,
@@ -126,6 +130,21 @@ class HomeViewModel @Inject constructor(
             }
         }
     }.filterNotNull().distinctUntilChanged()
+
+    val uiState: StateFlow<HomeUiState> = combine(
+        boardUiState,
+        siteProfileStore.profiles,
+    ) { state, sites ->
+        state.copy(taughtSites = sites.toImmutableList())
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = HomeUiState(),
+    )
+
+    init {
+        viewModelScope.launch { siteProfileStore.refresh() }
+    }
 
     /** True when at least one website is saved. */
     fun hasBoards(): Boolean = boardsStore.boards.value.isNotEmpty()
@@ -258,7 +277,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    val uiState = com.ammar.wallflow.utils.combine(
+    private val boardUiState = com.ammar.wallflow.utils.combine(
         popularTags,
         homeSearchFlow,
         appPreferencesRepository.appPreferencesFlow,
@@ -572,6 +591,7 @@ data class HomeUiState(
     val quickActionsWallpaper: Wallpaper? = null,
     val redditSubredditFilter: RedditSubredditFilter = RedditSubredditFilter(),
     val websites: ImmutableList<SavedBoard> = persistentListOf(),
+    val taughtSites: ImmutableList<SiteProfile> = persistentListOf(),
     val selectedBoardUrl: String? = null,
     val websiteAddRunning: Boolean = false,
     val websiteAddError: String? = null,

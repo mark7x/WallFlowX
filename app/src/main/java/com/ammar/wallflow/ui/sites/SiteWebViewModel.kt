@@ -55,6 +55,7 @@ class SiteWebViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val store: SiteProfileStore,
     private val grabber: SiteGrabber,
+    private val renderedCache: SiteRenderedCache,
 ) : ViewModel() {
     private val _profile = MutableStateFlow<SiteProfile?>(null)
     val profile: StateFlow<SiteProfile?> = _profile.asStateFlow()
@@ -97,7 +98,7 @@ class SiteWebViewModel @Inject constructor(
                 _message.value = context.getString(R.string.site_scan_none)
                 return@launch
             }
-            SiteRenderedCache.put(current.id, found)
+            renderedCache.put(current.id, found)
             _message.value = context.getString(R.string.site_scanned, found.size)
         }
     }

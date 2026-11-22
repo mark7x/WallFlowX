@@ -1,5 +1,8 @@
 package com.ammar.wallflow.sites
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
@@ -21,6 +24,14 @@ class SiteProfileStore @Inject constructor(
     private val mutex = Mutex()
     private val json = Json { ignoreUnknownKeys = true }
     private val listSerializer = ListSerializer(SiteProfile.serializer())
+    private val _profiles = MutableStateFlow<List<SiteProfile>>(emptyList())
+
+    /** Taught sites, kept current after every save. Call [refresh] once at startup. */
+    val profiles: StateFlow<List<SiteProfile>> = _profiles.asStateFlow()
+
+    suspend fun refresh() {
+        _profiles.value = all()
+    }
 
     suspend fun all(): List<SiteProfile> = withContext(Dispatchers.IO) {
         mutex.withLock { read() }
@@ -54,7 +65,9 @@ class SiteProfileStore @Inject constructor(
     private suspend fun update(block: (List<SiteProfile>) -> List<SiteProfile>) {
         withContext(Dispatchers.IO) {
             mutex.withLock {
-                file.writeText(json.encodeToString(listSerializer, block(read())))
+                val next = block(read())
+                file.writeText(json.encodeToString(listSerializer, next))
+                _profiles.value = next
             }
         }
     }

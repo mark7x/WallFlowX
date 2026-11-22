@@ -27,6 +27,7 @@ data class BrowseState(
 class SiteDetailViewModel @Inject constructor(
     private val store: SiteProfileStore,
     private val grabber: SiteGrabber,
+    private val renderedCache: SiteRenderedCache,
 ) : ViewModel() {
     private val _profile = MutableStateFlow<SiteProfile?>(null)
     val profile: StateFlow<SiteProfile?> = _profile.asStateFlow()
@@ -42,7 +43,7 @@ class SiteDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _profile.value = store.get(id)
             _state.update { s ->
-                if (s.items.isEmpty()) s.copy(items = SiteRenderedCache.get(id)) else s
+                if (s.items.isEmpty()) s.copy(items = renderedCache.get(id)) else s
             }
         }
     }

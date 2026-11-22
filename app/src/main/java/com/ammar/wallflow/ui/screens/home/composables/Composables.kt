@@ -1,5 +1,6 @@
 package com.ammar.wallflow.ui.screens.home.composables
 
+import com.ammar.wallflow.sites.SiteProfile
 import androidx.compose.foundation.horizontalScroll
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
@@ -69,6 +70,8 @@ internal fun LazyStaggeredGridScope.header(
     websites: ImmutableList<SavedBoard> = persistentListOf(),
     selectedWebsite: String? = null,
     onWebsiteClick: (SavedBoard) -> Unit = {},
+    sites: ImmutableList<SiteProfile> = persistentListOf(),
+    onSiteClick: (SiteProfile) -> Unit = {},
 ) {
     item(span = StaggeredGridItemSpan.FullLine) {
         SourcesRow(
@@ -79,6 +82,8 @@ internal fun LazyStaggeredGridScope.header(
             websites = websites,
             selectedWebsite = selectedWebsite,
             onWebsiteClick = onWebsiteClick,
+            sites = sites,
+            onSiteClick = onSiteClick,
         )
     }
     sourceHeader?.invoke(this)
@@ -147,6 +152,8 @@ internal fun SourcesRow(
     websites: ImmutableList<SavedBoard> = persistentListOf(),
     selectedWebsite: String? = null,
     onWebsiteClick: (SavedBoard) -> Unit = {},
+    sites: ImmutableList<SiteProfile> = persistentListOf(),
+    onSiteClick: (SiteProfile) -> Unit = {},
 ) {
     Row(
         modifier = modifier.horizontalScroll(rememberScrollState()),
@@ -172,6 +179,12 @@ internal fun SourcesRow(
                     label = website.displayName(),
                     selected = selected == OnlineSource.BOORU && website.baseUrl == selectedWebsite,
                     onClick = { onWebsiteClick(website) },
+                )
+            }
+            sites.forEach { site ->
+                WebsiteChip(
+                    label = site.name,
+                    onClick = { onSiteClick(site) },
                 )
             }
         }

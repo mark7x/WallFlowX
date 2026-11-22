@@ -1,6 +1,7 @@
 package com.ammar.wallflow.ui.screens.home
 
 
+import com.ammar.wallflow.destinations.SiteDetailScreenDestination
 import com.ammar.wallflow.model.search.BooruSearch
 
 import androidx.compose.foundation.layout.Box
@@ -371,6 +372,10 @@ fun HomeScreen(
                         websites = uiState.websites,
                         selectedWebsite = uiState.selectedBoardUrl ?: uiState.websites.firstOrNull()?.baseUrl,
                         onWebsiteClick = { viewModel.selectWebsite(it.baseUrl) },
+                        sites = uiState.taughtSites,
+                        onSiteClick = { site ->
+                            rootNavController.navigate(SiteDetailScreenDestination(site.id).route)
+                        },
                         onManageSourcesClick = {
                             viewModel.showManageSourcesDialog(true)
                         },
