@@ -146,6 +146,15 @@ fun SiteWebScreen(
                     }) {
                         Text(text = stringResource(R.string.site_read_tags))
                     }
+                    TextButton(onClick = {
+                        webView?.evaluateJavascript("document.documentElement.outerHTML") { raw ->
+                            val html = runCatching { JSONTokener(raw).nextValue() as? String }
+                                .getOrNull()
+                            viewModel.scanPage(html.orEmpty(), webView?.url.orEmpty())
+                        }
+                    }) {
+                        Text(text = stringResource(R.string.site_scan))
+                    }
                 }
             }
         },

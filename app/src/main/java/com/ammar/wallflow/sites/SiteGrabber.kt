@@ -25,28 +25,31 @@ class SiteGrabber @Inject constructor(
 ) {
     suspend fun search(profile: SiteProfile, tags: String, page: Int): Result<List<SiteItem>> =
         runCatching {
-            val itemSelector = profile.itemSelector
-                ?: error("This site has no grid item learned yet.")
-            val doc = fetchDocument(profile.searchAddress(tags, page))
-            doc.select(itemSelector).mapNotNull { element ->
-                val link = if (element.tagName() == "a") {
-                    element.absUrl("href")
-                } else {
-                    element.selectFirst("a[href]")?.absUrl("href")
-                }?.takeIf { it.isNotBlank() }
-                val image = if (element.tagName() == "img") element else element.selectFirst("img")
-                val thumb = image?.let { img ->
-                    listOf(profile.thumbAttr, "data-src", "src")
-                        .map { img.absUrl(it) }
-                        .firstOrNull { it.isNotBlank() }
-                }
-                if (link == null && thumb == null) {
-                    null
-                } else {
-                    SiteItem(postUrl = link, thumbUrl = thumb)
-                }
-            }
+            itemsIn(profile, fetchDocument(profile.searchAddress(tags, page)))
         }
+
+    /** Items from a page the browser has already rendered. Works for JavaScript-driven sites. */
+    fun renderedItemsIn(profile: SiteProfile, html: String, pageUrl: String): List<SiteItem> =
+        runCatching { itemsIn(profile, Jsoup.parse(html, pageUrl)) }.getOrDefault(emptyList())
+
+    private fun itemsIn(profile: SiteProfile, doc: Document): List<SiteItem> {
+        val itemSelector = profile.itemSelector
+            ?: error("This site has no grid item learned yet.")
+        return doc.select(itemSelector).mapNotNull { element ->
+            val link = if (element.tagName() == "a") {
+                element.absUrl("href")
+            } else {
+                element.selectFirst("a[href]")?.absUrl("href")
+            }?.takeIf { it.isNotBlank() }
+            val image = if (element.tagName() == "img") element else element.selectFirst("img")
+            val thumb = image?.let { img ->
+                listOf(profile.thumbAttr, "data-src", "src")
+                    .map { img.absUrl(it) }
+                    .firstOrNull { it.isNotBlank() }
+            }
+            if (link == null && thumb == null) null else SiteItem(postUrl = link, thumbUrl = thumb)
+        }
+    }
 
     /** Tags on a page, read from its HTML with the learned tag selector. */
     fun tagsIn(profile: SiteProfile, html: String): List<String> {

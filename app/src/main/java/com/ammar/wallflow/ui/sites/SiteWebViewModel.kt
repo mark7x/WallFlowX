@@ -1,5 +1,6 @@
 package com.ammar.wallflow.ui.sites
 
+import com.ammar.wallflow.sites.SiteRenderedCache
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -80,6 +81,20 @@ class SiteWebViewModel @Inject constructor(
                 else -> R.string.site_label_tag
             }
             _message.value = context.getString(R.string.site_picked, context.getString(label))
+        }
+    }
+
+    /** Keeps the items this page shows, so the site's browse grid can show them. */
+    fun scanPage(html: String, pageUrl: String) {
+        viewModelScope.launch {
+            val current = _profile.value ?: return@launch
+            val found = grabber.renderedItemsIn(current, html, pageUrl)
+            if (found.isEmpty()) {
+                _message.value = context.getString(R.string.site_scan_none)
+                return@launch
+            }
+            SiteRenderedCache.put(current.id, found)
+            _message.value = context.getString(R.string.site_scanned, found.size)
         }
     }
 

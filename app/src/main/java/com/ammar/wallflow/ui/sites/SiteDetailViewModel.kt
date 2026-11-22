@@ -1,5 +1,6 @@
 package com.ammar.wallflow.ui.sites
 
+import com.ammar.wallflow.sites.SiteRenderedCache
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ammar.wallflow.sites.SiteItem
@@ -38,7 +39,12 @@ class SiteDetailViewModel @Inject constructor(
     private var job: Job? = null
 
     fun load(id: String) {
-        viewModelScope.launch { _profile.value = store.get(id) }
+        viewModelScope.launch {
+            _profile.value = store.get(id)
+            _state.update { s ->
+                if (s.items.isEmpty()) s.copy(items = SiteRenderedCache.get(id)) else s
+            }
+        }
     }
 
     fun onQueryChange(text: String) {

@@ -1,5 +1,6 @@
 package com.ammar.wallflow.ui.screens.crop
 
+import android.graphics.BitmapFactory
 import com.ammar.wallflow.data.crop.CropMemoryStore
 import com.ammar.wallflow.data.crop.NormalizedCrop
 import com.ammar.wallflow.data.crop.toNormalizedCrop
@@ -242,6 +243,33 @@ class CropViewModel(
         }
     }
 
+    /**
+     * The crop is measured on the cropper's copy of the image, which can be smaller than the
+     * original. The wallpaper is cut from the original, so scale the crop to its pixel size.
+     */
+    private fun originalSpaceRect(uri: Uri, cropRect: Rect, cropperSize: Size): Rect {
+        if (cropperSize.width <= 0f || cropperSize.height <= 0f) return cropRect
+        val original = runCatching {
+            application.contentResolver.openInputStream(uri)?.use { stream ->
+                val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeStream(stream, null, options)
+                if (options.outWidth > 0 && options.outHeight > 0) {
+                    Size(options.outWidth.toFloat(), options.outHeight.toFloat())
+                } else {
+                    null
+                }
+            }
+        }.getOrNull() ?: return cropRect
+        val sx = original.width / cropperSize.width
+        val sy = original.height / cropperSize.height
+        return Rect(
+            left = cropRect.left * sx,
+            top = cropRect.top * sy,
+            right = cropRect.right * sx,
+            bottom = cropRect.bottom * sy,
+        )
+    }
+
     private suspend fun setUri(uri: Uri) {
         val result = imageCropper.crop(
             uri = uri,
@@ -271,10 +299,11 @@ class CropViewModel(
         val display = state.displays.find {
             it.displayId == state.selectedDisplay?.displayId
         } ?: application.displayManager.getDisplay(Display.DEFAULT_DISPLAY)
+        val wallpaperRect = originalSpaceRect(uri, cropRect, state.imageSize)
         val applied = application.setWallpaper(
             display = display,
             uri = uri,
-            cropRect = cropRect,
+            cropRect = wallpaperRect,
             targets = state.wallpaperTargets,
         )
         if (applied && cropKey != null && state.crop) {
