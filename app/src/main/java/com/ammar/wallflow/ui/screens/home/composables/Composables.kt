@@ -1,8 +1,7 @@
 package com.ammar.wallflow.ui.screens.home.composables
 
+import androidx.compose.foundation.horizontalScroll
 import android.content.res.Configuration
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -150,10 +149,7 @@ internal fun SourcesRow(
     onWebsiteClick: (SavedBoard) -> Unit = {},
 ) {
     Row(
-        modifier = modifier.scrollable(
-            state = rememberScrollState(),
-            orientation = Orientation.Horizontal,
-        ),
+        modifier = modifier.horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
