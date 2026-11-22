@@ -131,21 +131,6 @@ class HomeViewModel @Inject constructor(
         }
     }.filterNotNull().distinctUntilChanged()
 
-    val uiState: StateFlow<HomeUiState> = combine(
-        boardUiState,
-        siteProfileStore.profiles,
-    ) { state, sites ->
-        state.copy(taughtSites = sites.toImmutableList())
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = HomeUiState(),
-    )
-
-    init {
-        viewModelScope.launch { siteProfileStore.refresh() }
-    }
-
     /** True when at least one website is saved. */
     fun hasBoards(): Boolean = boardsStore.boards.value.isNotEmpty()
 
@@ -340,6 +325,21 @@ class HomeViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = HomeUiState(),
     )
+
+    val uiState: StateFlow<HomeUiState> = combine(
+        boardUiState,
+        siteProfileStore.profiles,
+    ) { state, sites ->
+        state.copy(taughtSites = sites.toImmutableList())
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = HomeUiState(),
+    )
+
+    init {
+        viewModelScope.launch { siteProfileStore.refresh() }
+    }
 
     fun refresh() {
         viewModelScope.launch {
