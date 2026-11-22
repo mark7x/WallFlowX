@@ -60,6 +60,18 @@ class CropMemoryStore @Inject constructor(
         }
     }
 
+    /** Every saved crop, for backups. */
+    suspend fun exportAll(): Map<String, NormalizedCrop> = withContext(Dispatchers.IO) {
+        mutex.withLock { read() }
+    }
+
+    /** Merges crops from a backup. Backup values win for the same image. */
+    suspend fun importAll(entries: Map<String, NormalizedCrop>) = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            file.writeText(json.encodeToString(mapSerializer, read() + entries))
+        }
+    }
+
     private fun read(): Map<String, NormalizedCrop> = runCatching {
         if (file.exists()) json.decodeFromString(mapSerializer, file.readText()) else emptyMap()
     }.getOrDefault(emptyMap())

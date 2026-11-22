@@ -1,5 +1,7 @@
 package com.ammar.wallflow.ui.screens.backuprestore
 
+import com.ammar.wallflow.data.crop.CropMemoryStore
+import com.ammar.wallflow.sites.SiteProfileStore
 import com.ammar.wallflow.sources.booru.BoardsStore
 import com.ammar.wallflow.sources.booru.BooruFavoritesStore
 import com.ammar.wallflow.data.rating.WallpaperRatingStore
@@ -63,6 +65,8 @@ class BackupRestoreViewModel @Inject constructor(
     private val boardsStore: BoardsStore,
     private val booruFavoritesStore: BooruFavoritesStore,
     private val wallpaperRatingStore: WallpaperRatingStore,
+    private val siteProfileStore: SiteProfileStore,
+    private val cropMemoryStore: CropMemoryStore,
 ) : AndroidViewModel(
     application = application,
 ) {
@@ -171,6 +175,8 @@ class BackupRestoreViewModel @Inject constructor(
                 boardsStore = boardsStore,
                 booruFavoritesStore = booruFavoritesStore,
                 wallpaperRatingStore = wallpaperRatingStore,
+                siteProfileStore = siteProfileStore,
+                cropMemoryStore = cropMemoryStore,
             ) ?: return@launch
             try {
                 application.writeToUri(
@@ -239,6 +245,8 @@ class BackupRestoreViewModel @Inject constructor(
                     boardsStore = boardsStore,
                     booruFavoritesStore = booruFavoritesStore,
                     wallpaperRatingStore = wallpaperRatingStore,
+                    siteProfileStore = siteProfileStore,
+                    cropMemoryStore = cropMemoryStore,
                 )
                 localUiState.update {
                     it.copy(

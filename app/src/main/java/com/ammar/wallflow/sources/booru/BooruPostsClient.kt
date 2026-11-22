@@ -1,5 +1,6 @@
 package com.ammar.wallflow.sources.booru
 
+import com.ammar.wallflow.sources.pacing.RequestPacer
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +28,7 @@ data class BooruPost(
 class BooruPostsClient @Inject constructor(
     private val okHttpClient: OkHttpClient,
     private val boardsStore: BoardsStore,
-    private val pacer: BooruPacer,
+    private val pacer: RequestPacer,
 ) {
     suspend fun fetchPosts(
         style: BooruStyle,

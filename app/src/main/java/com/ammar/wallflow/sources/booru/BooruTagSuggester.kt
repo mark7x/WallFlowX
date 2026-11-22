@@ -1,5 +1,6 @@
 package com.ammar.wallflow.sources.booru
 
+import com.ammar.wallflow.sources.pacing.RequestPacer
 import java.net.URLEncoder
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -19,7 +20,7 @@ import okhttp3.Request
  */
 @Singleton
 class BooruTagSuggester @Inject constructor(
-    private val pacer: BooruPacer,
+    private val pacer: RequestPacer,
     private val okHttpClient: OkHttpClient,
     private val boardsStore: BoardsStore,
 ) {

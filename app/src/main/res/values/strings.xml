@@ -544,4 +544,6 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="site_label_item">grid item</string>
     <string name="site_label_image">full image</string>
     <string name="site_label_tag">tag</string>
+    <string name="sites_backup">Sites and crops</string>
+    <string name="no_sites_found">No sites or crops in this backup</string>
 </resources>

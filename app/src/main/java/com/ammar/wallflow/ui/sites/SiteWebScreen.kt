@@ -32,7 +32,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -70,7 +69,6 @@ fun SiteWebScreen(
     var mode by remember { mutableStateOf<String?>(null) }
     val modeRef = remember { AtomicReference<String?>(null) }
     var webView by remember { mutableStateOf<WebView?>(null) }
-    val context = LocalContext.current
 
     LaunchedEffect(profileId) { viewModel.load(profileId) }
     LaunchedEffect(mode, webView) {

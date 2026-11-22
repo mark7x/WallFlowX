@@ -1,4 +1,4 @@
-package com.ammar.wallflow.sources.booru
+package com.ammar.wallflow.sources.pacing
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -8,8 +8,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-/** The delay between requests to the same booru site, stored in SharedPreferences. */
-object BooruPacing {
+/** The delay between requests to the same site, stored in SharedPreferences. Used by booru and taught sites. */
+object RequestPacing {
     const val MIN_MS = 0L
     const val MAX_MS = 10_000L
     const val STEP_MS = 250L
@@ -35,7 +35,7 @@ object BooruPacing {
  * is paused for the time the site asked for in Retry-After (30 seconds if none).
  */
 @Singleton
-class BooruPacer @Inject constructor(
+class RequestPacer @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
     private val mutex = Mutex()
@@ -47,7 +47,7 @@ class BooruPacer @Inject constructor(
         val wait = mutex.withLock {
             val now = System.currentTimeMillis()
             val turn = maxOf(nextAllowedAt[host] ?: 0L, now)
-            nextAllowedAt[host] = turn + BooruPacing.delayMs(context)
+            nextAllowedAt[host] = turn + RequestPacing.delayMs(context)
             turn - now
         }
         if (wait > 0) delay(wait)

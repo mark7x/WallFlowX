@@ -2,7 +2,7 @@ package com.ammar.wallflow.sites
 
 import android.webkit.CookieManager
 import com.ammar.wallflow.sources.booru.BOORU_USER_AGENT
-import com.ammar.wallflow.sources.booru.BooruPacer
+import com.ammar.wallflow.sources.pacing.RequestPacer
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +21,7 @@ data class SiteItem(val postUrl: String?, val thumbUrl: String?)
 @Singleton
 class SiteGrabber @Inject constructor(
     private val okHttpClient: OkHttpClient,
-    private val pacer: BooruPacer,
+    private val pacer: RequestPacer,
 ) {
     suspend fun search(profile: SiteProfile, tags: String, page: Int): Result<List<SiteItem>> =
         runCatching {

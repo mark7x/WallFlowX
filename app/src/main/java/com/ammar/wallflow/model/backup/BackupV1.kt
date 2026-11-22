@@ -1,5 +1,7 @@
 package com.ammar.wallflow.model.backup
 
+import com.ammar.wallflow.data.crop.NormalizedCrop
+import com.ammar.wallflow.sites.SiteProfile
 import com.ammar.wallflow.sources.booru.SavedBoard
 
 import android.net.Uri
@@ -32,6 +34,10 @@ data class BackupV1(
     val booruFavorites: Map<String, StoredBooruPost>? = null,
     /** Star ratings, set counts, limits and the recent list. */
     val ratings: RatingFile? = null,
+    /** Taught sites (learned selectors and tag counts). */
+    val sites: List<SiteProfile>? = null,
+    /** Crops chosen per image, keyed by wallpaper. */
+    val crops: Map<String, NormalizedCrop>? = null,
 ) : Backup {
     override fun getRestoreSummary(file: Uri) = RestoreSummary(
         file = file,
@@ -41,6 +47,7 @@ data class BackupV1(
         viewed = viewed?.size,
         boards = boards?.size,
         ratings = ratings?.ratings?.size,
+        sites = (sites?.size ?: 0) + (crops?.size ?: 0),
         savedSearches = (wallhaven?.savedSearches?.size ?: 0) + (reddit?.savedSearches?.size ?: 0),
         backup = this,
     )

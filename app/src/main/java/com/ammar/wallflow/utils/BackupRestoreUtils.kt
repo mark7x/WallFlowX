@@ -1,5 +1,7 @@
 package com.ammar.wallflow.utils
 
+import com.ammar.wallflow.data.crop.CropMemoryStore
+import com.ammar.wallflow.sites.SiteProfileStore
 import com.ammar.wallflow.model.search.BooruFilters
 
 import com.ammar.wallflow.sources.booru.BoardsStore
@@ -71,6 +73,8 @@ suspend fun getBackupV1Json(
     boardsStore: BoardsStore,
     booruFavoritesStore: BooruFavoritesStore,
     wallpaperRatingStore: WallpaperRatingStore,
+    siteProfileStore: SiteProfileStore,
+    cropMemoryStore: CropMemoryStore,
 ): String? {
     if (!options.atleastOneChosen) {
         return null
@@ -189,6 +193,8 @@ suspend fun getBackupV1Json(
     val backupV1 = BackupV1(
         booruFavorites = booruFavorites,
         ratings = ratings,
+        sites = if (options.sites) siteProfileStore.all() else null,
+        crops = if (options.sites) cropMemoryStore.exportAll().takeIf { it.isNotEmpty() } else null,
         preferences = appPreferences,
         favorites = favorites,
         lightDark = lightDarkEntities,
@@ -243,6 +249,8 @@ suspend fun restoreBackup(
     boardsStore: BoardsStore,
     booruFavoritesStore: BooruFavoritesStore,
     wallpaperRatingStore: WallpaperRatingStore,
+    siteProfileStore: SiteProfileStore,
+    cropMemoryStore: CropMemoryStore,
 ) {
     when (backup.version) {
         1 -> restoreBackupV1(
@@ -261,6 +269,8 @@ suspend fun restoreBackup(
             boardsStore = boardsStore,
             booruFavoritesStore = booruFavoritesStore,
             wallpaperRatingStore = wallpaperRatingStore,
+            siteProfileStore = siteProfileStore,
+            cropMemoryStore = cropMemoryStore,
         )
         else -> throw InvalidJsonException("Invalid version!")
     }
@@ -282,6 +292,8 @@ suspend fun restoreBackupV1(
     boardsStore: BoardsStore,
     booruFavoritesStore: BooruFavoritesStore,
     wallpaperRatingStore: WallpaperRatingStore,
+    siteProfileStore: SiteProfileStore,
+    cropMemoryStore: CropMemoryStore,
 ) {
     if (!options.atleastOneChosen) {
         return
@@ -368,6 +380,10 @@ suspend fun restoreBackupV1(
     }
     if (options.ratings) {
         backup.ratings?.let { wallpaperRatingStore.importData(it) }
+    }
+    if (options.sites) {
+        backup.sites?.let { siteProfileStore.importAll(it) }
+        backup.crops?.let { cropMemoryStore.importAll(it) }
     }
     if (options.viewed && backup.viewed?.isNotEmpty() == true) {
         viewedRepository.insertEntities(backup.viewed)

@@ -46,6 +46,11 @@ class SiteProfileStore @Inject constructor(
         }
     }
 
+    /** Merges taught sites from a backup. Backup values win for the same site. */
+    suspend fun importAll(profiles: List<SiteProfile>) = update { current ->
+        current.filterNot { old -> profiles.any { it.id == old.id } } + profiles
+    }
+
     private suspend fun update(block: (List<SiteProfile>) -> List<SiteProfile>) {
         withContext(Dispatchers.IO) {
             mutex.withLock {

@@ -13,14 +13,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.ammar.wallflow.R
-import com.ammar.wallflow.sources.booru.BooruPacing
+import com.ammar.wallflow.sources.pacing.RequestPacing
 
 /** Slider for the pause between requests to the same booru site. Saves when the finger lifts. */
 @Composable
-fun BooruPacingSetting(modifier: Modifier = Modifier) {
+fun RequestPacingSetting(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    var delayMs by remember { mutableStateOf(BooruPacing.delayMs(context)) }
-    val steps = ((BooruPacing.MAX_MS - BooruPacing.MIN_MS) / BooruPacing.STEP_MS).toInt() - 1
+    var delayMs by remember { mutableStateOf(RequestPacing.delayMs(context)) }
+    val steps = ((RequestPacing.MAX_MS - RequestPacing.MIN_MS) / RequestPacing.STEP_MS).toInt() - 1
     Column(modifier = modifier) {
         Text(
             text = stringResource(R.string.booru_delay_label, delayMs / 1000f),
@@ -33,10 +33,10 @@ fun BooruPacingSetting(modifier: Modifier = Modifier) {
         Slider(
             value = delayMs.toFloat(),
             onValueChange = {
-                delayMs = it.toLong() / BooruPacing.STEP_MS * BooruPacing.STEP_MS
+                delayMs = it.toLong() / RequestPacing.STEP_MS * RequestPacing.STEP_MS
             },
-            onValueChangeFinished = { BooruPacing.setDelayMs(context, delayMs) },
-            valueRange = BooruPacing.MIN_MS.toFloat()..BooruPacing.MAX_MS.toFloat(),
+            onValueChangeFinished = { RequestPacing.setDelayMs(context, delayMs) },
+            valueRange = RequestPacing.MIN_MS.toFloat()..RequestPacing.MAX_MS.toFloat(),
             steps = steps,
         )
     }

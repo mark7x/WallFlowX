@@ -16,6 +16,7 @@ data class BackupOptions(
     val viewed: Boolean = false,
     val boards: Boolean = false,
     val ratings: Boolean = false,
+    val sites: Boolean = false,
     val file: Uri? = null,
 ) {
     val atleastOneChosen = settings ||
@@ -24,7 +25,8 @@ data class BackupOptions(
         savedSearches ||
         viewed ||
         boards ||
-        ratings
+        ratings ||
+        sites
 }
 
 val MutableBackupOptionsSaver = Saver<MutableState<BackupOptions>, Bundle>(
@@ -38,6 +40,7 @@ val MutableBackupOptionsSaver = Saver<MutableState<BackupOptions>, Bundle>(
             "viewed" to value.viewed,
             "boards" to value.boards,
             "ratings" to value.ratings,
+            "sites" to value.sites,
             "file" to value.file,
         )
     },
@@ -51,6 +54,7 @@ val MutableBackupOptionsSaver = Saver<MutableState<BackupOptions>, Bundle>(
                 viewed = it.getBoolean("viewed", false),
                 boards = it.getBoolean("boards", false),
                 ratings = it.getBoolean("ratings", false),
+                sites = it.getBoolean("sites", false),
                 file = it.getParcelableCompat("file", Uri::class.java),
             ),
         )

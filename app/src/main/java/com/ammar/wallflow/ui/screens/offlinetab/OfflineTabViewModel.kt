@@ -101,13 +101,6 @@ class OfflineTabViewModel @Inject constructor(
         }
     }
 
-    fun setLimit(stars: Int, sets: Int) {
-        viewModelScope.launch {
-            ratingStore.setLimit(stars, sets)
-            refresh()
-        }
-    }
-
     /** Removes the offline copy only. The favorite stays in Collections. */
     fun delete(item: OfflineItem) {
         viewModelScope.launch {

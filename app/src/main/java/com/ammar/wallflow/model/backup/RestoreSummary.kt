@@ -12,6 +12,7 @@ data class RestoreSummary(
     val savedSearches: Int? = null,
     val boards: Int? = null,
     val ratings: Int? = null,
+    val sites: Int? = null,
 ) {
     fun getInitialRestoreOptions() = BackupOptions(
         file = file,
@@ -22,5 +23,6 @@ data class RestoreSummary(
         savedSearches = savedSearches != null && savedSearches > 0,
         boards = boards != null && boards > 0,
         ratings = ratings != null && ratings > 0,
+        sites = sites != null && sites > 0,
     )
 }
