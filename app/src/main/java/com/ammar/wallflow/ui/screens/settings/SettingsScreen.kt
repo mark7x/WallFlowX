@@ -1,5 +1,7 @@
 package com.ammar.wallflow.ui.screens.settings
 
+import com.ammar.wallflow.ui.common.OfflineDelaySetting
+import com.ammar.wallflow.ui.common.RatingLimitsSetting
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
@@ -900,6 +902,8 @@ private fun DownloadsSettingsScreen(
         onDownloadLocationClick = { viewModel.showChangeDownloadLocationDialog(true) },
         onWriteTagsToExifCheckChange = viewModel::updateWriteTagsToExif,
         onTagsWriteTypeClick = { viewModel.showTagsWriteTypeDialog(true) },
+        ratingLimits = { RatingLimitsSetting() },
+        downloadPause = { OfflineDelaySetting() },
     )
 }
 

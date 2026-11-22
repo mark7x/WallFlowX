@@ -1,5 +1,6 @@
 package com.ammar.wallflow.utils
 
+import com.ammar.wallflow.data.rating.ratingKey
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import com.ammar.wallflow.data.rating.wallpaperRatingStore
@@ -76,7 +77,8 @@ fun applyWallpaper(
     wallpaper: Wallpaper,
 ) {
     viewModel.viewModelScope.launch { wallpaperRatingStore(context).recordSet(wallpaper) }
-    fun startActivity(uri: Uri) {
+    val cropKey = ratingKey(wallpaper.source, wallpaper.id)
+    fun startActivity(uri: Uri, cropKey: String) {
         context.startActivity(
             Intent().apply {
                 setClass(context, SetWallpaperActivity::class.java)
@@ -84,16 +86,17 @@ fun applyWallpaper(
                     SetWallpaperActivity.EXTRA_URI,
                     uri,
                 )
+                putExtra(SetWallpaperActivity.EXTRA_CROP_KEY, cropKey)
             },
         )
     }
     if (wallpaper is LocalWallpaper) {
-        startActivity(wallpaper.data)
+        startActivity(wallpaper.data, cropKey)
         return
     }
     viewModel.downloadForSharing(wallpaper) {
         val file = it ?: return@downloadForSharing
         val uri = context.getUriForFile(file)
-        startActivity(uri)
+        startActivity(uri, cropKey)
     }
 }

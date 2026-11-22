@@ -507,4 +507,6 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="recent_title">Recent, last 10 set</string>
     <string name="ratings">Ratings and recent</string>
     <string name="no_ratings_found">No ratings in this backup</string>
+    <string name="rating_limits_title">Favorite ratings</string>
+    <string name="offline_settings_note">Star limits and the pause between downloads are in Settings → Downloads.</string>
 </resources>

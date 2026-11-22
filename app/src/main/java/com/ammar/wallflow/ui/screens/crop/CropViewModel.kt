@@ -1,5 +1,8 @@
 package com.ammar.wallflow.ui.screens.crop
 
+import com.ammar.wallflow.data.crop.CropMemoryStore
+import com.ammar.wallflow.data.crop.NormalizedCrop
+import com.ammar.wallflow.data.crop.toNormalizedCrop
 import android.app.Application
 import android.hardware.display.DisplayManager
 import android.net.Uri
@@ -62,6 +65,8 @@ class CropViewModel(
     private val objectDetectionModelRepository: ObjectDetectionModelRepository,
     private val downloadManager: DownloadManager,
     private val ioDispatcher: CoroutineDispatcher,
+    private val cropKey: String?,
+    private val cropMemoryStore: CropMemoryStore,
 ) : AndroidViewModel(application) {
     val imageCropper: ImageCropper by lazy { ImageCropper() }
     private val localUiStateFlow = MutableStateFlow(CropUiStatePartial())
@@ -138,6 +143,15 @@ class CropViewModel(
     )
 
     init {
+        viewModelScope.launch {
+            val saved = cropKey?.let { cropMemoryStore.get(it) }
+            localUiStateFlow.update {
+                it.copy(
+                    savedCrop = partial(saved),
+                    savedCropLoaded = partial(true),
+                )
+            }
+        }
         viewModelScope.launch { setUri(uri) }
         viewModelScope.launch {
             detectionState.collectLatest {
@@ -261,6 +275,9 @@ class CropViewModel(
             cropRect = cropRect,
             targets = state.wallpaperTargets,
         )
+        if (applied && cropKey != null && state.crop) {
+            cropRect.toNormalizedCrop(state.imageSize)?.let { cropMemoryStore.put(cropKey, it) }
+        }
         application.toast(
             application.getString(
                 if (applied) {
@@ -317,6 +334,11 @@ class CropViewModel(
         it.copy(selectedDetection = partial(detection))
     }
 
+    /** Called once the saved crop has been shown, so it is not applied again. */
+    fun consumeSavedCrop() = localUiStateFlow.update {
+        it.copy(savedCrop = partial(null))
+    }
+
     fun setLastCropRegion(region: Rect) = localUiStateFlow.update {
         it.copy(lastCropRegion = partial(region))
     }
@@ -361,6 +383,8 @@ class CropViewModel(
             objectDetectionModelRepository: ObjectDetectionModelRepository,
             downloadManager: DownloadManager,
             ioDispatcher: CoroutineDispatcher,
+            cropKey: String?,
+            cropMemoryStore: CropMemoryStore,
         ) = viewModelFactory {
             initializer {
                 CropViewModel(
@@ -370,6 +394,8 @@ class CropViewModel(
                     objectDetectionModelRepository = objectDetectionModelRepository,
                     downloadManager = downloadManager,
                     ioDispatcher = ioDispatcher,
+                    cropKey = cropKey,
+                    cropMemoryStore = cropMemoryStore,
                 )
             }
         }
@@ -398,6 +424,8 @@ data class CropUiState(
     val displays: List<Display> = emptyList(),
     val selectedDisplay: Display? = null,
     val crop: Boolean = true,
+    val savedCrop: NormalizedCrop? = null,
+    val savedCropLoaded: Boolean = false,
     val imageSize: Size = Size.Unspecified,
 )
 

@@ -1,5 +1,6 @@
 package com.ammar.wallflow.ui.screens.crop
 
+import com.ammar.wallflow.data.crop.toCropRect
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.RectF
@@ -126,10 +127,14 @@ fun CropScreen(
         maxCropSize,
         uiState.detectedRectScale,
         uiState.selectedDetection,
+        uiState.savedCropLoaded,
+        uiState.savedCrop,
     ) {
         if (cropState?.enabled == false) {
             return@LaunchedEffect
         }
+        // wait until the saved crop for this image has been read, so it is not replaced by the centered one
+        if (!uiState.savedCropLoaded) return@LaunchedEffect
         // when lastDetectionCropRegion != null and selectedDetection == null,
         // it means user manually updated the crop region. Do nothing in such cases.
         if (uiState.lastCropRegion != null && uiState.selectedDetection == null) {
@@ -140,13 +145,19 @@ fun CropScreen(
         val cropScale = state.transform.scale.x
         val imageSize = state.src.size.toSize() * cropScale
         viewModel.setImageSize(imageSize)
-        val newCropRegion = getCropRect(
-            maxCropSize,
-            uiState.selectedDetection?.detection?.boundingBox,
-            uiState.detectedRectScale,
-            imageSize,
-            state.transform.scale.x,
-        )
+        val saved = uiState.savedCrop
+        val newCropRegion = if (saved != null) {
+            viewModel.consumeSavedCrop()
+            saved.toCropRect(imageSize)
+        } else {
+            getCropRect(
+                maxCropSize,
+                uiState.selectedDetection?.detection?.boundingBox,
+                uiState.detectedRectScale,
+                imageSize,
+                state.transform.scale.x,
+            )
+        }
         viewModel.setLastCropRegion(newCropRegion)
         state.region = newCropRegion
         state.aspectLock = true

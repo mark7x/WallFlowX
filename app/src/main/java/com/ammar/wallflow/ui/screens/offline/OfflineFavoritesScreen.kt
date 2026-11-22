@@ -35,7 +35,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import com.ammar.wallflow.R
-import com.ammar.wallflow.ui.common.OfflineDelaySetting
 import com.ammar.wallflow.navigation.AppNavGraphs.RootNavGraph
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -74,7 +73,10 @@ fun OfflineFavoritesScreen(
                 style = MaterialTheme.typography.bodyMedium,
             )
             Spacer(modifier = Modifier.height(16.dp))
-            OfflineDelaySetting()
+            Text(
+                text = stringResource(R.string.offline_settings_note),
+                style = MaterialTheme.typography.bodySmall,
+            )
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = viewModel::start,

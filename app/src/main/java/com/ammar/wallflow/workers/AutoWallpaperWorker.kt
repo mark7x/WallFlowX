@@ -1,5 +1,9 @@
 package com.ammar.wallflow.workers
 
+import com.ammar.wallflow.data.crop.CropMemoryStore
+import com.ammar.wallflow.data.crop.toCropRect
+import com.ammar.wallflow.data.rating.MAX_STARS
+import com.ammar.wallflow.data.rating.ratingKey
 import com.ammar.wallflow.sources.booru.BooruPostsClient
 import com.ammar.wallflow.sources.booru.BooruRepository
 import com.ammar.wallflow.sources.booru.toWallpaper
@@ -124,6 +128,7 @@ class AutoWallpaperWorker @AssistedInject constructor(
     private val favoritesRepository: FavoritesRepository,
     private val offlineFavoritesStore: OfflineFavoritesStore,
     private val wallpaperRatingStore: WallpaperRatingStore,
+    private val cropMemoryStore: CropMemoryStore,
     private val localWallpapersRepository: LocalWallpapersRepository,
     private val lightDarkRepository: LightDarkRepository,
 ) : CoroutineWorker(
@@ -549,6 +554,9 @@ class AutoWallpaperWorker @AssistedInject constructor(
         if (!autoWallpaperPreferences.crop) {
             return imageSize.toRect()
         }
+        cropMemoryStore.get(ratingKey(nextWallpaper.source, nextWallpaper.id))?.let { saved ->
+            return saved.toCropRect(imageSize)
+        }
         val screenResolution = context.getScreenResolution(true)
         val maxCropSize = getMaxCropSize(
             screenResolution = screenResolution,
@@ -802,48 +810,26 @@ class AutoWallpaperWorker @AssistedInject constructor(
         }
 
     /**
-     * Favorites that already have an offline copy go first, so setting them needs no download.
-     * A favorite that was never set comes first. Otherwise the one set longest ago is used.
+     * Picks a favorite at random, weighted by stars: 5 stars is five times as likely as 1 star.
+     * Unrated favorites count as 1 star. Favorites with an offline copy are preferred,
+     * so setting them needs no download.
      */
-    private suspend fun getOfflineFavoriteWallpaper(): Wallpaper? {
-        val lastSet = lastSetByFavorite()
-        return favoritesRepository.getDownloadableWallpapers(context)
+    private suspend fun getNextFavoriteWallpaper(): Wallpaper? {
+        val stars = wallpaperRatingStore.allRatings()
+        val candidates = favoritesRepository.getAllWallpapers(context)
             .filter { candidate ->
                 badWallpapers.none { it.id == candidate.id && it.source == candidate.source }
             }
-            .filter { offlineFavoritesStore.existingFile(context, it) != null }
-            .shuffled()
-            .minWithOrNull(compareBy { lastSet[it.source to it.id] })
+        val offline = candidates.filter { candidate ->
+            candidate is DownloadableWallpaper &&
+                offlineFavoritesStore.existingFile(context, candidate) != null
+        }
+        return (offline.ifEmpty { candidates }).weightedRandomOrNull { candidate ->
+            starWeight(stars[ratingKey(candidate.source, candidate.id)])
+        }
     }
 
-    private suspend fun getNextFavoriteWallpaper() = getOfflineFavoriteWallpaper() ?: favoritesRepository.getFirstFresh(
-        context = context,
-        excluding = badWallpapers,
-        order = AutoWallpaperOrder.RANDOM,
-    ) ?: favoritesRepository.getByOldestSetOn(
-        context = context,
-        excluding = badWallpapers,
-    ) ?: getAnyFavoriteWallpaper()
-
-    /**
-     * Fallback when the database queries return nothing usable, for example when the
-     * first picked favorite's saved data is missing. Tries every loadable favorite,
-     * preferring the one set longest ago.
-     */
-    private suspend fun getAnyFavoriteWallpaper(): Wallpaper? {
-        val lastSet = lastSetByFavorite()
-        return favoritesRepository.getAllWallpapers(context)
-            .filter { candidate ->
-                badWallpapers.none { it.id == candidate.id && it.source == candidate.source }
-            }
-            .shuffled()
-            .minWithOrNull(compareBy { lastSet[it.source to it.id] })
-    }
-
-    private suspend fun lastSetByFavorite() = autoWallpaperHistoryRepository.getAll()
-        .filter { it.sourceChoice == SourceChoice.FAVORITES }
-        .groupBy { it.source to it.sourceId }
-        .mapValues { entry -> entry.value.maxOf { it.setOn } }
+    private fun starWeight(stars: Int?): Int = (stars ?: 0).coerceIn(1, MAX_STARS)
 
     private suspend fun getNextLocalWallpaper(target: WallpaperTarget): Wallpaper? {
         val uris = when (target) {
@@ -1323,4 +1309,16 @@ class AutoWallpaperWorker @AssistedInject constructor(
             fun isSuccessOrFail() = this is Success || this is Failed
         }
     }
+}
+
+/** Picks one item with probability proportional to [weight]. Weights below 1 count as 1. */
+private fun <T> List<T>.weightedRandomOrNull(weight: (T) -> Int): T? {
+    if (isEmpty()) return null
+    val weights = map { weight(it).coerceAtLeast(1) }
+    var pick = kotlin.random.Random.nextInt(weights.sum())
+    forEachIndexed { index, item ->
+        pick -= weights[index]
+        if (pick < 0) return item
+    }
+    return last()
 }

@@ -60,7 +60,6 @@ import com.ammar.wallflow.destinations.WallpaperScreenDestination
 import com.ammar.wallflow.model.Source
 import com.ammar.wallflow.navigation.AppNavGraphs.OfflineTabNavGraph
 import com.ammar.wallflow.ui.common.LocalSystemController
-import com.ammar.wallflow.ui.common.OfflineDelaySetting
 import com.ammar.wallflow.ui.common.RatingDialog
 import com.ammar.wallflow.ui.common.bottomWindowInsets
 import com.ammar.wallflow.ui.common.bottombar.LocalBottomBarController
@@ -141,25 +140,11 @@ fun OfflineTabScreen(
                         ),
                         style = MaterialTheme.typography.bodyMedium,
                     )
-                    listOf(1, 2, 3, 4).forEach { stars ->
-                        Column(modifier = Modifier.padding(vertical = 2.dp)) {
-                            Text(
-                                text = stringResource(R.string.remove_after_label, stars),
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
-                                listOf(1, 2, 3, 5, 10).forEach { sets ->
-                                    FilterChip(
-                                        selected = state.limits[stars] == sets,
-                                        onClick = { viewModel.setLimit(stars, sets) },
-                                        label = { Text(text = sets.toString()) },
-                                        modifier = Modifier.padding(end = 6.dp),
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    OfflineDelaySetting(modifier = Modifier.padding(vertical = 4.dp))
+                    Text(
+                        text = stringResource(R.string.offline_settings_note),
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(vertical = 4.dp),
+                    )
                     Button(
                         onClick = viewModel::downloadFavorites,
                         enabled = !state.running,

@@ -1,5 +1,6 @@
 package com.ammar.wallflow.activities.setwallpaper
 
+import com.ammar.wallflow.data.crop.CropMemoryStore
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -59,6 +60,9 @@ class SetWallpaperActivity : ComponentActivity() {
     lateinit var objectDetectionModelRepository: ObjectDetectionModelRepository
 
     @Inject
+    lateinit var cropMemoryStore: CropMemoryStore
+
+    @Inject
     lateinit var downloadManager: DownloadManager
 
     @Inject
@@ -96,6 +100,8 @@ class SetWallpaperActivity : ComponentActivity() {
                     objectDetectionModelRepository = objectDetectionModelRepository,
                     downloadManager = downloadManager,
                     ioDispatcher = ioDispatcher,
+                    cropKey = intent.getStringExtra(EXTRA_CROP_KEY),
+                    cropMemoryStore = cropMemoryStore,
                 )
             },
         )
@@ -170,5 +176,6 @@ class SetWallpaperActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_URI = "uri"
+        const val EXTRA_CROP_KEY = "crop_key"
     }
 }

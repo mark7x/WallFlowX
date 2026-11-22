@@ -1,5 +1,7 @@
 package com.ammar.wallflow.ui.screens.settings.detailcontents
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -34,6 +36,8 @@ internal fun DownloadsContent(
     onDownloadLocationClick: () -> Unit = {},
     onWriteTagsToExifCheckChange: (checked: Boolean) -> Unit = {},
     onTagsWriteTypeClick: () -> Unit = {},
+    ratingLimits: @Composable () -> Unit = {},
+    downloadPause: @Composable () -> Unit = {},
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -93,6 +97,16 @@ internal fun DownloadsContent(
                         )
                     },
                 )
+            }
+        }
+        item {
+            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                downloadPause()
+            }
+        }
+        item {
+            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                ratingLimits()
             }
         }
     }
