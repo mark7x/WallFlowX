@@ -511,4 +511,37 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="offline_settings_note">Star limits and the pause between downloads are in Settings → Downloads.</string>
     <string name="booru_delay_label">Delay between booru requests: %1$.2f s</string>
     <string name="booru_delay_desc">Waits this long between requests to the same site. If a site returns 429 (too many requests), the app waits for the time it asks for.</string>
+    <string name="sites_title">Sites</string>
+    <string name="sites_empty">No sites yet. Tap + to add one.</string>
+    <string name="sites_item_title">Sites</string>
+    <string name="sites_item_desc">Teach the app a site, then browse it</string>
+    <string name="site_not_learned">Not learned yet. Open it and tap Learn.</string>
+    <string name="site_ready">Learned, %1$d tags known</string>
+    <string name="site_add_title">Add site</string>
+    <string name="site_name_label">Name</string>
+    <string name="site_url_label">Search address with {tags} and {page}</string>
+    <string name="site_url_hint">https://example.com/search?tags={tags}&amp;page={page}</string>
+    <string name="site_add_button">Add</string>
+    <string name="site_cancel">Cancel</string>
+    <string name="site_delete">Remove site</string>
+    <string name="site_learn">Learn</string>
+    <string name="site_search">Search</string>
+    <string name="site_tags_hint">Tags, separated by spaces</string>
+    <string name="site_no_items">No items here yet. Learn the site first, and log in there if it needs it.</string>
+    <string name="site_load_more">Load more</string>
+    <string name="site_pick_item">Grid item</string>
+    <string name="site_pick_image">Full image</string>
+    <string name="site_pick_tag">Tag</string>
+    <string name="site_read_tags">Read tags on this page</string>
+    <string name="site_help_browse">Browse the page as normal. Pick one of the options below, then tap the matching thing on the page.</string>
+    <string name="site_help_item">Tap one thumbnail in a grid. The app learns how every thumbnail is found.</string>
+    <string name="site_help_image">Open a post, then tap its full image.</string>
+    <string name="site_help_tag">Open a post, then tap one of its tags. The app learns all tags of that kind.</string>
+    <string name="site_picked">Saved: %1$s</string>
+    <string name="site_pick_error">Could not learn that tap. Try a different element.</string>
+    <string name="site_no_tags">No tags found on this page. Pick a tag first.</string>
+    <string name="site_tags_read">Learned %1$d tags from this page</string>
+    <string name="site_label_item">grid item</string>
+    <string name="site_label_image">full image</string>
+    <string name="site_label_tag">tag</string>
 </resources>

@@ -23,6 +23,7 @@ internal fun AccountContent(
     redditCookie: String = "",
     onNetworkLogItemClick: () -> Unit = {},
     onOfflineFavoritesItemClick: () -> Unit = {},
+    onSitesItemClick: () -> Unit = {},
     onBoardsItemClick: () -> Unit = {},
 ) {
     Column(modifier = modifier) {
@@ -41,6 +42,10 @@ internal fun AccountContent(
         )
         OfflineFavoritesItem(
             modifier = Modifier.clickable(onClick = onOfflineFavoritesItemClick),
+            isExpanded = isExpanded,
+        )
+        SitesItem(
+            modifier = Modifier.clickable(onClick = onSitesItemClick),
             isExpanded = isExpanded,
         )
     }
@@ -148,4 +153,18 @@ private fun PreviewAccountContent() {
             AccountContent()
         }
     }
+}
+
+@Composable
+private fun SitesItem(
+    modifier: Modifier = Modifier,
+    isExpanded: Boolean = false,
+) {
+    SettingsDetailListItem(
+        modifier = modifier,
+        isExpanded = isExpanded,
+        isLast = true,
+        headlineContent = { Text(text = stringResource(R.string.sites_item_title)) },
+        supportingContent = { Text(text = stringResource(R.string.sites_item_desc)) },
+    )
 }

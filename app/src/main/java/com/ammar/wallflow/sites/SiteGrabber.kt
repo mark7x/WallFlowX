@@ -1,0 +1,76 @@
+package com.ammar.wallflow.sites
+
+import android.webkit.CookieManager
+import com.ammar.wallflow.sources.booru.BOORU_USER_AGENT
+import com.ammar.wallflow.sources.booru.BooruPacer
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
+
+data class SiteItem(val postUrl: String?, val thumbUrl: String?)
+
+/**
+ * Fetches a taught site's pages. It reuses the cookies from the in-app browser, so a
+ * login done there carries over. Requests go through the same per-site pacing as booru.
+ */
+@Singleton
+class SiteGrabber @Inject constructor(
+    private val okHttpClient: OkHttpClient,
+    private val pacer: BooruPacer,
+) {
+    suspend fun search(profile: SiteProfile, tags: String, page: Int): Result<List<SiteItem>> =
+        runCatching {
+            val itemSelector = profile.itemSelector
+                ?: error("This site has no grid item learned yet.")
+            val doc = fetchDocument(profile.searchAddress(tags, page))
+            doc.select(itemSelector).mapNotNull { element ->
+                val link = if (element.tagName() == "a") {
+                    element.absUrl("href")
+                } else {
+                    element.selectFirst("a[href]")?.absUrl("href")
+                }?.takeIf { it.isNotBlank() }
+                val image = if (element.tagName() == "img") element else element.selectFirst("img")
+                val thumb = image?.let { img ->
+                    listOf(profile.thumbAttr, "data-src", "src")
+                        .map { img.absUrl(it) }
+                        .firstOrNull { it.isNotBlank() }
+                }
+                if (link == null && thumb == null) {
+                    null
+                } else {
+                    SiteItem(postUrl = link, thumbUrl = thumb)
+                }
+            }
+        }
+
+    /** Tags on a page, read from its HTML with the learned tag selector. */
+    fun tagsIn(profile: SiteProfile, html: String): List<String> {
+        val selector = profile.tagSelector ?: return emptyList()
+        return runCatching {
+            Jsoup.parse(html).select(selector)
+                .map { it.text().trim().lowercase().replace(' ', '_') }
+                .filter { it.isNotBlank() }
+                .distinct()
+        }.getOrDefault(emptyList())
+    }
+
+    private suspend fun fetchDocument(url: String): Document = withContext(Dispatchers.IO) {
+        pacer.await(url)
+        val cookies = CookieManager.getInstance().getCookie(url).orEmpty()
+        val request = Request.Builder()
+            .url(url)
+            .header("User-Agent", BOORU_USER_AGENT)
+            .apply { if (cookies.isNotBlank()) header("Cookie", cookies) }
+            .build()
+        okHttpClient.newCall(request).execute().use { response ->
+            if (response.code == 429) pacer.rateLimited(url, response.header("Retry-After"))
+            if (!response.isSuccessful) error("HTTP ${response.code}")
+            Jsoup.parse(response.body?.string().orEmpty(), url)
+        }
+    }
+}

@@ -1,5 +1,6 @@
 package com.ammar.wallflow.ui.screens.settings
 
+import com.ammar.wallflow.destinations.SitesScreenDestination
 import com.ammar.wallflow.ui.common.BooruPacingSetting
 import com.ammar.wallflow.ui.common.OfflineDelaySetting
 import com.ammar.wallflow.ui.common.RatingLimitsSetting
@@ -241,6 +242,9 @@ fun SettingsScreen(
                     },
                     onOfflineFavoritesItemClick = {
                         navController.navigate(OfflineFavoritesScreenDestination.route)
+                    },
+                    onSitesItemClick = {
+                        navController.navigate(SitesScreenDestination.route)
                     },
                     onBoardsItemClick = {},
                     onLayoutClick = {
@@ -613,6 +617,7 @@ private fun DetailContentScaffold(
     redditCookie: String,
     onNetworkLogItemClick: () -> Unit,
     onOfflineFavoritesItemClick: () -> Unit,
+    onSitesItemClick: () -> Unit,
     onBoardsItemClick: () -> Unit,
     onLayoutClick: () -> Unit,
     onViewedWallpapersLookClick: () -> Unit,
@@ -666,6 +671,7 @@ private fun DetailContentScaffold(
                         redditCookie = redditCookie,
                         onNetworkLogItemClick = onNetworkLogItemClick,
                         onOfflineFavoritesItemClick = onOfflineFavoritesItemClick,
+                        onSitesItemClick = onSitesItemClick,
                         onBoardsItemClick = onBoardsItemClick,
                     )
                     SettingsType.LOOK_AND_FEEL -> LookAndFeelSettingsScreen(
