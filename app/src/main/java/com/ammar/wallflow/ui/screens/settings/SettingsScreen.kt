@@ -1,5 +1,6 @@
 package com.ammar.wallflow.ui.screens.settings
 
+import com.ammar.wallflow.ui.common.BooruPacingSetting
 import com.ammar.wallflow.ui.common.OfflineDelaySetting
 import com.ammar.wallflow.ui.common.RatingLimitsSetting
 import android.Manifest
@@ -904,6 +905,7 @@ private fun DownloadsSettingsScreen(
         onTagsWriteTypeClick = { viewModel.showTagsWriteTypeDialog(true) },
         ratingLimits = { RatingLimitsSetting() },
         downloadPause = { OfflineDelaySetting() },
+        booruPause = { BooruPacingSetting() },
     )
 }
 

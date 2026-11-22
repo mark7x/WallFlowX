@@ -27,6 +27,7 @@ sealed interface BooruDetection {
 @Singleton
 class BooruStyleDetector @Inject constructor(
     private val okHttpClient: OkHttpClient,
+    private val pacer: BooruPacer,
 ) {
     suspend fun detect(
         baseUrl: String,
@@ -53,12 +54,13 @@ class BooruStyleDetector @Inject constructor(
         }
     }
 
-    private fun probe(style: BooruStyle, base: String, userId: String?, apiKey: String?): ProbeResult {
+    private suspend fun probe(style: BooruStyle, base: String, userId: String?, apiKey: String?): ProbeResult {
         return try {
             val request = Request.Builder()
                 .url(probeUrl(style, base, userId, apiKey))
                 .header("User-Agent", BOORU_USER_AGENT)
                 .build()
+            pacer.await(base)
             okHttpClient.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
                     return ProbeResult.Miss("HTTP ${response.code}")

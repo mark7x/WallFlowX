@@ -19,6 +19,7 @@ import okhttp3.Request
  */
 @Singleton
 class BooruTagSuggester @Inject constructor(
+    private val pacer: BooruPacer,
     private val okHttpClient: OkHttpClient,
     private val boardsStore: BoardsStore,
 ) {
@@ -31,7 +32,9 @@ class BooruTagSuggester @Inject constructor(
             val url = suggestUrl(style, base, term, board?.userId, board?.apiKey) ?: return@withContext emptyList()
             runCatching {
                 val request = Request.Builder().url(url).header("User-Agent", BOORU_USER_AGENT).build()
+                pacer.await(base)
                 okHttpClient.newCall(request).execute().use { response ->
+                    if (response.code == 429) pacer.rateLimited(base, response.header("Retry-After"))
                     if (!response.isSuccessful) return@use emptyList()
                     parseNames(response.body?.string().orEmpty())
                 }

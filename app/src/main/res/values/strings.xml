@@ -509,4 +509,6 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="no_ratings_found">No ratings in this backup</string>
     <string name="rating_limits_title">Favorite ratings</string>
     <string name="offline_settings_note">Star limits and the pause between downloads are in Settings → Downloads.</string>
+    <string name="booru_delay_label">Delay between booru requests: %1$.2f s</string>
+    <string name="booru_delay_desc">Waits this long between requests to the same site. If a site returns 429 (too many requests), the app waits for the time it asks for.</string>
 </resources>

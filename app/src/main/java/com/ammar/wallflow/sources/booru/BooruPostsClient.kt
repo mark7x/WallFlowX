@@ -27,6 +27,7 @@ data class BooruPost(
 class BooruPostsClient @Inject constructor(
     private val okHttpClient: OkHttpClient,
     private val boardsStore: BoardsStore,
+    private val pacer: BooruPacer,
 ) {
     suspend fun fetchPosts(
         style: BooruStyle,
@@ -40,7 +41,9 @@ class BooruPostsClient @Inject constructor(
             val board = boardsStore.find(base)
             val url = postsUrl(style, base, limit, page, tags, board?.userId, board?.apiKey)
             val request = Request.Builder().url(url).header("User-Agent", BOORU_USER_AGENT).build()
+            pacer.await(base)
             okHttpClient.newCall(request).execute().use { response ->
+                if (response.code == 429) pacer.rateLimited(base, response.header("Retry-After"))
                 if (!response.isSuccessful) error("HTTP ${response.code}")
                 parsePosts(style, response.body?.string().orEmpty())
             }

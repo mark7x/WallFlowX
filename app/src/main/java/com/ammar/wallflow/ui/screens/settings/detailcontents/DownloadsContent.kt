@@ -38,6 +38,7 @@ internal fun DownloadsContent(
     onTagsWriteTypeClick: () -> Unit = {},
     ratingLimits: @Composable () -> Unit = {},
     downloadPause: @Composable () -> Unit = {},
+    booruPause: @Composable () -> Unit = {},
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -102,6 +103,11 @@ internal fun DownloadsContent(
         item {
             Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                 downloadPause()
+            }
+        }
+        item {
+            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                booruPause()
             }
         }
         item {
