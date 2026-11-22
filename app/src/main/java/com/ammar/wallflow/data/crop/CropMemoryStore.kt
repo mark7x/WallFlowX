@@ -60,6 +60,13 @@ class CropMemoryStore @Inject constructor(
         }
     }
 
+    /** Forgets the crop for one image, so it goes back to the centered crop. */
+    suspend fun remove(key: String) = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            file.writeText(json.encodeToString(mapSerializer, read() - key))
+        }
+    }
+
     /** Every saved crop, for backups. */
     suspend fun exportAll(): Map<String, NormalizedCrop> = withContext(Dispatchers.IO) {
         mutex.withLock { read() }

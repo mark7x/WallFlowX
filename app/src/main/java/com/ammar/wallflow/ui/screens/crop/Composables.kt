@@ -1,5 +1,6 @@
 package com.ammar.wallflow.ui.screens.crop
 
+import androidx.compose.material3.TextButton
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.view.Display
@@ -395,6 +396,7 @@ internal fun TopActions(
     displays: List<Display> = emptyList(),
     selectedDisplay: Display? = null,
     onCropChange: (Boolean) -> Unit = {},
+    onResetCrop: () -> Unit = {},
     setSelectedDisplay: (Display) -> Unit = {},
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -411,6 +413,14 @@ internal fun TopActions(
             )
         }
         Spacer(modifier = Modifier.weight(1f))
+        if (crop) {
+            TextButton(onClick = onResetCrop) {
+                Text(
+                    text = stringResource(R.string.crop_reset),
+                    color = Color.White,
+                )
+            }
+        }
         Surface(
             modifier = Modifier.indication(
                 interactionSource = interactionSource,

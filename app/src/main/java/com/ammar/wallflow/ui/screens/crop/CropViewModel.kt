@@ -70,6 +70,8 @@ class CropViewModel(
 ) : AndroidViewModel(application) {
     val imageCropper: ImageCropper by lazy { ImageCropper() }
     private val localUiStateFlow = MutableStateFlow(CropUiStatePartial())
+    /** True once a saved crop was applied. Object detection then leaves the crop alone. */
+    private var savedCropApplied = false
     private val modelDownloadStatusFlow = MutableStateFlow<DownloadStatus?>(null)
     private val downloadedModelFlow = MutableStateFlow<File?>(null)
     private val appPreferencesFlow = appPreferencesRepository.appPreferencesFlow
@@ -312,7 +314,9 @@ class CropViewModel(
                 it.copy(
                     detectedRectScale = partial(scale),
                     detectedObjects = partial(Resource.Success(detectionWithBitmaps)),
-                    selectedDetection = partial(detectionWithBitmaps.firstOrNull()),
+                    selectedDetection = partial(
+                        if (savedCropApplied) null else detectionWithBitmaps.firstOrNull(),
+                    ),
                 )
             }
         } catch (e: Exception) {
@@ -335,8 +339,18 @@ class CropViewModel(
     }
 
     /** Called once the saved crop has been shown, so it is not applied again. */
-    fun consumeSavedCrop() = localUiStateFlow.update {
-        it.copy(savedCrop = partial(null))
+    fun consumeSavedCrop() {
+        savedCropApplied = true
+        localUiStateFlow.update { it.copy(savedCrop = partial(null)) }
+    }
+
+    /** Forgets the saved crop for this image and goes back to the centered crop. */
+    fun resetCrop() {
+        savedCropApplied = false
+        viewModelScope.launch {
+            cropKey?.let { cropMemoryStore.remove(it) }
+            localUiStateFlow.update { it.copy(lastCropRegion = partial(null)) }
+        }
     }
 
     fun setLastCropRegion(region: Rect) = localUiStateFlow.update {

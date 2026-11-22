@@ -129,6 +129,7 @@ fun CropScreen(
         uiState.selectedDetection,
         uiState.savedCropLoaded,
         uiState.savedCrop,
+        uiState.lastCropRegion == null,
     ) {
         if (cropState?.enabled == false) {
             return@LaunchedEffect
@@ -199,6 +200,7 @@ fun CropScreen(
             cropState?.done(true)
         },
         onCropChange = viewModel::onCropChange,
+        onResetCrop = viewModel::resetCrop,
     )
 }
 
@@ -221,6 +223,7 @@ private fun CropScreenContent(
     onCancelClick: () -> Unit = {},
     onSetClick: (Set<WallpaperTarget>) -> Unit = {},
     onCropChange: (Boolean) -> Unit = {},
+    onResetCrop: () -> Unit = {},
 ) {
     var actionsSize by remember { mutableStateOf(IntSize.Zero) }
     var topActionsSize by remember { mutableStateOf(IntSize.Zero) }
@@ -282,6 +285,7 @@ private fun CropScreenContent(
             selectedDisplay = selectedDisplay,
             setSelectedDisplay = setSelectedDisplay,
             onCropChange = onCropChange,
+            onResetCrop = onResetCrop,
         )
 
         Actions(
