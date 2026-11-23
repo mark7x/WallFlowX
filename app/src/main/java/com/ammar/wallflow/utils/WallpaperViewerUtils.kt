@@ -97,7 +97,8 @@ fun applyWallpaper(
         return
     }
     viewModel.downloadForSharing(wallpaper) {
-        val file = it ?: run {
+        val file = it
+        if (file == null) {
             context.toast(context.getString(R.string.apply_download_failed))
             return@downloadForSharing
         }

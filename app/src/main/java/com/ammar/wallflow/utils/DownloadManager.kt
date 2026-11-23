@@ -143,11 +143,11 @@ class DownloadManager @Inject constructor(
         try {
             onLoadingChange(true)
             val fileName = wallpaper.data.getFileNameFromUrl()
-            val fileIfExists = context.getTempFileIfExists(fileName)?.takeIf { file ->
-                val usable = file.isReadableImage()
-                if (!usable) file.delete()
-                usable
+            val existingTemp = context.getTempFileIfExists(fileName)
+            if (existingTemp != null && !existingTemp.isReadableImage()) {
+                existingTemp.delete()
             }
+            val fileIfExists = existingTemp?.takeIf { it.exists() }
             if (fileIfExists != null) {
                 onLoadingChange(false)
                 onResult(fileIfExists)
