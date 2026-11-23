@@ -1,5 +1,6 @@
 package com.ammar.wallflow.utils
 
+import android.graphics.BitmapFactory
 import android.app.Application
 import android.content.Context
 import android.net.Uri
@@ -142,7 +143,11 @@ class DownloadManager @Inject constructor(
         try {
             onLoadingChange(true)
             val fileName = wallpaper.data.getFileNameFromUrl()
-            val fileIfExists = context.getTempFileIfExists(fileName)
+            val fileIfExists = context.getTempFileIfExists(fileName)?.takeIf { file ->
+                val usable = file.isReadableImage()
+                if (!usable) file.delete()
+                usable
+            }
             if (fileIfExists != null) {
                 onLoadingChange(false)
                 onResult(fileIfExists)
@@ -216,4 +221,12 @@ sealed class DownloadStatus {
             totalBytes: Long,
         ) = if (totalBytes == 0L) 0F else ((downloadedBytes.toFloat()) / totalBytes)
     }
+}
+
+/** True when the file has content and Android can read its size, so it is not a broken download. */
+private fun File.isReadableImage(): Boolean {
+    if (length() == 0L) return false
+    val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeFile(absolutePath, options)
+    return options.outWidth > 0 && options.outHeight > 0
 }

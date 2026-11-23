@@ -1,5 +1,7 @@
 package com.ammar.wallflow.utils
 
+import com.ammar.wallflow.extensions.toast
+import com.ammar.wallflow.R
 import com.ammar.wallflow.data.rating.ratingKey
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
@@ -95,7 +97,10 @@ fun applyWallpaper(
         return
     }
     viewModel.downloadForSharing(wallpaper) {
-        val file = it ?: return@downloadForSharing
+        val file = it ?: run {
+            context.toast(context.getString(R.string.apply_download_failed))
+            return@downloadForSharing
+        }
         val uri = context.getUriForFile(file)
         startActivity(uri, cropKey)
     }
