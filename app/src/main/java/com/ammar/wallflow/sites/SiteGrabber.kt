@@ -53,6 +53,17 @@ class SiteGrabber @Inject constructor(
         }
     }
 
+    /** Full-size image address on a post page, read with the learned full image pick. */
+    suspend fun fullImageUrl(profile: SiteProfile, postUrl: String): String? = runCatching {
+        val selector = profile.postImageSelector ?: return null
+        val doc = fetchDocument(postUrl)
+        doc.selectFirst(selector)?.let { el ->
+            listOfNotNull(profile.postImageAttr, "src", "href")
+                .map { el.absUrl(it) }
+                .firstOrNull { it.isNotBlank() }
+        }
+    }.getOrNull()
+
     /** Tags on a page, read from its HTML with the learned tag selector. */
     fun tagsIn(profile: SiteProfile, html: String): List<String> {
         val selector = profile.tagSelector ?: return emptyList()

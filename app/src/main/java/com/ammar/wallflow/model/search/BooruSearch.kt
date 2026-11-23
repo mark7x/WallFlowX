@@ -25,6 +25,8 @@ data class BooruFilters(
         Purity.SKETCHY.purityName,
         Purity.NSFW.purityName,
     ),
+    /** Set when the search is over a taught site instead of a booru board. */
+    val siteId: String? = null,
 ) : Filters() {
     fun allowedPurities(): Set<Purity> = purityNames.map { Purity.fromName(it) }.toSet()
 }

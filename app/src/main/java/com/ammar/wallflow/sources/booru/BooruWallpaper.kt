@@ -19,6 +19,16 @@ data class BooruWallpaper(
     override val mimeType: String? = null
 }
 
+/** A post from a taught site. Sites have no rating, so it is treated as unrated (NSFW). */
+fun siteWallpaper(siteId: String, postUrl: String, fullUrl: String, thumbUrl: String?) = BooruWallpaper(
+    id = "site_${siteId}_$postUrl",
+    data = fullUrl,
+    thumbData = thumbUrl,
+    resolution = IntSize.Zero,
+    purity = Purity.NSFW,
+    boardUrl = "site:$siteId",
+)
+
 /**
  * Maps a booru rating to [Purity]. Danbooru uses g/s/q/e, Gelbooru uses
  * general/sensitive/questionable/explicit, and Moebooru uses safe/questionable/explicit.

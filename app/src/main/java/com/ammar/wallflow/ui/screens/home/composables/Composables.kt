@@ -72,6 +72,7 @@ internal fun LazyStaggeredGridScope.header(
     onWebsiteClick: (SavedBoard) -> Unit = {},
     sites: ImmutableList<SiteProfile> = persistentListOf(),
     onSiteClick: (SiteProfile) -> Unit = {},
+    selectedSiteId: String? = null,
 ) {
     item(span = StaggeredGridItemSpan.FullLine) {
         SourcesRow(
@@ -84,6 +85,7 @@ internal fun LazyStaggeredGridScope.header(
             onWebsiteClick = onWebsiteClick,
             sites = sites,
             onSiteClick = onSiteClick,
+            selectedSiteId = selectedSiteId,
         )
     }
     sourceHeader?.invoke(this)
@@ -154,6 +156,7 @@ internal fun SourcesRow(
     onWebsiteClick: (SavedBoard) -> Unit = {},
     sites: ImmutableList<SiteProfile> = persistentListOf(),
     onSiteClick: (SiteProfile) -> Unit = {},
+    selectedSiteId: String? = null,
 ) {
     Row(
         modifier = modifier.horizontalScroll(rememberScrollState()),
@@ -184,6 +187,7 @@ internal fun SourcesRow(
             sites.forEach { site ->
                 WebsiteChip(
                     label = site.name,
+                    selected = selected == OnlineSource.BOORU && site.id == selectedSiteId,
                     onClick = { onSiteClick(site) },
                 )
             }

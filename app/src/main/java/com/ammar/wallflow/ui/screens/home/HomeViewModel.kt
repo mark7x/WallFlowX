@@ -1,5 +1,6 @@
 package com.ammar.wallflow.ui.screens.home
 
+import com.ammar.wallflow.sources.booru.BooruStyle
 import com.ammar.wallflow.sites.SiteProfile
 import com.ammar.wallflow.sites.SiteProfileStore
 import kotlinx.coroutines.flow.StateFlow
@@ -116,17 +117,28 @@ class HomeViewModel @Inject constructor(
             local = local,
             homeSource = appPreferences.homeSources,
             homeRedditSearch = appPreferences.homeRedditSearch,
-            hasBoards = boards.isNotEmpty(),
+            hasBoards = boards.isNotEmpty() || siteProfileStore.profiles.value.isNotEmpty(),
         )
         when (source) {
             OnlineSource.WALLHAVEN -> appPreferences.homeWallhavenSearch
             OnlineSource.REDDIT -> appPreferences.homeRedditSearch
             // The website chosen in the feed, else the first saved website.
             OnlineSource.BOORU -> {
-                val website = boards.firstOrNull { it.baseUrl == local.selectedBoardUrl.getOrElse { null } }
-                    ?: boards.firstOrNull()
-                website?.let { BooruSearch(filters = BooruFilters(boardUrl = it.baseUrl, style = it.style)) }
-                    ?: appPreferences.homeWallhavenSearch
+                val siteId = local.selectedSiteId.getOrElse { null }
+                if (siteId != null && siteProfileStore.profiles.value.any { it.id == siteId }) {
+                    BooruSearch(
+                        filters = BooruFilters(
+                            boardUrl = "site:$siteId",
+                            style = BooruStyle.DANBOORU,
+                            siteId = siteId,
+                        ),
+                    )
+                } else {
+                    val website = boards.firstOrNull { it.baseUrl == local.selectedBoardUrl.getOrElse { null } }
+                        ?: boards.firstOrNull()
+                    website?.let { BooruSearch(filters = BooruFilters(boardUrl = it.baseUrl, style = it.style)) }
+                        ?: appPreferences.homeWallhavenSearch
+                }
             }
         }
     }.filterNotNull().distinctUntilChanged()
@@ -139,6 +151,17 @@ class HomeViewModel @Inject constructor(
             it.copy(
                 selectedSource = partial(OnlineSource.BOORU),
                 selectedBoardUrl = partial<String?>(url),
+                selectedSiteId = partial<String?>(null),
+            )
+        }
+    }
+
+    /** Shows a taught site's feed, the same way a booru board is shown. */
+    fun selectSite(siteId: String) {
+        localUiState.update {
+            it.copy(
+                selectedSource = partial(OnlineSource.BOORU),
+                selectedSiteId = partial<String?>(siteId),
             )
         }
     }
@@ -593,6 +616,7 @@ data class HomeUiState(
     val websites: ImmutableList<SavedBoard> = persistentListOf(),
     val taughtSites: ImmutableList<SiteProfile> = persistentListOf(),
     val selectedBoardUrl: String? = null,
+    val selectedSiteId: String? = null,
     val websiteAddRunning: Boolean = false,
     val websiteAddError: String? = null,
     val lastCrash: String? = null,
