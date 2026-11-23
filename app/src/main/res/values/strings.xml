@@ -547,6 +547,7 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="sites_backup">Sites and crops</string>
     <string name="no_sites_found">No sites or crops in this backup</string>
     <string name="crop_reset">Reset crop</string>
+    <string name="apply_download_failed">Could not download this image</string>
     <string name="crop_save">Save crop</string>
     <string name="crop_saved">Crop saved</string>
     <string name="crop_save_failed">Could not save crop</string>
