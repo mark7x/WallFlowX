@@ -201,6 +201,7 @@ fun CropScreen(
         },
         onCropChange = viewModel::onCropChange,
         onResetCrop = viewModel::resetCrop,
+        onSaveCrop = viewModel::saveCrop,
     )
 }
 
@@ -224,6 +225,7 @@ private fun CropScreenContent(
     onSetClick: (Set<WallpaperTarget>) -> Unit = {},
     onCropChange: (Boolean) -> Unit = {},
     onResetCrop: () -> Unit = {},
+    onSaveCrop: () -> Unit = {},
 ) {
     var actionsSize by remember { mutableStateOf(IntSize.Zero) }
     var topActionsSize by remember { mutableStateOf(IntSize.Zero) }
@@ -286,6 +288,7 @@ private fun CropScreenContent(
             setSelectedDisplay = setSelectedDisplay,
             onCropChange = onCropChange,
             onResetCrop = onResetCrop,
+            onSaveCrop = onSaveCrop,
         )
 
         Actions(

@@ -397,6 +397,7 @@ internal fun TopActions(
     selectedDisplay: Display? = null,
     onCropChange: (Boolean) -> Unit = {},
     onResetCrop: () -> Unit = {},
+    onSaveCrop: () -> Unit = {},
     setSelectedDisplay: (Display) -> Unit = {},
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -414,6 +415,12 @@ internal fun TopActions(
         }
         Spacer(modifier = Modifier.weight(1f))
         if (crop) {
+            TextButton(onClick = onSaveCrop) {
+                Text(
+                    text = stringResource(R.string.crop_save),
+                    color = Color.White,
+                )
+            }
             TextButton(onClick = onResetCrop) {
                 Text(
                     text = stringResource(R.string.crop_reset),

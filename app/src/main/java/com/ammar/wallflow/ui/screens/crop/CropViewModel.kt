@@ -373,6 +373,23 @@ class CropViewModel(
         localUiStateFlow.update { it.copy(savedCrop = partial(null)) }
     }
 
+    /** Saves the current crop for this image without setting the wallpaper. */
+    fun saveCrop() {
+        val key = cropKey ?: return
+        val state = uiState.value
+        if (!state.crop) return
+        val region = state.lastCropRegion ?: return
+        viewModelScope.launch {
+            val normalized = region.toNormalizedCrop(state.imageSize)
+            if (normalized == null) {
+                application.toast(application.getString(R.string.crop_save_failed))
+                return@launch
+            }
+            cropMemoryStore.put(key, normalized)
+            application.toast(application.getString(R.string.crop_saved))
+        }
+    }
+
     /** Forgets the saved crop for this image and goes back to the centered crop. */
     fun resetCrop() {
         savedCropApplied = false
