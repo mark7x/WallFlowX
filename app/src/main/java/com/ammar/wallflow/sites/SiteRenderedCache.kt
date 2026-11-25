@@ -37,11 +37,21 @@ class SiteRenderedCache @Inject constructor(
     }
 
     suspend fun get(profileId: String): List<SiteItem> = withContext(Dispatchers.IO) {
+        mutex.withLock { readFile(profileId) }
+    }
+
+    /** Adds scanned items to the ones already saved for this site, without repeats. */
+    suspend fun add(profileId: String, found: List<SiteItem>) = withContext(Dispatchers.IO) {
         mutex.withLock {
-            val file = fileFor(profileId)
-            runCatching {
-                if (file.exists()) json.decodeFromString(listSerializer, file.readText()) else emptyList()
-            }.getOrDefault(emptyList())
+            val merged = (readFile(profileId) + found).distinctBy { it.postUrl ?: it.thumbUrl }
+            fileFor(profileId).writeText(json.encodeToString(listSerializer, merged))
         }
+    }
+
+    private fun readFile(profileId: String): List<SiteItem> {
+        val file = fileFor(profileId)
+        return runCatching {
+            if (file.exists()) json.decodeFromString(listSerializer, file.readText()) else emptyList()
+        }.getOrDefault(emptyList())
     }
 }

@@ -2,6 +2,7 @@ package com.ammar.wallflow.sources.booru
 
 import com.ammar.wallflow.sites.SiteGrabber
 import com.ammar.wallflow.sites.SiteProfileStore
+import com.ammar.wallflow.sites.SiteRenderedCache
 import androidx.paging.PagingSource.LoadParams
 import androidx.paging.PagingSource.LoadResult
 import androidx.paging.Pager
@@ -21,10 +22,11 @@ class BooruRepository @Inject constructor(
     private val booruPostsClient: BooruPostsClient,
     private val siteProfileStore: SiteProfileStore,
     private val siteGrabber: SiteGrabber,
+    private val siteRenderedCache: SiteRenderedCache,
 ) {
     fun wallpapersPager(search: BooruSearch): Flow<PagingData<Wallpaper>> = Pager(
         config = PagingConfig(pageSize = PAGE_SIZE, enablePlaceholders = false),
-        pagingSourceFactory = { BooruPagingSource(booruPostsClient, siteProfileStore, siteGrabber, search) },
+        pagingSourceFactory = { BooruPagingSource(booruPostsClient, siteProfileStore, siteGrabber, siteRenderedCache, search) },
     ).flow
 
     companion object {
@@ -36,6 +38,7 @@ private class BooruPagingSource(
     private val booruPostsClient: BooruPostsClient,
     private val siteProfileStore: SiteProfileStore,
     private val siteGrabber: SiteGrabber,
+    private val siteRenderedCache: SiteRenderedCache,
     private val search: BooruSearch,
 ) : PagingSource<Int, Wallpaper>() {
     // Ids already shown in this list. A post can come back on a later page when new posts
@@ -73,8 +76,15 @@ private class BooruPagingSource(
     private suspend fun loadSite(siteId: String, page: Int): LoadResult<Int, Wallpaper> {
         val profile = siteProfileStore.get(siteId)
             ?: return LoadResult.Error(IllegalStateException("This site was removed."))
-        val items = siteGrabber.search(profile, search.query, page).getOrElse {
-            return LoadResult.Error(it)
+        val result = siteGrabber.search(profile, search.query, page)
+        // Sites that build their list with JavaScript return nothing over plain HTTP.
+        // Show what the learning center has scanned for them, on the first page of an unfiltered feed.
+        val fromScan = page == 1 && search.query.isBlank()
+        val items = result.getOrNull().orEmpty().ifEmpty {
+            if (fromScan) siteRenderedCache.get(siteId) else emptyList()
+        }
+        if (result.isFailure && items.isEmpty()) {
+            return LoadResult.Error(result.exceptionOrNull() ?: IllegalStateException("Site search failed."))
         }
         val allowed = search.filters.allowedPurities()
         val wallpapers: List<Wallpaper> = items.mapNotNull { item ->
@@ -86,7 +96,7 @@ private class BooruPagingSource(
         return LoadResult.Page(
             data = wallpapers,
             prevKey = if (page > 1) page - 1 else null,
-            nextKey = if (items.isEmpty()) null else page + 1,
+            nextKey = if (items.isEmpty() || fromScan) null else page + 1,
         )
     }
 
