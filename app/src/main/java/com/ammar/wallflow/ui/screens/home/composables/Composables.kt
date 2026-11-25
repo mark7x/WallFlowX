@@ -188,6 +188,7 @@ internal fun SourcesRow(
                 WebsiteChip(
                     label = site.name,
                     selected = selected == OnlineSource.BOORU && site.id == selectedSiteId,
+                    learned = site.canBrowse,
                     onClick = { onSiteClick(site) },
                 )
             }
@@ -479,9 +480,21 @@ private fun WebsiteChip(
         modifier = modifier,
         shape = MaterialTheme.shapes.medium,
         colors = FilterChipDefaults.filterChipColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            containerColor = if (learned) {
+                MaterialTheme.colorScheme.tertiaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            },
+            iconColor = if (learned) {
+                MaterialTheme.colorScheme.onTertiaryContainer
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+            labelColor = if (learned) {
+                MaterialTheme.colorScheme.onTertiaryContainer
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
             selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
             selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
             selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
