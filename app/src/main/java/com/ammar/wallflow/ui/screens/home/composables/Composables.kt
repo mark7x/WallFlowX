@@ -472,6 +472,7 @@ private fun WebsiteChip(
     label: String,
     modifier: Modifier = Modifier,
     selected: Boolean = false,
+    learned: Boolean = false,
     onClick: () -> Unit = {},
 ) {
     FilterChip(
