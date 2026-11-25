@@ -92,13 +92,24 @@ fun SiteDetailScreen(
                             )
                         }
                     }) {
-                        Text(text = stringResource(R.string.site_learn))
+                        Text(
+                            text = stringResource(
+                                if (profile?.canBrowse == true) R.string.site_relearn else R.string.site_learn,
+                            ),
+                        )
                     }
                 },
             )
         },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+            profile?.takeIf { it.canBrowse }?.let { learned ->
+                Text(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    text = stringResource(R.string.site_ready, learned.tagCounts.size),
+                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                )
+            }
             OutlinedTextField(
                 value = text,
                 onValueChange = {

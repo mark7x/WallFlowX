@@ -525,6 +525,7 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="site_cancel">Cancel</string>
     <string name="site_delete">Remove site</string>
     <string name="site_learn">Learn</string>
+    <string name="site_relearn">Relearn</string>
     <string name="site_search">Search</string>
     <string name="site_tags_hint">Tags, separated by spaces</string>
     <string name="site_no_items">No items here yet. Learn the site first, and log in there if it needs it.</string>
