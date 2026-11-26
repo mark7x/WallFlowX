@@ -53,15 +53,20 @@ class SiteGrabber @Inject constructor(
         }
     }
 
-    /** Full-size image address on a post page, read with the learned full image pick. */
+    /**
+     * Full-size image address on a post page. Uses the learned full image pick when there is one,
+     * otherwise the page's og:image tag, which most sites set to the full image.
+     */
     suspend fun fullImageUrl(profile: SiteProfile, postUrl: String): String? = runCatching {
-        val selector = profile.postImageSelector ?: return null
         val doc = fetchDocument(postUrl)
-        doc.selectFirst(selector)?.let { el ->
-            listOfNotNull(profile.postImageAttr, "src", "href")
-                .map { el.absUrl(it) }
-                .firstOrNull { it.isNotBlank() }
+        val picked = profile.postImageSelector?.let { selector ->
+            doc.selectFirst(selector)?.let { el ->
+                listOfNotNull(profile.postImageAttr, "src", "href")
+                    .map { el.absUrl(it) }
+                    .firstOrNull { it.isNotBlank() }
+            }
         }
+        picked ?: doc.selectFirst("meta[property=og:image]")?.absUrl("content")?.takeIf { it.isNotBlank() }
     }.getOrNull()
 
     /** Tags on a page, read from its HTML with the learned tag selector. */
