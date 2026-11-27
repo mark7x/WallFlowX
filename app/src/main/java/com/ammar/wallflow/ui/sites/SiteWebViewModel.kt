@@ -1,5 +1,9 @@
 package com.ammar.wallflow.ui.sites
 
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.ammar.wallflow.sites.SiteRenderedCache
@@ -72,6 +76,20 @@ class SiteWebViewModel @Inject constructor(
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
 
+    private val _debugLog = MutableStateFlow<List<String>>(emptyList())
+
+    /** Debug mode: a running log of picks, scans and tag reads, newest last. */
+    val debugLog: StateFlow<List<String>> = _debugLog.asStateFlow()
+
+    fun debug(message: String) {
+        val time = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
+        _debugLog.update { (it + "$time $message").takeLast(200) }
+    }
+
+    fun clearDebug() {
+        _debugLog.value = emptyList()
+    }
+
     fun load(id: String) {
         viewModelScope.launch { _profile.value = store.get(id) }
     }
@@ -80,7 +98,9 @@ class SiteWebViewModel @Inject constructor(
         viewModelScope.launch {
             val current = _profile.value ?: return@launch
             val pick = runCatching { JSONObject(json) }.getOrNull()
+            debug("pick: mode=${pick?.optString("mode") ?: "unreadable"}, selector=${pick?.optJSONObject("target")?.optString("selector")}")
             val updated = pick?.let { applyPick(current, it) }
+            debug("pick applied: ${updated != null}")
             if (pick == null || updated == null) {
                 _message.value = context.getString(R.string.site_pick_error)
                 return@launch
@@ -103,6 +123,7 @@ class SiteWebViewModel @Inject constructor(
             val found = withContext(Dispatchers.Default) {
                 grabber.renderedItemsIn(current, html, pageUrl)
             }
+            debug("scan $pageUrl: html ${html.length} chars, ${found.size} items, item selector=${current.itemSelector}")
             if (found.isEmpty()) {
                 _message.value = context.getString(R.string.site_scan_none)
                 return@launch
@@ -116,6 +137,7 @@ class SiteWebViewModel @Inject constructor(
         viewModelScope.launch {
             val current = _profile.value ?: return@launch
             val tags = withContext(Dispatchers.Default) { grabber.tagsIn(current, html) }
+            debug("read tags: ${tags.size} found, tag selector=${current.tagSelector}")
             if (tags.isEmpty()) {
                 _message.value = context.getString(R.string.site_no_tags)
                 return@launch

@@ -1,5 +1,6 @@
 package com.ammar.wallflow.ui.sites
 
+import androidx.compose.runtime.collectAsState
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import androidx.compose.runtime.rememberCoroutineScope
@@ -77,6 +78,9 @@ fun SiteWebScreen(
     var webView by remember { mutableStateOf<WebView?>(null) }
     var reloadKey by remember { mutableStateOf(0) }
     val scrollScope = rememberCoroutineScope()
+    var debugOn by remember { mutableStateOf(false) }
+    val debugLines by viewModel.debugLog.collectAsState()
+    val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
 
     LaunchedEffect(profileId) { viewModel.load(profileId) }
     LaunchedEffect(mode, webView) {
@@ -109,6 +113,31 @@ fun SiteWebScreen(
                         style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                     )
+                }
+                TextButton(onClick = { debugOn = !debugOn }) {
+                    Text(
+                        text = stringResource(
+                            if (debugOn) R.string.site_debug_hide else R.string.site_debug_show,
+                        ),
+                    )
+                }
+                if (debugOn) {
+                    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        Text(
+                            text = if (debugLines.isEmpty()) "No events yet." else debugLines.joinToString("\n"),
+                            style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                        )
+                        Row {
+                            TextButton(onClick = { viewModel.clearDebug() }) {
+                                Text(text = stringResource(R.string.site_debug_clear))
+                            }
+                            TextButton(onClick = {
+                                clipboard.setText(androidx.compose.ui.text.AnnotatedString(debugLines.joinToString("\n")))
+                            }) {
+                                Text(text = stringResource(R.string.site_debug_copy))
+                            }
+                        }
+                    }
                 }
                 Text(
                     text = stringResource(
@@ -171,6 +200,7 @@ fun SiteWebScreen(
                         Text(text = stringResource(R.string.site_scan))
                     }
                     TextButton(onClick = {
+                        viewModel.debug("scroll and scan started")
                         // Infinite-scroll sites load more posts as the page scrolls; scroll, wait, then scan all of it.
                         scrollScope.launch {
                             repeat(8) {
