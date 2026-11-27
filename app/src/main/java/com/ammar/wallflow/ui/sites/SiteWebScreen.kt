@@ -112,6 +112,7 @@ fun SiteWebScreen(
                             "item" -> R.string.site_help_item
                             "image" -> R.string.site_help_image
                             "tag" -> R.string.site_help_tag
+                            "next" -> R.string.site_help_next
                             else -> R.string.site_help_browse
                         },
                     ),
@@ -139,6 +140,12 @@ fun SiteWebScreen(
                         selected = mode == "tag",
                         onClick = { mode = if (mode == "tag") null else "tag" },
                         label = { Text(text = stringResource(R.string.site_pick_tag)) },
+                        modifier = Modifier.padding(end = 6.dp),
+                    )
+                    FilterChip(
+                        selected = mode == "next",
+                        onClick = { mode = if (mode == "next") null else "next" },
+                        label = { Text(text = stringResource(R.string.site_pick_next)) },
                         modifier = Modifier.padding(end = 6.dp),
                     )
                     TextButton(onClick = {

@@ -537,6 +537,8 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="site_help_browse">Browse the page as normal. Pick one of the options below, then tap the matching thing on the page.</string>
     <string name="site_help_item">Tap one thumbnail in a grid. The app learns how every thumbnail is found.</string>
     <string name="site_help_image">Open a post, then tap its full image.</string>
+    <string name="site_help_next">Tap the Next page button or link. The app will follow it for later pages.</string>
+    <string name="site_pick_next">Next page</string>
     <string name="site_help_tag">Open a post, then tap one of its tags. The app learns all tags of that kind.</string>
     <string name="site_picked">Saved: %1$s</string>
     <string name="site_pick_error">Could not learn that tap. Try a different element.</string>
