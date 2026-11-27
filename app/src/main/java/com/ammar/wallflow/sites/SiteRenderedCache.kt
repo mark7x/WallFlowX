@@ -53,6 +53,14 @@ class SiteRenderedCache @Inject constructor(
         }
     }
 
+    /** Forgets the saved posts and resume address under this key. */
+    suspend fun clear(key: String) = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            fileFor(key).delete()
+            resumePrefs.edit().remove(key).apply()
+        }
+    }
+
     private fun readFile(profileId: String): List<SiteItem> {
         val file = fileFor(profileId)
         return runCatching {

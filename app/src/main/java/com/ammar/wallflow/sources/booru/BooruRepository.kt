@@ -86,92 +86,80 @@ private class BooruPagingSource(
     private suspend fun loadSite(siteId: String, page: Int): LoadResult<Int, Wallpaper> {
         val profile = siteProfileStore.get(siteId)
             ?: return LoadResult.Error(IllegalStateException("This site was removed."))
-        siteLog.log("feed", "${profile.name}: page $page, query '${search.query}'")
-        // Unfiltered feed: pages come from the saved posts. When they run out, the hidden browser
-        // clicks the learned Next button and saves more, the same way the learning page does.
-        if (search.query.isBlank()) {
-            val needed = page * SITE_PAGE_SIZE
-            var scanned = siteRenderedCache.get(siteId)
-            val canClick = profile.hiddenLoadMore && profile.nextPageSelector != null && profile.itemSelector != null
-            if (page == 1 && scanned.isEmpty()) {
-                // Nothing saved yet: read the first page over HTTP and save it, so later pages can follow on.
-                val first = siteGrabber.search(profile, "", 1).getOrNull().orEmpty()
-                siteLog.log("feed", "${profile.name}: nothing saved, first page over HTTP gave ${first.size} posts")
-                if (first.isNotEmpty()) siteRenderedCache.add(siteId, first)
-                scanned = siteRenderedCache.get(siteId)
+        val query = search.query.trim()
+        siteLog.log("feed", "${profile.name}: page $page, query '$query'")
+        if (query.isNotEmpty() && !profile.searchUrl.contains("{tags}")) {
+            siteLog.log("feed", "${profile.name}: search not learned, address ${profile.searchUrl} has no {tags}")
+            return LoadResult.Error(
+                IllegalStateException(
+                    "Search isn't learned for ${profile.name}. Open it in Sites, search on the site, then tap Save search.",
+                ),
+            )
+        }
+        // The plain listing keeps what the learning page scanned. Each search keeps its own posts,
+        // and starts fresh every time it is run.
+        val key = siteCacheKey(siteId, query)
+        if (query.isNotEmpty() && page == 1) {
+            siteRenderedCache.clear(key)
+            siteHiddenBrowser.close("new search '$query'")
+        }
+        val needed = page * SITE_PAGE_SIZE
+        var saved = siteRenderedCache.get(key)
+        val canClick = profile.hiddenLoadMore && profile.nextPageSelector != null && profile.itemSelector != null
+        if (page == 1 && saved.isEmpty()) {
+            val first = siteGrabber.search(profile, query, 1)
+            val items = first.getOrNull().orEmpty()
+            siteLog.log(
+                "feed",
+                "${profile.name}: first page over HTTP gave ${items.size} posts" +
+                    (first.exceptionOrNull()?.let { ", error: ${it.message}" } ?: ""),
+            )
+            if (items.isNotEmpty()) {
+                siteRenderedCache.add(key, items)
+            } else if (profile.hiddenLoadMore && profile.itemSelector != null) {
+                // Sites that draw their list with JavaScript: read the first page in the hidden browser.
+                siteHiddenBrowser.loadNextPage(profile, query, key, click = false)
             }
-            var attempts = 0
-            while (canClick && scanned.size < needed && attempts < MAX_HIDDEN_ATTEMPTS) {
-                attempts++
-                siteLog.log("feed", "${profile.name}: page $page needs $needed posts, ${scanned.size} saved, hidden load #$attempts")
-                val added = siteHiddenBrowser.loadNextPage(profile)
-                scanned = siteRenderedCache.get(siteId)
-                if (added <= 0) break
-            }
-            val offset = (page - 1) * SITE_PAGE_SIZE
-            if (scanned.size > offset) {
-                val allowed = search.filters.allowedPurities()
-                val pageItems = scanned.drop(offset).take(SITE_PAGE_SIZE)
-                val wallpapers: List<Wallpaper> = pageItems.mapNotNull { item ->
-                    val postUrl = item.postUrl ?: return@mapNotNull null
-                    val thumb = item.thumbUrl ?: return@mapNotNull null
-                    siteWallpaper(siteId, postUrl, null, thumb)
-                }.filter { it.purity in allowed }.filter { seenIds.add(it.id) }
-                val more = canClick || scanned.size > offset + SITE_PAGE_SIZE
-                siteLog.log(
-                    "feed",
-                    "${profile.name}: page $page served ${wallpapers.size} of ${pageItems.size} saved posts" +
-                        if (more) "" else ", no more pages (no Next button learned or hidden loading off)",
-                )
-                BooruPostRegistry.remember(wallpapers)
-                return LoadResult.Page(
-                    data = wallpapers,
-                    prevKey = if (page > 1) page - 1 else null,
-                    nextKey = if (more) page + 1 else null,
-                )
-            }
-            if (page > 1) {
-                siteLog.log(
-                    "feed",
-                    "${profile.name}: page $page stopping, ${scanned.size} saved posts and " +
-                        if (canClick) "the hidden browser added none (see [hidden] lines)" else "no way to load more",
-                )
-                return LoadResult.Page(data = emptyList(), prevKey = page - 1, nextKey = null)
+            saved = siteRenderedCache.get(key)
+            if (saved.isEmpty() && first.isFailure) {
+                return LoadResult.Error(first.exceptionOrNull() ?: IllegalStateException("Site search failed."))
             }
         }
-        // Without a learned Next button or a {page} address, page 2 would just reload page 1. Stop instead.
-        if (page > 1 && profile.nextPageSelector == null && !profile.searchUrl.contains("{page}")) {
-            siteLog.log("feed", "${profile.name}: page $page needs a learned Next button, none learned, stopping")
-            return LoadResult.Page(data = emptyList(), prevKey = page - 1, nextKey = null)
+        var attempts = 0
+        while (canClick && saved.size < needed && attempts < MAX_HIDDEN_ATTEMPTS) {
+            attempts++
+            siteLog.log("feed", "${profile.name}: page $page needs $needed posts, ${saved.size} saved, hidden load #$attempts")
+            val added = siteHiddenBrowser.loadNextPage(profile, query, key)
+            saved = siteRenderedCache.get(key)
+            if (added <= 0) break
         }
-        val result = siteGrabber.search(profile, search.query, page)
-        // Sites that build their list with JavaScript return nothing over plain HTTP.
-        // Show what the learning center has scanned for them, on the first page of an unfiltered feed.
-        val fromScan = page == 1 && search.query.isBlank()
-        val items = result.getOrNull().orEmpty().ifEmpty {
-            if (fromScan) siteRenderedCache.get(siteId) else emptyList()
-        }
-        if (result.isFailure && items.isEmpty()) {
-            siteLog.log("feed", "${profile.name}: page $page failed, stopping")
-            return LoadResult.Error(result.exceptionOrNull() ?: IllegalStateException("Site search failed."))
+        val offset = (page - 1) * SITE_PAGE_SIZE
+        if (saved.size <= offset) {
+            siteLog.log(
+                "feed",
+                "${profile.name}: page $page stopping, ${saved.size} saved posts and " +
+                    if (canClick) "the hidden browser added none (see [hidden] lines)" else "no way to load more",
+            )
+            return LoadResult.Page(data = emptyList(), prevKey = if (page > 1) page - 1 else null, nextKey = null)
         }
         val allowed = search.filters.allowedPurities()
-        val wallpapers: List<Wallpaper> = items.mapNotNull { item ->
+        val pageItems = saved.drop(offset).take(SITE_PAGE_SIZE)
+        val wallpapers: List<Wallpaper> = pageItems.mapNotNull { item ->
             val postUrl = item.postUrl ?: return@mapNotNull null
             val thumb = item.thumbUrl ?: return@mapNotNull null
             siteWallpaper(siteId, postUrl, null, thumb)
         }.filter { it.purity in allowed }.filter { seenIds.add(it.id) }
+        val more = canClick || saved.size > offset + SITE_PAGE_SIZE
         siteLog.log(
             "feed",
-            "${profile.name}: page $page gave ${items.size} items, ${wallpapers.size} new to the list" +
-                if (wallpapers.isEmpty()) ", next page will not be asked" else "",
+            "${profile.name}: page $page served ${wallpapers.size} of ${pageItems.size} saved posts" +
+                if (more) "" else ", no more pages (no Next button learned or hidden loading off)",
         )
         BooruPostRegistry.remember(wallpapers)
         return LoadResult.Page(
             data = wallpapers,
             prevKey = if (page > 1) page - 1 else null,
-            // Stop when a page adds nothing new, otherwise Paging keeps asking for pages forever.
-            nextKey = if (items.isEmpty() || wallpapers.isEmpty()) null else page + 1,
+            nextKey = if (more) page + 1 else null,
         )
     }
 
@@ -180,3 +168,7 @@ private class BooruPagingSource(
 
 private const val SITE_PAGE_SIZE = 30
 private const val MAX_HIDDEN_ATTEMPTS = 3
+
+/** Saved posts of the plain listing use the site id; each search gets its own key. */
+private fun siteCacheKey(siteId: String, query: String): String =
+    if (query.isEmpty()) siteId else "${siteId}_q${query.lowercase().hashCode().toUInt()}"

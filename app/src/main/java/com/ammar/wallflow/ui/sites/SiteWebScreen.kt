@@ -87,6 +87,34 @@ fun SiteWebScreen(
     var reloadKey by remember { mutableStateOf(0) }
     val scrollScope = rememberCoroutineScope()
     var debugOn by remember { mutableStateOf(false) }
+    var saveSearchOpen by remember { mutableStateOf(false) }
+    var searchWord by remember { mutableStateOf("") }
+    if (saveSearchOpen) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { saveSearchOpen = false },
+            title = { Text(text = stringResource(R.string.site_save_search)) },
+            text = {
+                Column {
+                    Text(text = stringResource(R.string.site_save_search_help))
+                    androidx.compose.material3.OutlinedTextField(
+                        value = searchWord,
+                        onValueChange = { searchWord = it },
+                        singleLine = true,
+                        label = { Text(text = stringResource(R.string.site_save_search_word)) },
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.saveSearch(webView?.url.orEmpty(), searchWord)
+                    saveSearchOpen = false
+                }) { Text(text = stringResource(R.string.site_save_search)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { saveSearchOpen = false }) { Text(text = stringResource(android.R.string.cancel)) }
+            },
+        )
+    }
     val debugLines by viewModel.debugLog.collectAsState()
     val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
 
@@ -266,6 +294,9 @@ fun SiteWebScreen(
                         }
                     }) {
                         Text(text = stringResource(R.string.site_click_next))
+                    }
+                    TextButton(onClick = { saveSearchOpen = true }) {
+                        Text(text = stringResource(R.string.site_save_search))
                     }
                 }
             }

@@ -45,27 +45,36 @@ class SiteHiddenBrowser @Inject constructor(
     private var pageLoaded: CompletableDeferred<Boolean>? = null
     private val idleRelease = Runnable { release("idle for ${IDLE_MS / 60_000} minutes") }
 
-    /** Returns how many new posts were saved. */
-    suspend fun loadNextPage(profile: SiteProfile): Int = mutex.withLock {
+    /** Closes the hidden page, so the next load starts from a fresh page. */
+    suspend fun close(reason: String) = mutex.withLock {
+        withContext(Dispatchers.Main) { release(reason) }
+    }
+
+    /**
+     * Saves more posts under [key]. With [click] it clicks the learned Next button first;
+     * without it, it only reads what the page shows (for a first page HTTP could not read).
+     * Returns how many new posts were saved.
+     */
+    suspend fun loadNextPage(profile: SiteProfile, query: String = "", key: String = profile.id, click: Boolean = true): Int = mutex.withLock {
         val nextSelector = profile.nextPageSelector
         val itemSelector = profile.itemSelector
-        if (nextSelector == null || itemSelector == null) {
+        if (itemSelector == null || (click && nextSelector == null)) {
             log(profile, "cannot load more: next button learned=${nextSelector != null}, grid item learned=${itemSelector != null}")
             return@withLock 0
         }
-        val before = renderedCache.get(profile.id).size
+        val before = renderedCache.get(key).size
         val started = System.currentTimeMillis()
         val page = withContext(Dispatchers.Main) {
             mainHandler.removeCallbacks(idleRelease)
             try {
-                step(profile, itemSelector, nextSelector)
+                step(profile, query, key, itemSelector, if (click) nextSelector else null)
             } finally {
                 mainHandler.postDelayed(idleRelease, IDLE_MS)
             }
         } ?: return@withLock 0
         val items = grabber.renderedItemsIn(profile, page.html, page.url)
-        renderedCache.add(profile.id, items, page.url)
-        val added = renderedCache.get(profile.id).size - before
+        renderedCache.add(key, items, page.url)
+        val added = renderedCache.get(key).size - before
         log(profile, "read ${items.size} posts from ${page.url}, $added new saved, took ${System.currentTimeMillis() - started} ms")
         added
     }
@@ -73,21 +82,27 @@ class SiteHiddenBrowser @Inject constructor(
     private class Page(val html: String, val url: String)
 
     /** Runs on the main thread, where WebView must be used. */
-    private suspend fun step(profile: SiteProfile, itemSelector: String, nextSelector: String): Page? {
-        var view = ensureOpen(profile) ?: return null
+    private suspend fun step(profile: SiteProfile, query: String, key: String, itemSelector: String, nextSelector: String?): Page? {
+        var view = ensureOpen(profile, query, key) ?: return null
         var countBefore = waitForCount(view, itemSelector, atLeast = 1, timeoutMs = RENDER_TIMEOUT_MS)
         if (countBefore > MAX_PAGE_ITEMS) {
             val here = view.url
             log(profile, "hidden page has $countBefore posts, reopening at $here to keep memory low")
             release("page too large")
-            if (here != null) renderedCache.add(profile.id, emptyList(), here)
-            view = ensureOpen(profile) ?: return null
+            if (here != null) renderedCache.add(key, emptyList(), here)
+            view = ensureOpen(profile, query, key) ?: return null
             countBefore = waitForCount(view, itemSelector, atLeast = 1, timeoutMs = RENDER_TIMEOUT_MS)
         }
         log(profile, "posts on hidden page before click: $countBefore")
         if (countBefore <= 0) {
-            log(profile, "no posts appeared: ${pageState(view, itemSelector, nextSelector)}")
+            log(profile, "no posts appeared: ${pageState(view, itemSelector, nextSelector ?: itemSelector)}")
             return null
+        }
+        if (nextSelector == null) {
+            log(profile, "reading the page without clicking")
+            val raw = view.evaluate("document.documentElement.outerHTML") ?: return null
+            val html = runCatching { JSONTokener(raw).nextValue() as? String }.getOrNull() ?: return null
+            return Page(html = html, url = view.url.orEmpty())
         }
         if (!waitForElement(view, nextSelector, BUTTON_TIMEOUT_MS)) {
             log(profile, "next button not found: ${pageState(view, itemSelector, nextSelector)}")
@@ -111,16 +126,16 @@ class SiteHiddenBrowser @Inject constructor(
         return Page(html = html, url = view.url.orEmpty())
     }
 
-    private suspend fun ensureOpen(profile: SiteProfile): WebView? {
-        webView?.takeIf { openFor == profile.id }?.let { return it }
-        if (webView != null) release("switching to ${profile.name}")
-        val start = renderedCache.resumeUrl(profile.id) ?: profile.searchAddress("", 1)
+    private suspend fun ensureOpen(profile: SiteProfile, query: String, key: String): WebView? {
+        webView?.takeIf { openFor == key }?.let { return it }
+        if (webView != null) release("switching to ${profile.name} '${query}'")
+        val start = renderedCache.resumeUrl(key) ?: profile.searchAddress(query, 1)
         log(profile, "opening hidden page $start (ad blocking ${if (profile.blockThirdParty) "on" else "off"})")
         val loaded = CompletableDeferred<Boolean>()
         pageLoaded = loaded
         val view = createView(profile, start)
         webView = view
-        openFor = profile.id
+        openFor = key
         view.loadUrl(start)
         val ok = withTimeoutOrNull(LOAD_TIMEOUT_MS) { loaded.await() }
         if (ok != true) {

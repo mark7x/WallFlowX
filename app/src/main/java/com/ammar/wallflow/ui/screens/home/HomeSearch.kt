@@ -65,6 +65,9 @@ fun HomeSearch(
                         filters = filters as WallhavenFilters,
                     )
                 }
+            } else if (search is BooruSearch) {
+                // Boards and taught sites: search the selected one, not Wallhaven.
+                search.copy(query = it.trimAll(), meta = null)
             } else {
                 WallhavenSearch(
                     query = it,

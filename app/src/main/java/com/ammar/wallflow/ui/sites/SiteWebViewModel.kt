@@ -118,6 +118,38 @@ class SiteWebViewModel @Inject constructor(
     }
 
     /** Keeps the items this page shows, so the site's browse grid can show them. */
+    /**
+     * Learns the site's search address from a search done on the site: the word is found in the
+     * page address and replaced with {tags}.
+     */
+    fun saveSearch(pageUrl: String, word: String) {
+        viewModelScope.launch {
+            val current = _profile.value ?: return@launch
+            val term = word.trim()
+            if (term.isEmpty() || pageUrl.isBlank()) return@launch
+            val forms = listOf(
+                term,
+                java.net.URLEncoder.encode(term, "UTF-8"),
+                java.net.URLEncoder.encode(term, "UTF-8").replace("+", "%20"),
+                term.replace(' ', '_'),
+                term.replace(' ', '-'),
+            ).distinct()
+            val form = forms.firstOrNull { pageUrl.contains(it, ignoreCase = true) }
+            if (form == null) {
+                debug("save search: '$term' not found in $pageUrl")
+                _message.value = context.getString(R.string.site_search_word_missing, term)
+                return@launch
+            }
+            val at = pageUrl.indexOf(form, ignoreCase = true)
+            val template = pageUrl.substring(0, at) + "{tags}" + pageUrl.substring(at + form.length)
+            val updated = current.copy(searchUrl = template)
+            store.save(updated)
+            _profile.value = updated
+            debug("save search: address is now $template")
+            _message.value = context.getString(R.string.site_search_saved, template)
+        }
+    }
+
     fun scanPage(html: String, pageUrl: String) {
         viewModelScope.launch {
             val current = _profile.value ?: return@launch
