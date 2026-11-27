@@ -28,18 +28,38 @@ class SiteGrabber @Inject constructor(
     suspend fun search(profile: SiteProfile, tags: String, page: Int): Result<List<SiteItem>> =
         runCatching {
             val address = if (page > 1 && profile.nextPageSelector != null) {
-                // Pages after the first come from the "next page" link on the page before.
-                nextPages[pageKey(profile, tags, page)] ?: return@runCatching emptyList()
+                addressOfPage(profile, tags, page) ?: return@runCatching emptyList()
             } else {
                 profile.searchAddress(tags, page)
             }
             val doc = fetchDocument(address)
-            profile.nextPageSelector?.let { selector ->
-                doc.selectFirst(selector)?.absUrl(profile.nextPageAttr)?.takeIf { it.isNotBlank() }
-                    ?.let { nextPages[pageKey(profile, tags, page + 1)] = it }
-            }
+            nextLinkOf(profile, doc)?.let { nextPages[pageKey(profile, tags, page + 1)] = it }
             itemsIn(profile, doc)
         }
+
+    /** The page's learned "next page" link. Only links to the same site are followed, so ad links are ignored. */
+    private fun nextLinkOf(profile: SiteProfile, doc: Document): String? {
+        val selector = profile.nextPageSelector ?: return null
+        val next = doc.selectFirst(selector)?.absUrl(profile.nextPageAttr)?.takeIf { it.isNotBlank() }
+            ?: return null
+        val siteHost = runCatching { java.net.URI(profile.searchAddress("", 1)).host }.getOrNull()
+        val nextHost = runCatching { java.net.URI(next).host }.getOrNull()
+        return next.takeIf { siteHost != null && siteHost == nextHost }
+    }
+
+    /**
+     * Address of a later page. The links are only known once the page before has been read,
+     * so the first page is read again, following links, the first time a later page is asked for.
+     */
+    private suspend fun addressOfPage(profile: SiteProfile, tags: String, page: Int): String? {
+        nextPages[pageKey(profile, tags, page)]?.let { return it }
+        var current = profile.searchAddress(tags, 1)
+        for (p in 1 until page) {
+            current = nextLinkOf(profile, fetchDocument(current)) ?: return null
+            nextPages[pageKey(profile, tags, p + 1)] = current
+        }
+        return current
+    }
 
     private val nextPages = java.util.concurrent.ConcurrentHashMap<String, String>()
 
