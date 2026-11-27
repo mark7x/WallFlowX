@@ -1,5 +1,8 @@
 package com.ammar.wallflow.ui.sites
 
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import androidx.compose.runtime.rememberCoroutineScope
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebResourceRequest
 import androidx.compose.runtime.key
@@ -73,6 +76,7 @@ fun SiteWebScreen(
     val modeRef = remember { AtomicReference<String?>(null) }
     var webView by remember { mutableStateOf<WebView?>(null) }
     var reloadKey by remember { mutableStateOf(0) }
+    val scrollScope = rememberCoroutineScope()
 
     LaunchedEffect(profileId) { viewModel.load(profileId) }
     LaunchedEffect(mode, webView) {
@@ -165,6 +169,22 @@ fun SiteWebScreen(
                         }
                     }) {
                         Text(text = stringResource(R.string.site_scan))
+                    }
+                    TextButton(onClick = {
+                        // Infinite-scroll sites load more posts as the page scrolls; scroll, wait, then scan all of it.
+                        scrollScope.launch {
+                            repeat(8) {
+                                webView?.evaluateJavascript("window.scrollTo(0, document.body.scrollHeight);", null)
+                                delay(1500L)
+                            }
+                            webView?.evaluateJavascript("document.documentElement.outerHTML") { raw ->
+                                val html = runCatching { JSONTokener(raw).nextValue() as? String }
+                                    .getOrNull()
+                                viewModel.scanPage(html.orEmpty(), webView?.url.orEmpty())
+                            }
+                        }
+                    }) {
+                        Text(text = stringResource(R.string.site_scroll_scan))
                     }
                 }
             }

@@ -77,9 +77,9 @@ private class BooruPagingSource(
         val profile = siteProfileStore.get(siteId)
             ?: return LoadResult.Error(IllegalStateException("This site was removed."))
         // Unfiltered feed: serve every page from what the learning center has scanned, with no network wait.
-        if (search.query.isBlank() && page == 1) {
+        if (search.query.isBlank()) {
             val scanned = siteRenderedCache.get(siteId)
-            if (scanned.isNotEmpty()) {
+            if (scanned.size > (page - 1) * SITE_PAGE_SIZE) {
                 val allowed = search.filters.allowedPurities()
                 val pageItems = scanned.drop((page - 1) * SITE_PAGE_SIZE).take(SITE_PAGE_SIZE)
                 val wallpapers: List<Wallpaper> = pageItems.mapNotNull { item ->
