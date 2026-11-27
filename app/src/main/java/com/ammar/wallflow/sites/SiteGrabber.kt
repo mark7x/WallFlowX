@@ -27,8 +27,23 @@ class SiteGrabber @Inject constructor(
 ) {
     suspend fun search(profile: SiteProfile, tags: String, page: Int): Result<List<SiteItem>> =
         runCatching {
-            itemsIn(profile, fetchDocument(profile.searchAddress(tags, page)))
+            val address = if (page > 1 && profile.nextPageSelector != null) {
+                // Pages after the first come from the "next page" link on the page before.
+                nextPages[pageKey(profile, tags, page)] ?: return@runCatching emptyList()
+            } else {
+                profile.searchAddress(tags, page)
+            }
+            val doc = fetchDocument(address)
+            profile.nextPageSelector?.let { selector ->
+                doc.selectFirst(selector)?.absUrl(profile.nextPageAttr)?.takeIf { it.isNotBlank() }
+                    ?.let { nextPages[pageKey(profile, tags, page + 1)] = it }
+            }
+            itemsIn(profile, doc)
         }
+
+    private val nextPages = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    private fun pageKey(profile: SiteProfile, tags: String, page: Int) = "${profile.id}|$tags|$page"
 
     /** Items from a page the browser has already rendered. Works for JavaScript-driven sites. */
     fun renderedItemsIn(profile: SiteProfile, html: String, pageUrl: String): List<SiteItem> =

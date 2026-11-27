@@ -24,6 +24,9 @@ data class SiteProfile(
     val tagSelector: String? = null,
     /** How often each tag has been seen. Feeds tag suggestions. */
     val tagCounts: Map<String, Int> = emptyMap(),
+    /** The learned "next page" link. When set, pages after the first follow it. */
+    val nextPageSelector: String? = null,
+    val nextPageAttr: String = "href",
 ) {
     val canBrowse: Boolean get() = itemSelector != null
 

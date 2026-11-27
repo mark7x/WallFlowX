@@ -43,6 +43,15 @@ internal fun applyPick(profile: SiteProfile, pick: JSONObject): SiteProfile? {
                 ?: return null
             profile.copy(tagSelector = selector)
         }
+        "next" -> {
+            val link = pick.optJSONObject("link")
+            val selector = link?.nonBlank("classSelector")
+                ?: link?.nonBlank("selector")
+                ?: target.nonBlank("classSelector")
+                ?: target.nonBlank("selector")
+                ?: return null
+            profile.copy(nextPageSelector = selector, nextPageAttr = "href")
+        }
         else -> null
     }
 }
