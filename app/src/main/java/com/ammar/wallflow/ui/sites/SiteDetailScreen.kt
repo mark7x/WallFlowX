@@ -110,6 +110,27 @@ fun SiteDetailScreen(
                     style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                 )
             }
+            profile?.takeIf { it.canBrowse && it.nextPageSelector != null }?.let { learned ->
+                androidx.compose.foundation.layout.Row(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                ) {
+                    Text(
+                        modifier = Modifier.weight(1f),
+                        text = stringResource(R.string.site_hidden_load_more),
+                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                    )
+                    androidx.compose.material3.Switch(
+                        checked = learned.hiddenLoadMore,
+                        onCheckedChange = { viewModel.setHiddenLoadMore(it) },
+                    )
+                }
+                Text(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    text = stringResource(R.string.site_hidden_help),
+                    style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                )
+            }
             OutlinedTextField(
                 value = text,
                 onValueChange = {

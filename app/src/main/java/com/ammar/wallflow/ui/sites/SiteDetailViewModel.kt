@@ -39,6 +39,15 @@ class SiteDetailViewModel @Inject constructor(
     private var page = 1
     private var job: Job? = null
 
+    fun setHiddenLoadMore(enabled: Boolean) {
+        viewModelScope.launch {
+            val current = _profile.value ?: return@launch
+            val updated = current.copy(hiddenLoadMore = enabled)
+            store.save(updated)
+            _profile.value = updated
+        }
+    }
+
     fun load(id: String) {
         viewModelScope.launch {
             _profile.value = store.get(id)

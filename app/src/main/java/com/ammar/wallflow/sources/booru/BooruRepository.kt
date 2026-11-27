@@ -2,6 +2,7 @@ package com.ammar.wallflow.sources.booru
 
 import com.ammar.wallflow.sites.SiteGrabber
 import com.ammar.wallflow.sites.SiteProfileStore
+import com.ammar.wallflow.sites.SiteHiddenBrowser
 import com.ammar.wallflow.sites.SiteLog
 import com.ammar.wallflow.sites.SiteRenderedCache
 import androidx.paging.PagingSource.LoadParams
@@ -25,11 +26,14 @@ class BooruRepository @Inject constructor(
     private val siteGrabber: SiteGrabber,
     private val siteRenderedCache: SiteRenderedCache,
     private val siteLog: SiteLog,
+    private val siteHiddenBrowser: SiteHiddenBrowser,
 ) {
     fun wallpapersPager(search: BooruSearch): Flow<PagingData<Wallpaper>> = Pager(
         config = PagingConfig(pageSize = PAGE_SIZE, enablePlaceholders = false),
         pagingSourceFactory = {
-            BooruPagingSource(booruPostsClient, siteProfileStore, siteGrabber, siteRenderedCache, siteLog, search)
+            BooruPagingSource(
+                booruPostsClient, siteProfileStore, siteGrabber, siteRenderedCache, siteLog, siteHiddenBrowser, search,
+            )
         },
     ).flow
 
@@ -44,6 +48,7 @@ private class BooruPagingSource(
     private val siteGrabber: SiteGrabber,
     private val siteRenderedCache: SiteRenderedCache,
     private val siteLog: SiteLog,
+    private val siteHiddenBrowser: SiteHiddenBrowser,
     private val search: BooruSearch,
 ) : PagingSource<Int, Wallpaper>() {
     // Ids already shown in this list. A post can come back on a later page when new posts
@@ -84,7 +89,15 @@ private class BooruPagingSource(
         siteLog.log("feed", "${profile.name}: page $page, query '${search.query}'")
         // Unfiltered feed: serve every page from what the learning center has scanned, with no network wait.
         if (search.query.isBlank()) {
-            val scanned = siteRenderedCache.get(siteId)
+            var scanned = siteRenderedCache.get(siteId)
+            // Out of scanned posts: click Next in the hidden browser first. Only when something is
+            // already scanned, so the first page always comes from the site itself.
+            if (scanned.isNotEmpty() && scanned.size <= (page - 1) * SITE_PAGE_SIZE &&
+                profile.hiddenLoadMore && profile.nextPageSelector != null
+            ) {
+                siteHiddenBrowser.loadNextPage(profile)
+                scanned = siteRenderedCache.get(siteId)
+            }
             if (scanned.size > (page - 1) * SITE_PAGE_SIZE) {
                 val allowed = search.filters.allowedPurities()
                 val pageItems = scanned.drop((page - 1) * SITE_PAGE_SIZE).take(SITE_PAGE_SIZE)

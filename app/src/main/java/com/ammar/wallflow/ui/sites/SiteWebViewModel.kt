@@ -126,7 +126,7 @@ class SiteWebViewModel @Inject constructor(
                 _message.value = context.getString(R.string.site_scan_none)
                 return@launch
             }
-            renderedCache.add(current.id, found)
+            renderedCache.add(current.id, found, pageUrl)
             _message.value = context.getString(R.string.site_scanned, found.size)
         }
     }

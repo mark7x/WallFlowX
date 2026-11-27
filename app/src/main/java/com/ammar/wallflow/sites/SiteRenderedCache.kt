@@ -23,6 +23,10 @@ class SiteRenderedCache @Inject constructor(
 ) {
     private val mutex = Mutex()
     private val json = Json { ignoreUnknownKeys = true }
+    private val resumePrefs = context.getSharedPreferences("site_resume", Context.MODE_PRIVATE)
+
+    /** Address of the last page scanned for this site, where the hidden browser picks up. */
+    fun resumeUrl(profileId: String): String? = resumePrefs.getString(profileId, null)
     private val listSerializer = ListSerializer(SiteItem.serializer())
 
     private fun fileFor(profileId: String): File {
@@ -41,10 +45,11 @@ class SiteRenderedCache @Inject constructor(
     }
 
     /** Adds scanned items to the ones already saved for this site, without repeats. */
-    suspend fun add(profileId: String, found: List<SiteItem>) = withContext(Dispatchers.IO) {
+    suspend fun add(profileId: String, found: List<SiteItem>, pageUrl: String? = null) = withContext(Dispatchers.IO) {
         mutex.withLock {
             val merged = (readFile(profileId) + found).distinctBy { it.postUrl ?: it.thumbUrl }
             fileFor(profileId).writeText(json.encodeToString(listSerializer, merged))
+            if (pageUrl != null) resumePrefs.edit().putString(profileId, pageUrl).apply()
         }
     }
 

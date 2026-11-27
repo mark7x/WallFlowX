@@ -27,6 +27,8 @@ data class SiteProfile(
     /** The learned "next page" link. When set, pages after the first follow it. */
     val nextPageSelector: String? = null,
     val nextPageAttr: String = "href",
+    /** Home feed clicks Next in a hidden browser when it runs out of scanned posts. */
+    val hiddenLoadMore: Boolean = true,
 ) {
     val canBrowse: Boolean get() = itemSelector != null
 
