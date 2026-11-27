@@ -7,6 +7,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import androidx.compose.runtime.rememberCoroutineScope
 import android.webkit.RenderProcessGoneDetail
+import android.webkit.ConsoleMessage
+import android.webkit.WebResourceResponse
+import android.graphics.Bitmap
 import android.webkit.WebResourceRequest
 import androidx.compose.runtime.key
 import android.annotation.SuppressLint
@@ -232,14 +235,25 @@ fun SiteWebScreen(
                             viewModel.debug("click next: no next-page button learned")
                             return@TextButton
                         }
-                        viewModel.debug("click next: $selector")
+                        viewModel.debug("click next: selector $selector")
                         // Clicks the learned button with a script, so an ad layered over it can't take the tap.
+                        // The result says what was clicked and whether something covers it.
                         scrollScope.launch {
-                            val script = "(function(){var el=document.querySelector(" +
-                                JSONObject.quote(selector) +
-                                ");if(!el)return 'no element';el.click();return 'clicked';})()"
-                            webView?.evaluateJavascript(script) { result ->
-                                viewModel.debug("click next result: $result")
+                            val script = "(function(){var sel=" + JSONObject.quote(selector) + ";" +
+                                "var el=document.querySelector(sel);" +
+                                "var count=document.querySelectorAll(sel).length;" +
+                                "if(!el)return JSON.stringify({ok:false,count:count});" +
+                                "var r=el.getBoundingClientRect();" +
+                                "var top=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);" +
+                                "var info={ok:true,count:count,tag:el.tagName,text:(el.innerText||'').trim().slice(0,40)," +
+                                "href:el.closest('a')?el.closest('a').getAttribute('href'):null," +
+                                "w:Math.round(r.width),h:Math.round(r.height)," +
+                                "coveredBy:(top&&!el.contains(top))?(top.tagName+' '+(top.className||'')).slice(0,80):null," +
+                                "disabled:!!el.disabled};" +
+                                "el.click();return JSON.stringify(info);})()"
+                            webView?.evaluateJavascript(script) { raw ->
+                                val info = runCatching { JSONTokener(raw).nextValue() as? String }.getOrNull()
+                                viewModel.debug("click next result: ${info ?: raw}")
                             }
                             delay(3000L)
                             webView?.evaluateJavascript("document.documentElement.outerHTML") { raw ->
@@ -274,11 +288,63 @@ fun SiteWebScreen(
                             isDialog: Boolean,
                             isUserGesture: Boolean,
                             resultMsg: android.os.Message?,
-                        ): Boolean = false
+                        ): Boolean {
+                            viewModel.debug("pop-up window request blocked (tap=$isUserGesture)")
+                            return false
+                        }
+
+                        override fun onConsoleMessage(message: ConsoleMessage?): Boolean {
+                            if (message?.messageLevel() == ConsoleMessage.MessageLevel.ERROR) {
+                                viewModel.debug("site script error: ${message?.message()?.take(200)}")
+                            }
+                            return true
+                        }
                     }
                     CookieManager.getInstance().setAcceptCookie(true)
                     addJavascriptInterface(SiteBridge { json -> viewModel.onPick(json) }, "WallFlowPick")
                     webViewClient = object : WebViewClient() {
+                        private var startedAt = 0L
+                        private val thirdPartyHosts = java.util.Collections.synchronizedSet(mutableSetOf<String>())
+
+                        override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                            startedAt = System.currentTimeMillis()
+                            viewModel.debug("load started: $url")
+                        }
+
+                        override fun onReceivedError(
+                            view: WebView?,
+                            request: android.webkit.WebResourceRequest?,
+                            error: android.webkit.WebResourceError?,
+                        ) {
+                            if (request?.isForMainFrame == true) {
+                                viewModel.debug("load error ${error?.errorCode} ${error?.description} at ${request?.url}")
+                            }
+                        }
+
+                        override fun onReceivedHttpError(
+                            view: WebView?,
+                            request: android.webkit.WebResourceRequest?,
+                            errorResponse: WebResourceResponse?,
+                        ) {
+                            if (request?.isForMainFrame == true) {
+                                viewModel.debug("http error ${errorResponse?.statusCode} at ${request?.url}")
+                            }
+                        }
+
+                        // Lists every other host the page loads from (ads, trackers, CDNs), once each per view.
+                        override fun shouldInterceptRequest(
+                            view: WebView?,
+                            request: android.webkit.WebResourceRequest?,
+                        ): WebResourceResponse? {
+                            val host = request?.url?.host.orEmpty()
+                            if (host.isNotEmpty() && host != siteHost && !host.endsWith(".$siteHost") &&
+                                thirdPartyHosts.size < 40 && thirdPartyHosts.add(host)
+                            ) {
+                                viewModel.debug("loads from other host: $host")
+                            }
+                            return null
+                        }
+
                         // Ads often open app links (intent://, market://). Only web pages load here.
                         override fun shouldOverrideUrlLoading(
                             view: WebView?,
@@ -311,14 +377,22 @@ fun SiteWebScreen(
                             view: WebView?,
                             detail: RenderProcessGoneDetail?,
                         ): Boolean {
-                            viewModel.debug("web page process ended, view rebuilt: ${detail?.didCrash()}")
+                            val runtime = Runtime.getRuntime()
+                            val heapMb = (runtime.totalMemory() - runtime.freeMemory()) / 1_048_576
+                            viewModel.debug(
+                                "web page process ended: didCrash=${detail?.didCrash()}, " +
+                                    "priority=${detail?.rendererPriorityAtExit()}, app heap $heapMb MB, " +
+                                    "rebuild #${reloadKey + 1}, last url=${view?.url}",
+                            )
                             view?.destroy()
                             reloadKey++
                             return true
                         }
 
                         override fun onPageFinished(view: WebView, pageUrl: String?) {
-                            viewModel.debug("page loaded: $pageUrl")
+                            viewModel.debug(
+                                "page finished in ${System.currentTimeMillis() - startedAt} ms: $pageUrl, title=${view.title}",
+                            )
                             view.evaluateJavascript(SiteScripts.PICKER, null)
                             view.evaluateJavascript(SiteScripts.modeScript(modeRef.get()), null)
                         }

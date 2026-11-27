@@ -115,6 +115,11 @@ private class BooruPagingSource(
                 )
             }
         }
+        // Without a learned Next button or a {page} address, page 2 would just reload page 1. Stop instead.
+        if (page > 1 && profile.nextPageSelector == null && !profile.searchUrl.contains("{page}")) {
+            siteLog.log("feed", "${profile.name}: page $page needs a learned Next button, none learned, stopping")
+            return LoadResult.Page(data = emptyList(), prevKey = page - 1, nextKey = null)
+        }
         val result = siteGrabber.search(profile, search.query, page)
         // Sites that build their list with JavaScript return nothing over plain HTTP.
         // Show what the learning center has scanned for them, on the first page of an unfiltered feed.

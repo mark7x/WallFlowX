@@ -99,6 +99,9 @@ class SiteWebViewModel @Inject constructor(
             debug("pick: mode=${pick?.optString("mode") ?: "unreadable"}, selector=${pick?.optJSONObject("target")?.optString("selector")}")
             val updated = pick?.let { applyPick(current, it) }
             debug("pick applied: ${updated != null}")
+            if (updated != null && pick?.optString("mode") == "next") {
+                debug("saved next-page selector: ${updated.nextPageSelector}")
+            }
             if (pick == null || updated == null) {
                 _message.value = context.getString(R.string.site_pick_error)
                 return@launch
