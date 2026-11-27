@@ -89,8 +89,8 @@ private class BooruPagingSource(
         val allowed = search.filters.allowedPurities()
         val wallpapers: List<Wallpaper> = items.mapNotNull { item ->
             val postUrl = item.postUrl ?: return@mapNotNull null
-            val fullUrl = siteGrabber.fullImageUrl(profile, postUrl) ?: return@mapNotNull null
-            siteWallpaper(siteId, postUrl, fullUrl, item.thumbUrl)
+            val thumb = item.thumbUrl ?: return@mapNotNull null
+            siteWallpaper(siteId, postUrl, null, thumb)
         }.filter { it.purity in allowed }.filter { seenIds.add(it.id) }
         BooruPostRegistry.remember(wallpapers)
         return LoadResult.Page(

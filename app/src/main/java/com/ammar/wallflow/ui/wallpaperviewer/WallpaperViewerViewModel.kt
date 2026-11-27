@@ -1,5 +1,7 @@
 package com.ammar.wallflow.ui.wallpaperviewer
 
+import com.ammar.wallflow.sites.SitePostResolver
+import com.ammar.wallflow.sources.booru.BooruWallpaper
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -47,6 +49,7 @@ import com.ammar.wallflow.sources.booru.BooruFavoritesStore
 @HiltViewModel
 class WallpaperViewerViewModel @Inject constructor(
     private val application: Application,
+    private val sitePostResolver: SitePostResolver,
     private val wallhavenRepository: WallhavenRepository,
     private val redditRepository: RedditRepository,
     private val localWallpapersRepository: LocalWallpapersRepository,
@@ -74,12 +77,14 @@ class WallpaperViewerViewModel @Inject constructor(
                     when (it.source) {
                         Source.WALLHAVEN -> wallhavenRepository.wallpaper(it.wallpaperId)
                         Source.REDDIT -> redditRepository.wallpaper(it.wallpaperId)
-                        Source.BOORU -> flowOf(
-                            Resource.Success(
-                                BooruPostRegistry.get(it.wallpaperId)
-                                    ?: booruFavoritesStore.get(it.wallpaperId),
-                            ),
-                        )
+                        Source.BOORU -> flow<Resource<Wallpaper?>> {
+                            val found = BooruPostRegistry.get(it.wallpaperId)
+                                ?: booruFavoritesStore.get(it.wallpaperId)
+                            val resolved = (found as? BooruWallpaper)?.let { post ->
+                                sitePostResolver.resolve(post)
+                            } ?: found
+                            emit(Resource.Success(resolved))
+                        }
                         Source.LOCAL -> localWallpapersRepository.wallpaper(
                             application,
                             it.wallpaperId,

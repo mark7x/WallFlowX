@@ -20,9 +20,9 @@ data class BooruWallpaper(
 }
 
 /** A post from a taught site. Sites have no rating, so it is treated as unrated (NSFW). */
-fun siteWallpaper(siteId: String, postUrl: String, fullUrl: String, thumbUrl: String?) = BooruWallpaper(
+fun siteWallpaper(siteId: String, postUrl: String, fullUrl: String?, thumbUrl: String) = BooruWallpaper(
     id = "site_${siteId}_$postUrl",
-    data = fullUrl,
+    data = fullUrl ?: thumbUrl,
     thumbData = thumbUrl,
     resolution = IntSize.Zero,
     purity = Purity.NSFW,
