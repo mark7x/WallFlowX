@@ -115,7 +115,8 @@ private class BooruPagingSource(
         return LoadResult.Page(
             data = wallpapers,
             prevKey = if (page > 1) page - 1 else null,
-            nextKey = if (items.isEmpty()) null else page + 1,
+            // Stop when a page adds nothing new, otherwise Paging keeps asking for pages forever.
+            nextKey = if (items.isEmpty() || wallpapers.isEmpty()) null else page + 1,
         )
     }
 
