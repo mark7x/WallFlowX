@@ -557,6 +557,8 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="site_scan">Scan items on this page</string>
     <string name="site_scroll_scan">Scroll and scan</string>
     <string name="site_click_next">Click next</string>
+    <string name="site_block_ads">Block ads and pop-ups</string>
+    <string name="site_block_ads_help">Blocks scripts and frames from other websites. Turn off if the site stops working.</string>
     <string name="site_hidden_load_more">Home feed loads more in a hidden browser</string>
     <string name="site_hidden_help">When the home feed runs out of scanned posts, it clicks Next in a hidden browser. Turn this off to show only what you scanned.</string>
     <string name="site_debug_show">Show debug</string>

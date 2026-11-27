@@ -81,6 +81,8 @@ fun SiteWebScreen(
     val message by viewModel.message.collectAsStateWithLifecycle()
     var mode by remember { mutableStateOf<String?>(null) }
     val modeRef = remember { AtomicReference<String?>(null) }
+    val blockRef = remember { java.util.concurrent.atomic.AtomicBoolean(true) }
+    LaunchedEffect(profile?.blockThirdParty) { blockRef.set(profile?.blockThirdParty ?: true) }
     var webView by remember { mutableStateOf<WebView?>(null) }
     var reloadKey by remember { mutableStateOf(0) }
     val scrollScope = rememberCoroutineScope()
@@ -331,18 +333,27 @@ fun SiteWebScreen(
                             }
                         }
 
-                        // Lists every other host the page loads from (ads, trackers, CDNs), once each per view.
+                        // Other hosts: images, video, fonts and styles load; scripts and frames (ads,
+                        // pop-ups, trackers) are blocked while ad blocking is on. Each host is logged once.
                         override fun shouldInterceptRequest(
                             view: WebView?,
                             request: android.webkit.WebResourceRequest?,
                         ): WebResourceResponse? {
-                            val host = request?.url?.host.orEmpty()
-                            if (host.isNotEmpty() && host != siteHost && !host.endsWith(".$siteHost") &&
-                                thirdPartyHosts.size < 40 && thirdPartyHosts.add(host)
+                            request ?: return null
+                            val host = request.url?.host.orEmpty()
+                            if (host.isEmpty() || request.isForMainFrame ||
+                                com.ammar.wallflow.sites.SiteRequestFilter.isSameSite(host, siteHost)
                             ) {
-                                viewModel.debug("loads from other host: $host")
+                                return null
                             }
-                            return null
+                            val reason = com.ammar.wallflow.sites.SiteRequestFilter.allowReason(request)
+                            val block = blockRef.get() && reason == null
+                            if (thirdPartyHosts.size < 60 && thirdPartyHosts.add("$host|$block")) {
+                                viewModel.debug(
+                                    if (block) "blocked other host: $host" else "allowed other host: $host (${reason ?: "ad blocking off"})",
+                                )
+                            }
+                            return if (block) com.ammar.wallflow.sites.SiteRequestFilter.emptyResponse() else null
                         }
 
                         // Ads often open app links (intent://, market://). Only web pages load here.
@@ -359,7 +370,7 @@ fun SiteWebScreen(
                             // Only taps that stay on the taught site may change the main page.
                             if (request.isForMainFrame) {
                                 val host = request.url?.host.orEmpty()
-                                val sameSite = host == siteHost || host.endsWith(".$siteHost")
+                                val sameSite = com.ammar.wallflow.sites.SiteRequestFilter.isSameSite(host, siteHost)
                                 if (!request.hasGesture() || !sameSite) {
                                     viewModel.debug(
                                         "blocked navigation (tap=${request.hasGesture()}, same site=$sameSite): ${request.url}",
@@ -382,7 +393,8 @@ fun SiteWebScreen(
                             viewModel.debug(
                                 "web page process ended: didCrash=${detail?.didCrash()}, " +
                                     "priority=${detail?.rendererPriorityAtExit()}, app heap $heapMb MB, " +
-                                    "rebuild #${reloadKey + 1}, last url=${view?.url}",
+                                    "rebuild #${reloadKey + 1}, last url=${view?.url}, webview " +
+                                    (if (android.os.Build.VERSION.SDK_INT >= 26) WebView.getCurrentWebViewPackage()?.versionName else null),
                             )
                             view?.destroy()
                             reloadKey++

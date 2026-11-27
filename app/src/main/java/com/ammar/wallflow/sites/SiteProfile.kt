@@ -29,6 +29,8 @@ data class SiteProfile(
     val nextPageAttr: String = "href",
     /** Home feed clicks Next in a hidden browser when it runs out of scanned posts. */
     val hiddenLoadMore: Boolean = true,
+    /** Blocks scripts and frames from other hosts (ads, pop-ups, trackers) in the site browsers. */
+    val blockThirdParty: Boolean = true,
 ) {
     val canBrowse: Boolean get() = itemSelector != null
 

@@ -110,6 +110,27 @@ fun SiteDetailScreen(
                     style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                 )
             }
+            profile?.let { site ->
+                androidx.compose.foundation.layout.Row(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                ) {
+                    Text(
+                        modifier = Modifier.weight(1f),
+                        text = stringResource(R.string.site_block_ads),
+                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                    )
+                    androidx.compose.material3.Switch(
+                        checked = site.blockThirdParty,
+                        onCheckedChange = { viewModel.setBlockThirdParty(it) },
+                    )
+                }
+                Text(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    text = stringResource(R.string.site_block_ads_help),
+                    style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                )
+            }
             profile?.takeIf { it.canBrowse && it.nextPageSelector != null }?.let { learned ->
                 androidx.compose.foundation.layout.Row(
                     modifier = Modifier.padding(horizontal = 16.dp),

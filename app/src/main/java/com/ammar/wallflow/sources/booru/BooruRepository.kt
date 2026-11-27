@@ -87,32 +87,56 @@ private class BooruPagingSource(
         val profile = siteProfileStore.get(siteId)
             ?: return LoadResult.Error(IllegalStateException("This site was removed."))
         siteLog.log("feed", "${profile.name}: page $page, query '${search.query}'")
-        // Unfiltered feed: serve every page from what the learning center has scanned, with no network wait.
+        // Unfiltered feed: pages come from the saved posts. When they run out, the hidden browser
+        // clicks the learned Next button and saves more, the same way the learning page does.
         if (search.query.isBlank()) {
+            val needed = page * SITE_PAGE_SIZE
             var scanned = siteRenderedCache.get(siteId)
-            // Out of scanned posts: click Next in the hidden browser first. Only when something is
-            // already scanned, so the first page always comes from the site itself.
-            if (scanned.isNotEmpty() && scanned.size <= (page - 1) * SITE_PAGE_SIZE &&
-                profile.hiddenLoadMore && profile.nextPageSelector != null
-            ) {
-                siteHiddenBrowser.loadNextPage(profile)
+            val canClick = profile.hiddenLoadMore && profile.nextPageSelector != null && profile.itemSelector != null
+            if (page == 1 && scanned.isEmpty()) {
+                // Nothing saved yet: read the first page over HTTP and save it, so later pages can follow on.
+                val first = siteGrabber.search(profile, "", 1).getOrNull().orEmpty()
+                siteLog.log("feed", "${profile.name}: nothing saved, first page over HTTP gave ${first.size} posts")
+                if (first.isNotEmpty()) siteRenderedCache.add(siteId, first)
                 scanned = siteRenderedCache.get(siteId)
             }
-            if (scanned.size > (page - 1) * SITE_PAGE_SIZE) {
+            var attempts = 0
+            while (canClick && scanned.size < needed && attempts < MAX_HIDDEN_ATTEMPTS) {
+                attempts++
+                siteLog.log("feed", "${profile.name}: page $page needs $needed posts, ${scanned.size} saved, hidden load #$attempts")
+                val added = siteHiddenBrowser.loadNextPage(profile)
+                scanned = siteRenderedCache.get(siteId)
+                if (added <= 0) break
+            }
+            val offset = (page - 1) * SITE_PAGE_SIZE
+            if (scanned.size > offset) {
                 val allowed = search.filters.allowedPurities()
-                val pageItems = scanned.drop((page - 1) * SITE_PAGE_SIZE).take(SITE_PAGE_SIZE)
+                val pageItems = scanned.drop(offset).take(SITE_PAGE_SIZE)
                 val wallpapers: List<Wallpaper> = pageItems.mapNotNull { item ->
                     val postUrl = item.postUrl ?: return@mapNotNull null
                     val thumb = item.thumbUrl ?: return@mapNotNull null
                     siteWallpaper(siteId, postUrl, null, thumb)
                 }.filter { it.purity in allowed }.filter { seenIds.add(it.id) }
-                siteLog.log("feed", "${profile.name}: page $page from learning scan, ${wallpapers.size} new of ${pageItems.size}")
+                val more = canClick || scanned.size > offset + SITE_PAGE_SIZE
+                siteLog.log(
+                    "feed",
+                    "${profile.name}: page $page served ${wallpapers.size} of ${pageItems.size} saved posts" +
+                        if (more) "" else ", no more pages (no Next button learned or hidden loading off)",
+                )
                 BooruPostRegistry.remember(wallpapers)
                 return LoadResult.Page(
                     data = wallpapers,
                     prevKey = if (page > 1) page - 1 else null,
-                    nextKey = page + 1,
+                    nextKey = if (more) page + 1 else null,
                 )
+            }
+            if (page > 1) {
+                siteLog.log(
+                    "feed",
+                    "${profile.name}: page $page stopping, ${scanned.size} saved posts and " +
+                        if (canClick) "the hidden browser added none (see [hidden] lines)" else "no way to load more",
+                )
+                return LoadResult.Page(data = emptyList(), prevKey = page - 1, nextKey = null)
             }
         }
         // Without a learned Next button or a {page} address, page 2 would just reload page 1. Stop instead.
@@ -155,3 +179,4 @@ private class BooruPagingSource(
 }
 
 private const val SITE_PAGE_SIZE = 30
+private const val MAX_HIDDEN_ATTEMPTS = 3
