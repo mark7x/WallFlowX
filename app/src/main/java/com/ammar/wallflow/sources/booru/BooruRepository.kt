@@ -77,7 +77,7 @@ private class BooruPagingSource(
         val profile = siteProfileStore.get(siteId)
             ?: return LoadResult.Error(IllegalStateException("This site was removed."))
         // Unfiltered feed: serve every page from what the learning center has scanned, with no network wait.
-        if (search.query.isBlank()) {
+        if (search.query.isBlank() && page == 1) {
             val scanned = siteRenderedCache.get(siteId)
             if (scanned.isNotEmpty()) {
                 val allowed = search.filters.allowedPurities()
@@ -91,7 +91,7 @@ private class BooruPagingSource(
                 return LoadResult.Page(
                     data = wallpapers,
                     prevKey = if (page > 1) page - 1 else null,
-                    nextKey = if (page * SITE_PAGE_SIZE < scanned.size) page + 1 else null,
+                    nextKey = page + 1,
                 )
             }
         }
@@ -115,7 +115,7 @@ private class BooruPagingSource(
         return LoadResult.Page(
             data = wallpapers,
             prevKey = if (page > 1) page - 1 else null,
-            nextKey = if (items.isEmpty() || fromScan) null else page + 1,
+            nextKey = if (items.isEmpty()) null else page + 1,
         )
     }
 
