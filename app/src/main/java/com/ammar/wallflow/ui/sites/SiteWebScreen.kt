@@ -1,5 +1,7 @@
 package com.ammar.wallflow.ui.sites
 
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.runtime.collectAsState
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
@@ -95,6 +97,15 @@ fun SiteWebScreen(
         topBar = {
             TopAppBar(
                 title = { Text(text = profile?.name.orEmpty()) },
+                actions = {
+                    TextButton(onClick = { debugOn = !debugOn }) {
+                        Text(
+                            text = stringResource(
+                                if (debugOn) R.string.site_debug_hide else R.string.site_debug_show,
+                            ),
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = { navigator.navigateUp() }) {
                         Icon(
@@ -114,15 +125,13 @@ fun SiteWebScreen(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                     )
                 }
-                TextButton(onClick = { debugOn = !debugOn }) {
-                    Text(
-                        text = stringResource(
-                            if (debugOn) R.string.site_debug_hide else R.string.site_debug_show,
-                        ),
-                    )
-                }
                 if (debugOn) {
-                    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    Column(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .heightIn(max = 220.dp)
+                            .verticalScroll(rememberScrollState()),
+                    ) {
                         Text(
                             text = if (debugLines.isEmpty()) "No events yet." else debugLines.joinToString("\n"),
                             style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
