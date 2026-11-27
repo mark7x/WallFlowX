@@ -2,6 +2,7 @@ package com.ammar.wallflow.sources.booru
 
 import com.ammar.wallflow.sites.SiteGrabber
 import com.ammar.wallflow.sites.SiteProfileStore
+import com.ammar.wallflow.sites.SiteLog
 import com.ammar.wallflow.sites.SiteRenderedCache
 import androidx.paging.PagingSource.LoadParams
 import androidx.paging.PagingSource.LoadResult
@@ -23,10 +24,13 @@ class BooruRepository @Inject constructor(
     private val siteProfileStore: SiteProfileStore,
     private val siteGrabber: SiteGrabber,
     private val siteRenderedCache: SiteRenderedCache,
+    private val siteLog: SiteLog,
 ) {
     fun wallpapersPager(search: BooruSearch): Flow<PagingData<Wallpaper>> = Pager(
         config = PagingConfig(pageSize = PAGE_SIZE, enablePlaceholders = false),
-        pagingSourceFactory = { BooruPagingSource(booruPostsClient, siteProfileStore, siteGrabber, siteRenderedCache, search) },
+        pagingSourceFactory = {
+            BooruPagingSource(booruPostsClient, siteProfileStore, siteGrabber, siteRenderedCache, siteLog, search)
+        },
     ).flow
 
     companion object {
@@ -39,6 +43,7 @@ private class BooruPagingSource(
     private val siteProfileStore: SiteProfileStore,
     private val siteGrabber: SiteGrabber,
     private val siteRenderedCache: SiteRenderedCache,
+    private val siteLog: SiteLog,
     private val search: BooruSearch,
 ) : PagingSource<Int, Wallpaper>() {
     // Ids already shown in this list. A post can come back on a later page when new posts
@@ -76,6 +81,7 @@ private class BooruPagingSource(
     private suspend fun loadSite(siteId: String, page: Int): LoadResult<Int, Wallpaper> {
         val profile = siteProfileStore.get(siteId)
             ?: return LoadResult.Error(IllegalStateException("This site was removed."))
+        siteLog.log("feed", "${profile.name}: page $page, query '${search.query}'")
         // Unfiltered feed: serve every page from what the learning center has scanned, with no network wait.
         if (search.query.isBlank()) {
             val scanned = siteRenderedCache.get(siteId)
@@ -87,6 +93,7 @@ private class BooruPagingSource(
                     val thumb = item.thumbUrl ?: return@mapNotNull null
                     siteWallpaper(siteId, postUrl, null, thumb)
                 }.filter { it.purity in allowed }.filter { seenIds.add(it.id) }
+                siteLog.log("feed", "${profile.name}: page $page from learning scan, ${wallpapers.size} new of ${pageItems.size}")
                 BooruPostRegistry.remember(wallpapers)
                 return LoadResult.Page(
                     data = wallpapers,
@@ -103,6 +110,7 @@ private class BooruPagingSource(
             if (fromScan) siteRenderedCache.get(siteId) else emptyList()
         }
         if (result.isFailure && items.isEmpty()) {
+            siteLog.log("feed", "${profile.name}: page $page failed, stopping")
             return LoadResult.Error(result.exceptionOrNull() ?: IllegalStateException("Site search failed."))
         }
         val allowed = search.filters.allowedPurities()
@@ -111,6 +119,11 @@ private class BooruPagingSource(
             val thumb = item.thumbUrl ?: return@mapNotNull null
             siteWallpaper(siteId, postUrl, null, thumb)
         }.filter { it.purity in allowed }.filter { seenIds.add(it.id) }
+        siteLog.log(
+            "feed",
+            "${profile.name}: page $page gave ${items.size} items, ${wallpapers.size} new to the list" +
+                if (wallpapers.isEmpty()) ", next page will not be asked" else "",
+        )
         BooruPostRegistry.remember(wallpapers)
         return LoadResult.Page(
             data = wallpapers,

@@ -51,6 +51,7 @@ import com.ammar.wallflow.navigation.AppNavGraphs.RootNavGraph
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import java.util.concurrent.atomic.AtomicReference
+import org.json.JSONObject
 import org.json.JSONTokener
 
 /** Receives taps from the page's script. Taps arrive on a background thread, so they are posted back. */
@@ -141,7 +142,7 @@ fun SiteWebScreen(
                                 Text(text = stringResource(R.string.site_debug_clear))
                             }
                             TextButton(onClick = {
-                                clipboard.setText(androidx.compose.ui.text.AnnotatedString(debugLines.joinToString("\n")))
+                                clipboard.setText(androidx.compose.ui.text.AnnotatedString(viewModel.fullLogText()))
                             }) {
                                 Text(text = stringResource(R.string.site_debug_copy))
                             }
@@ -225,6 +226,31 @@ fun SiteWebScreen(
                     }) {
                         Text(text = stringResource(R.string.site_scroll_scan))
                     }
+                    TextButton(onClick = {
+                        val selector = viewModel.profile.value?.nextPageSelector
+                        if (selector.isNullOrBlank()) {
+                            viewModel.debug("click next: no next-page button learned")
+                            return@TextButton
+                        }
+                        viewModel.debug("click next: $selector")
+                        // Clicks the learned button with a script, so an ad layered over it can't take the tap.
+                        scrollScope.launch {
+                            val script = "(function(){var el=document.querySelector(" +
+                                JSONObject.quote(selector) +
+                                ");if(!el)return 'no element';el.click();return 'clicked';})()"
+                            webView?.evaluateJavascript(script) { result ->
+                                viewModel.debug("click next result: $result")
+                            }
+                            delay(3000L)
+                            webView?.evaluateJavascript("document.documentElement.outerHTML") { raw ->
+                                val html = runCatching { JSONTokener(raw).nextValue() as? String }
+                                    .getOrNull()
+                                viewModel.scanPage(html.orEmpty(), webView?.url.orEmpty())
+                            }
+                        }
+                    }) {
+                        Text(text = stringResource(R.string.site_click_next))
+                    }
                 }
             }
         },
@@ -269,9 +295,12 @@ fun SiteWebScreen(
                                 val host = request.url?.host.orEmpty()
                                 val sameSite = host == siteHost || host.endsWith(".$siteHost")
                                 if (!request.hasGesture() || !sameSite) {
-                                    viewModel.debug("blocked navigation: ${request.url}")
+                                    viewModel.debug(
+                                        "blocked navigation (tap=${request.hasGesture()}, same site=$sameSite): ${request.url}",
+                                    )
                                     return true
                                 }
+                                viewModel.debug("navigation by tap: ${request.url}")
                             }
                             return false
                         }
@@ -282,12 +311,14 @@ fun SiteWebScreen(
                             view: WebView?,
                             detail: RenderProcessGoneDetail?,
                         ): Boolean {
+                            viewModel.debug("web page process ended, view rebuilt: ${detail?.didCrash()}")
                             view?.destroy()
                             reloadKey++
                             return true
                         }
 
                         override fun onPageFinished(view: WebView, pageUrl: String?) {
+                            viewModel.debug("page loaded: $pageUrl")
                             view.evaluateJavascript(SiteScripts.PICKER, null)
                             view.evaluateJavascript(SiteScripts.modeScript(modeRef.get()), null)
                         }

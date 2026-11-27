@@ -24,27 +24,45 @@ data class SiteItem(val postUrl: String?, val thumbUrl: String?)
 class SiteGrabber @Inject constructor(
     private val okHttpClient: OkHttpClient,
     private val pacer: RequestPacer,
+    private val siteLog: SiteLog,
 ) {
     suspend fun search(profile: SiteProfile, tags: String, page: Int): Result<List<SiteItem>> =
         runCatching {
             val address = if (page > 1 && profile.nextPageSelector != null) {
-                addressOfPage(profile, tags, page) ?: return@runCatching emptyList()
+                addressOfPage(profile, tags, page) ?: run {
+                    siteLog.log("grab", "${profile.name}: page $page has no address, stopping")
+                    return@runCatching emptyList()
+                }
             } else {
                 profile.searchAddress(tags, page)
             }
+            siteLog.log("grab", "${profile.name}: reading page $page at $address")
             val doc = fetchDocument(address)
             nextLinkOf(profile, doc)?.let { nextPages[pageKey(profile, tags, page + 1)] = it }
-            itemsIn(profile, doc)
-        }
+            val items = itemsIn(profile, doc)
+            siteLog.log("grab", "${profile.name}: page $page gave ${items.size} items")
+            items
+        }.onFailure { siteLog.log("grab", "${profile.name}: page $page failed: ${it.message}") }
 
     /** The page's learned "next page" link. Only links to the same site are followed, so ad links are ignored. */
     private fun nextLinkOf(profile: SiteProfile, doc: Document): String? {
-        val selector = profile.nextPageSelector ?: return null
+        val selector = profile.nextPageSelector ?: run {
+            siteLog.log("next", "${profile.name}: no next-page pick learned")
+            return null
+        }
         val next = doc.selectFirst(selector)?.absUrl(profile.nextPageAttr)?.takeIf { it.isNotBlank() }
-            ?: return null
+        if (next == null) {
+            siteLog.log("next", "${profile.name}: next-page selector matched nothing on ${doc.location()}")
+            return null
+        }
         val siteHost = runCatching { java.net.URI(profile.searchAddress("", 1)).host }.getOrNull()
         val nextHost = runCatching { java.net.URI(next).host }.getOrNull()
-        return next.takeIf { siteHost != null && siteHost == nextHost }
+        if (siteHost == null || siteHost != nextHost) {
+            siteLog.log("next", "${profile.name}: next link ignored, other host: $next")
+            return null
+        }
+        siteLog.log("next", "${profile.name}: next link is $next")
+        return next
     }
 
     /**
@@ -54,6 +72,7 @@ class SiteGrabber @Inject constructor(
     private suspend fun addressOfPage(profile: SiteProfile, tags: String, page: Int): String? {
         nextPages[pageKey(profile, tags, page)]?.let { return it }
         var current = profile.searchAddress(tags, 1)
+        siteLog.log("next", "${profile.name}: walking pages 1 to ${page - 1} to find page $page")
         for (p in 1 until page) {
             current = nextLinkOf(profile, fetchDocument(current)) ?: return null
             nextPages[pageKey(profile, tags, p + 1)] = current
@@ -93,6 +112,7 @@ class SiteGrabber @Inject constructor(
      * otherwise the page's og:image tag, which most sites set to the full image.
      */
     suspend fun fullImageUrl(profile: SiteProfile, postUrl: String): String? = runCatching {
+        siteLog.log("post", "${profile.name}: full image for $postUrl")
         val doc = fetchDocument(postUrl)
         val picked = profile.postImageSelector?.let { selector ->
             doc.selectFirst(selector)?.let { el ->
@@ -101,7 +121,9 @@ class SiteGrabber @Inject constructor(
                     .firstOrNull { it.isNotBlank() }
             }
         }
-        picked ?: doc.selectFirst("meta[property=og:image]")?.absUrl("content")?.takeIf { it.isNotBlank() }
+        val full = picked ?: doc.selectFirst("meta[property=og:image]")?.absUrl("content")?.takeIf { it.isNotBlank() }
+        siteLog.log("post", "${profile.name}: full image ${full ?: "not found"}")
+        full
     }.getOrNull()
 
     /** Tags on a page, read from its HTML with the learned tag selector. */
@@ -118,15 +140,24 @@ class SiteGrabber @Inject constructor(
     private suspend fun fetchDocument(url: String): Document = withContext(Dispatchers.IO) {
         pacer.await(url)
         val cookies = CookieManager.getInstance().getCookie(url).orEmpty()
+        siteLog.log("http", "GET $url (cookies sent: ${cookies.isNotBlank()})")
         val request = Request.Builder()
             .url(url)
             .header("User-Agent", BOORU_USER_AGENT)
             .apply { if (cookies.isNotBlank()) header("Cookie", cookies) }
             .build()
         okHttpClient.newCall(request).execute().use { response ->
-            if (response.code == 429) pacer.rateLimited(url, response.header("Retry-After"))
-            if (!response.isSuccessful) error("HTTP ${response.code}")
-            Jsoup.parse(response.body?.string().orEmpty(), url)
+            if (response.code == 429) {
+                siteLog.log("http", "429 rate limited at $url, Retry-After ${response.header("Retry-After")}")
+                pacer.rateLimited(url, response.header("Retry-After"))
+            }
+            if (!response.isSuccessful) {
+                siteLog.log("http", "HTTP ${response.code} at $url")
+                error("HTTP ${response.code}")
+            }
+            val body = response.body?.string().orEmpty()
+            siteLog.log("http", "${response.code} ${body.length} chars from $url")
+            Jsoup.parse(body, url)
         }
     }
 }

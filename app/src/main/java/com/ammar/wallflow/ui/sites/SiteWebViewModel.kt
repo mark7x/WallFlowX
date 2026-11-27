@@ -1,11 +1,8 @@
 package com.ammar.wallflow.ui.sites
 
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.ammar.wallflow.sites.SiteLog
 import com.ammar.wallflow.sites.SiteRenderedCache
 import android.content.Context
 import androidx.lifecycle.ViewModel
@@ -69,6 +66,7 @@ class SiteWebViewModel @Inject constructor(
     private val store: SiteProfileStore,
     private val grabber: SiteGrabber,
     private val renderedCache: SiteRenderedCache,
+    private val siteLog: SiteLog,
 ) : ViewModel() {
     private val _profile = MutableStateFlow<SiteProfile?>(null)
     val profile: StateFlow<SiteProfile?> = _profile.asStateFlow()
@@ -76,19 +74,19 @@ class SiteWebViewModel @Inject constructor(
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
 
-    private val _debugLog = MutableStateFlow<List<String>>(emptyList())
-
-    /** Debug mode: a running log of picks, scans and tag reads, newest last. */
-    val debugLog: StateFlow<List<String>> = _debugLog.asStateFlow()
+    /** Debug mode: the newest lines of the site log (picks, page loads, scans, feed loads). */
+    val debugLog: StateFlow<List<String>> = siteLog.lines
 
     fun debug(message: String) {
-        val time = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
-        _debugLog.update { (it + "$time $message").takeLast(200) }
+        siteLog.log("learn", message)
     }
 
     fun clearDebug() {
-        _debugLog.value = emptyList()
+        siteLog.clear()
     }
+
+    /** The whole saved log, for copying. */
+    fun fullLogText(): String = siteLog.fullText()
 
     fun load(id: String) {
         viewModelScope.launch { _profile.value = store.get(id) }

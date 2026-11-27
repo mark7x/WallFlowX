@@ -556,6 +556,7 @@ Auto wallpaper will almost never run at this time. It is dependent on many facto
     <string name="crop_save_failed">Could not save crop</string>
     <string name="site_scan">Scan items on this page</string>
     <string name="site_scroll_scan">Scroll and scan</string>
+    <string name="site_click_next">Click next</string>
     <string name="site_debug_show">Show debug</string>
     <string name="site_debug_hide">Hide debug</string>
     <string name="site_debug_clear">Clear</string>
