@@ -76,6 +76,25 @@ private class BooruPagingSource(
     private suspend fun loadSite(siteId: String, page: Int): LoadResult<Int, Wallpaper> {
         val profile = siteProfileStore.get(siteId)
             ?: return LoadResult.Error(IllegalStateException("This site was removed."))
+        // Unfiltered feed: serve every page from what the learning center has scanned, with no network wait.
+        if (search.query.isBlank()) {
+            val scanned = siteRenderedCache.get(siteId)
+            if (scanned.isNotEmpty()) {
+                val allowed = search.filters.allowedPurities()
+                val pageItems = scanned.drop((page - 1) * SITE_PAGE_SIZE).take(SITE_PAGE_SIZE)
+                val wallpapers: List<Wallpaper> = pageItems.mapNotNull { item ->
+                    val postUrl = item.postUrl ?: return@mapNotNull null
+                    val thumb = item.thumbUrl ?: return@mapNotNull null
+                    siteWallpaper(siteId, postUrl, null, thumb)
+                }.filter { it.purity in allowed }.filter { seenIds.add(it.id) }
+                BooruPostRegistry.remember(wallpapers)
+                return LoadResult.Page(
+                    data = wallpapers,
+                    prevKey = if (page > 1) page - 1 else null,
+                    nextKey = if (page * SITE_PAGE_SIZE < scanned.size) page + 1 else null,
+                )
+            }
+        }
         val result = siteGrabber.search(profile, search.query, page)
         // Sites that build their list with JavaScript return nothing over plain HTTP.
         // Show what the learning center has scanned for them, on the first page of an unfiltered feed.
@@ -102,3 +121,5 @@ private class BooruPagingSource(
 
     override fun getRefreshKey(state: PagingState<Int, Wallpaper>): Int? = null
 }
+
+private const val SITE_PAGE_SIZE = 30
