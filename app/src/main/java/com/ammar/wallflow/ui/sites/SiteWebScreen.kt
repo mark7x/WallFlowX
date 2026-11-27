@@ -235,9 +235,21 @@ fun SiteWebScreen(
                 .padding(padding)
                 .fillMaxSize(),
             factory = { ctx ->
+                val siteHost = android.net.Uri.parse(url).host.orEmpty()
                 WebView(ctx).apply {
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
+                    // Scripts may not open pop-up windows or tabs on their own (ad popups).
+                    settings.javaScriptCanOpenWindowsAutomatically = false
+                    settings.setSupportMultipleWindows(false)
+                    webChromeClient = object : android.webkit.WebChromeClient() {
+                        override fun onCreateWindow(
+                            view: WebView?,
+                            isDialog: Boolean,
+                            isUserGesture: Boolean,
+                            resultMsg: android.os.Message?,
+                        ): Boolean = false
+                    }
                     CookieManager.getInstance().setAcceptCookie(true)
                     addJavascriptInterface(SiteBridge { json -> viewModel.onPick(json) }, "WallFlowPick")
                     webViewClient = object : WebViewClient() {
@@ -246,8 +258,22 @@ fun SiteWebScreen(
                             view: WebView?,
                             request: WebResourceRequest?,
                         ): Boolean {
-                            val scheme = request?.url?.scheme.orEmpty()
-                            return scheme != "http" && scheme != "https"
+                            request ?: return false
+                            val scheme = request.url?.scheme.orEmpty()
+                            if (scheme != "http" && scheme != "https") return true
+                            // Infinite-scroll pages often navigate by script when you scroll, which
+                            // reloads the page under you. Only real taps may change the main page.
+                            // Ads that open a new tab or take over the page land on another host.
+                            // Only taps that stay on the taught site may change the main page.
+                            if (request.isForMainFrame) {
+                                val host = request.url?.host.orEmpty()
+                                val sameSite = host == siteHost || host.endsWith(".$siteHost")
+                                if (!request.hasGesture() || !sameSite) {
+                                    viewModel.debug("blocked navigation: ${request.url}")
+                                    return true
+                                }
+                            }
+                            return false
                         }
 
                         // If the page's process dies (common with heavy ad pages), a WebView that does
