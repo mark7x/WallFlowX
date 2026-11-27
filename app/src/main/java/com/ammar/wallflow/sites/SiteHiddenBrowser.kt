@@ -2,6 +2,7 @@ package com.ammar.wallflow.sites
 
 import android.content.Context
 import android.net.Uri
+import android.view.View
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -59,6 +60,13 @@ class SiteHiddenBrowser @Inject constructor(
     private suspend fun openAndClick(start: String, selector: String): Page? {
         val webView = WebView(context)
         try {
+            // A WebView that is never shown has no size, so the site's "Show more" logic never sees the
+            // page and adds nothing. Give it a real size, as if it were on screen.
+            webView.measure(
+                View.MeasureSpec.makeMeasureSpec(VIEW_WIDTH, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(VIEW_HEIGHT, View.MeasureSpec.EXACTLY),
+            )
+            webView.layout(0, 0, VIEW_WIDTH, VIEW_HEIGHT)
             webView.settings.javaScriptEnabled = true
             webView.settings.domStorageEnabled = true
             webView.settings.javaScriptCanOpenWindowsAutomatically = false
@@ -107,5 +115,7 @@ class SiteHiddenBrowser @Inject constructor(
     private companion object {
         const val LOAD_TIMEOUT_MS = 30_000L
         const val CLICK_WAIT_MS = 3_000L
+        const val VIEW_WIDTH = 1080
+        const val VIEW_HEIGHT = 2400
     }
 }
